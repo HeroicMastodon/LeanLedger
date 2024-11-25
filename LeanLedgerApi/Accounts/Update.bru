@@ -1,0 +1,26 @@
+meta {
+  name: Update
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accounts/{{id}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "new name",
+    "accountType": "Bank",
+    "openingBalance": 123,
+    "openingDate": "2024-01-01",
+    "active": false,
+    "notes": "some notes"
+  }
+}
+
+vars:pre-request {
+  id: d66b3553-28e7-4864-a267-45a8e7de790e
+}

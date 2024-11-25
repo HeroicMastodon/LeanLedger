@@ -1,3 +1,4 @@
+using LeanLedgerServer.Accounts;
 using LeanLedgerServer.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,5 +10,7 @@ builder.Services.AddDbContext<LedgerDbContext>(
 var app = builder.Build();
 app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = ["index.html"] });
 app.UseStaticFiles();
+var baseRoute = app.MapGroup("/api");
+baseRoute.MapAccounts();
 
 app.Run();

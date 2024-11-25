@@ -1,0 +1,26 @@
+meta {
+  name: Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "test transaction",
+    "accountType": "Bank",
+    "openingBalance": 123,
+    "openingDate": "2024-01-01",
+    "active": false,
+    "notes": "some notes"
+  }
+}
+
+vars:pre-request {
+  id: 
+}

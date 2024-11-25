@@ -1,9 +1,12 @@
 namespace LeanLedgerServer.Accounts;
 
+using System.Text.Json.Serialization;
+
 public class Account
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public AccountType AccountType { get; set; }
     public decimal OpeningBalance { get; set; }
     public DateOnly OpeningDate { get; set; }
