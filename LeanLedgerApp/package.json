@@ -1,0 +1,35 @@
+{
+  "name": "leanledgerapp",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@skeletonlabs/skeleton": "2.10.3",
+    "@skeletonlabs/tw-plugin": "0.4.0",
+    "@sveltejs/adapter-auto": "^3.0.0",
+    "@sveltejs/adapter-static": "^3.0.6",
+    "@sveltejs/kit": "^2.5.27",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "@tailwindcss/forms": "0.5.9",
+    "@types/node": "22.9.3",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.49",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "tailwindcss": "3.4.15",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.4",
+    "vite-plugin-tailwind-purgecss": "0.3.3"
+  },
+  "type": "module",
+  "dependencies": {
+    "@floating-ui/dom": "1.6.12",
+    "axios": "^1.7.7"
+  }
+}
