@@ -15,6 +15,14 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.AccountType) .HasConversion<string>();
                 entity.HasQueryFilter(a => !a.IsDeleted);
+
+                entity.HasMany(t => t.Withdrawls)
+                    .WithOne(t => t.SourceAccount)
+                    .HasForeignKey(t => t.SourceAccountId);
+
+                entity.HasMany(t => t.Deposits)
+                    .WithOne(t => t.DestinationAccount)
+                    .HasForeignKey(t => t.DestinationAccountId);
             }
         );
 
@@ -25,12 +33,12 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
                 entity.Property(t => t.UniqueHash).IsRequired();
                 entity.Property(t => t.Type).HasConversion<string>();
 
-                entity.HasOne(e => e.SourceAccount)
-                    .WithMany()
-                    .HasForeignKey(e => e.SourceAccountId);
+                entity.HasOne(t => t.SourceAccount)
+                    .WithMany(a => a.Withdrawls)
+                    .HasForeignKey(t => t.SourceAccountId);
 
                 entity.HasOne(t => t.DestinationAccount)
-                    .WithMany()
+                    .WithMany(a => a.Deposits)
                     .HasForeignKey(t => t.DestinationAccountId);
 
                 entity.HasQueryFilter(t => !t.IsDeleted);

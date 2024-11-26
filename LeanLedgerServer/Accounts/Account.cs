@@ -1,6 +1,7 @@
 namespace LeanLedgerServer.Accounts;
 
 using System.Text.Json.Serialization;
+using Transactions;
 
 public class Account
 {
@@ -13,6 +14,9 @@ public class Account
     public bool Active { get; set; }
     public string Notes { get; set; } = string.Empty;
     public bool IsDeleted { get; set; }
+
+    public List<Transaction> Withdrawls { get; set; } = [];
+    public List<Transaction> Deposits { get; set; } = [];
 }
 
 public enum AccountType

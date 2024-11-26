@@ -11,7 +11,7 @@ builder.Services.AddDbContext<LedgerDbContext>(
 var app = builder.Build();
 app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = ["index.html"] });
 app.UseStaticFiles();
-var baseRoute = app.MapGroup("/api");
+var baseRoute = app.MapGroup("api");
 baseRoute.MapAccounts();
 baseRoute.MapTransactions();
 

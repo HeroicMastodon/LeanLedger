@@ -15,8 +15,10 @@ public class Transaction {
     public bool IsDeleted { get; set; }
 
     public Guid? SourceAccountId { get; set; }
+    [JsonIgnore]
     public Account? SourceAccount { get; set; }
     public Guid? DestinationAccountId { get; set; }
+    [JsonIgnore]
     public Account? DestinationAccount { get; set; }
 }
 

@@ -16,8 +16,26 @@ public static class Endpoints {
     }
 
     private static async Task<IResult> ListAccounts([FromServices] LedgerDbContext dbContext) {
-        var accounts = await dbContext.Accounts.ToListAsync();
-        return Ok(new {Accounts = accounts});
+        var accounts = await dbContext.Accounts
+            .Select(
+                a => new {
+                    a.Id,
+                    a.AccountType,
+                    a.Name,
+                    a.Active,
+                    Balance = a.Withdrawls.Sum(t => t.Amount) + a.Deposits.Sum(t => t.Amount) + a.OpeningBalance,
+                    // TODO: This will probably be better as a separate query in the future
+                    LastActivityDate = a.Withdrawls.Any()
+                        ? (DateOnly?)a.Withdrawls.OrderByDescending(t => t.Date).First().Date
+                        : null,
+                    BalanceChange = a.Withdrawls.Sum(t => t.Amount) + a.Deposits.Sum(t => t.Amount),
+                }
+            )
+            .ToListAsync();
+        var grouped = accounts
+            .GroupBy(a => a.AccountType)
+            .ToDictionary(group => group.Key, group => group);
+        return Ok(grouped);
     }
 
     private static async Task<IResult> GetAccount(Guid id, [FromServices] LedgerDbContext dbContext) {
