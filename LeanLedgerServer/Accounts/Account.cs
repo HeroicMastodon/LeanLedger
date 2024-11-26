@@ -12,10 +12,12 @@ public class Account
     public DateOnly OpeningDate { get; set; }
     public bool Active { get; set; }
     public string Notes { get; set; } = string.Empty;
+    public bool IsDeleted { get; set; }
 }
 
 public enum AccountType
 {
     Bank,
-    CreditCard
+    CreditCard,
+    Merchant
 }

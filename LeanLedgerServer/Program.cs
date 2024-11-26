@@ -1,5 +1,6 @@
 using LeanLedgerServer.Accounts;
 using LeanLedgerServer.Common;
+using LeanLedgerServer.Transactions;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, WebRootPath = "StaticFiles" });
@@ -12,5 +13,6 @@ app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = ["index.html"] 
 app.UseStaticFiles();
 var baseRoute = app.MapGroup("/api");
 baseRoute.MapAccounts();
+baseRoute.MapTransactions();
 
 app.Run();
