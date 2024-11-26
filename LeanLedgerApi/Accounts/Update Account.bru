@@ -1,10 +1,10 @@
 meta {
-  name: Update
+  name: Update Account
   type: http
   seq: 4
 }
 
-post {
+put {
   url: {{baseUrl}}/accounts/{{id}}
   body: json
   auth: none

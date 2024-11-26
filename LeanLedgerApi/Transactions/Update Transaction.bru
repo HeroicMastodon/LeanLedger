@@ -1,0 +1,28 @@
+meta {
+  name: Update Transaction
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/transactions/{{id}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "Expense",
+    "description": "a test transaction",
+    "date": "2024-01-01",
+    "amount": 10,
+    "sourceAccountId": "0c80937d-8d20-44b7-a185-c7adea19d394",
+    "destinationAccountId": null,
+    "category": "Groceries",
+    "skipHashCheck": false
+  }
+}
+
+vars:pre-request {
+  id: 8fcc8dc8-6c31-4990-87c1-dc68c1f8a55e
+}
