@@ -24,3 +24,18 @@ export type AccountData = {
     notes: string;
     transactions: Transaction[];
 }
+
+export function defaultAccountData(): AccountData {
+    return {
+        id: "",
+        name: "",
+        accountType: "Bank",
+        openingBalance: 0,
+        balance: 0,
+        openingDate: "2024-01-01",
+        active: true,
+        includeInNetWorth: true,
+        notes: "",
+        transactions: [],
+    };
+}

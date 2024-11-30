@@ -1,4 +1,3 @@
-
 {#snippet errorMessage(err: any)}
     <div class="alert variant-filled-error">
         <div class="alert-message">
@@ -17,16 +16,23 @@
             <h1 class="h1">Account</h1>
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
             <button onclick={showDeleteConfirmation} class="btn variant-outline-error">Delete</button>
-            <dialog onclick={ (event) => {if (event.target === event.currentTarget) confirmationDialog?.close() }} bind:this={confirmationDialog} class="card p-8 mt-48 ml-auto mr-auto  text-on-surface-token">
+            <dialog
+                onclick={ (event) => {if (event.target === event.currentTarget) confirmationDialog?.close() }}
+                bind:this={confirmationDialog}
+                class="card p-8 mt-48 ml-auto mr-auto  text-on-surface-token"
+            >
                 <div class="flex flex-col gap-4">
                     <h2 class="h2">Are you sure you want to delete?</h2>
                     <div class="flex gap-4">
-                        <button onclick={() => confirmationDialog?.close()} class="btn variant-outline-success">Cancel</button>
+                        <button onclick={() => confirmationDialog?.close()} class="btn variant-outline-success">Cancel
+                        </button>
                         <button onclick={deleteAccount} class="btn variant-filled-error">Delete</button>
                     </div>
                 </div>
             </dialog>
-            <p>Balance: <Money amount={account.balance}/></p>
+            <p>Balance:
+                <Money amount={account.balance} />
+            </p>
             {#if isSaving}
                 <ProgressRadial width="w-5" meter="stroke-primary-500" track="strock-primary-500/30" />
             {/if}
@@ -94,6 +100,7 @@
     }
 
     let confirmationDialog: HTMLDialogElement | undefined = $state()
+
     function showDeleteConfirmation() {
         confirmationDialog?.showModal()
     }
