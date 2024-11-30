@@ -21,7 +21,10 @@ public static class Endpoints {
     }
 
     private static async Task<IResult> ListTransactions([FromServices] LedgerDbContext db) {
-        var transactions = await db.Transactions.ToListAsync();
+        var transactions = await db.Transactions
+            .Include(t => t.SourceAccount)
+            .Include(t => t.DestinationAccount)
+            .ToListAsync();
 
         return Ok(new {Transactions = transactions});
     }

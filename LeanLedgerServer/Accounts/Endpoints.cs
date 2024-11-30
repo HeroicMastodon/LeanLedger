@@ -1,5 +1,6 @@
 namespace LeanLedgerServer.Accounts;
 
+using System.Collections.Immutable;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,14 +17,72 @@ public static class Endpoints {
     }
 
     private static async Task<IResult> ListAccounts([FromServices] LedgerDbContext dbContext) {
-        var accounts = await dbContext.Accounts.ToListAsync();
-        return Ok(new {Accounts = accounts});
+        var accounts = await dbContext.Accounts
+            .Select(
+                a => new {
+                    a.Id,
+                    a.AccountType,
+                    a.Name,
+                    a.Active,
+                    a.IncludeInNetWorth,
+                    Balance = a.Withdrawls.Sum(t => t.Amount) + a.Deposits.Sum(t => t.Amount) + a.OpeningBalance,
+                    // TODO: This will probably be better as a separate query in the future
+                    LastActivityDate = a.Withdrawls.Any()
+                        ? (DateOnly?)a.Withdrawls.OrderByDescending(t => t.Date).First().Date
+                        : null,
+                    BalanceChange = a.Withdrawls.Sum(t => t.Amount) + a.Deposits.Sum(t => t.Amount),
+                }
+            )
+            .ToListAsync();
+        var grouped = accounts
+            .GroupBy(a => a.AccountType)
+            .ToDictionary(group => group.Key, group => group);
+        return Ok(grouped);
     }
 
     private static async Task<IResult> GetAccount(Guid id, [FromServices] LedgerDbContext dbContext) {
-        var account = await dbContext.Accounts.SingleOrDefaultAsync(a => a.Id == id);
+        var account = await dbContext
+            .Accounts
+            .Include(a => a.Withdrawls)
+            .ThenInclude(t => t.DestinationAccount)
+            .Include(a => a.Deposits)
+            .ThenInclude(t => t.SourceAccount)
+            .SingleOrDefaultAsync(a => a.Id == id);
 
-        return Ok(account);
+        if (account is null) {
+            return NotFound();
+        }
+
+        return Ok(
+            new {
+                account.Id,
+                account.Name,
+                AccountType = account.AccountType.ToString(),
+                account.OpeningBalance,
+                account.OpeningDate,
+                account.Active,
+                account.IncludeInNetWorth,
+                account.Notes,
+                Balance = account.Withdrawls.Sum(t => t.Amount) +
+                          account.Deposits.Sum(t => t.Amount) +
+                          account.OpeningBalance,
+                Transactions = account
+                    .Withdrawls
+                    .ToImmutableArray()
+                    .AddRange(account.Deposits)
+                    .Select(
+                        t => new {
+                            t.Id,
+                            t.Description,
+                            t.Amount,
+                            t.Date,
+                            t.Category,
+                            SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
+                            DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
+                        }
+                    )
+            }
+        );
     }
 
     private static async Task<IResult> CreateAccount(
@@ -48,6 +107,7 @@ public static class Endpoints {
             // OpeningDate = DateOnly.FromDateTime(newAccount.OpeningDate),
             OpeningDate = newAccount.OpeningDate,
             Active = newAccount.Active,
+            IncludeInNetWorth = newAccount.IncludeInNetWorth,
             Notes = newAccount.Notes
         };
 
@@ -84,6 +144,7 @@ public static class Endpoints {
         // account.OpeningDate = DateOnly.FromDateTime(accountUpdate.OpeningDate);
         account.OpeningDate = accountUpdate.OpeningDate;
         account.Active = accountUpdate.Active;
+        account.IncludeInNetWorth = accountUpdate.IncludeInNetWorth;
         account.Notes = accountUpdate.Notes;
 
         dbContext.Update(account);
@@ -99,7 +160,7 @@ public static class Endpoints {
             return NoContent();
         }
 
-        account.IsDeleted = false;
+        account.IsDeleted = true;
         dbContext.Update(account);
         await dbContext.SaveChangesAsync();
 
@@ -112,6 +173,7 @@ public static class Endpoints {
         decimal OpeningBalance,
         DateOnly OpeningDate,
         bool Active,
+        bool IncludeInNetWorth,
         string Notes
     );
 }
