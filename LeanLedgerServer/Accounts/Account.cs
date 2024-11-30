@@ -12,6 +12,7 @@ public class Account
     public decimal OpeningBalance { get; set; }
     public DateOnly OpeningDate { get; set; }
     public bool Active { get; set; }
+    public bool IncludeInNetWorth { get; set; }
     public string Notes { get; set; } = string.Empty;
     public bool IsDeleted { get; set; }
 

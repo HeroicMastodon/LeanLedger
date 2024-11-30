@@ -14,15 +14,16 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
             entity => {
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.AccountType) .HasConversion<string>();
-                entity.HasQueryFilter(a => !a.IsDeleted);
+                entity.Property(a => a.IncludeInNetWorth).HasDefaultValue(false);
 
                 entity.HasMany(t => t.Withdrawls)
                     .WithOne(t => t.SourceAccount)
                     .HasForeignKey(t => t.SourceAccountId);
-
                 entity.HasMany(t => t.Deposits)
                     .WithOne(t => t.DestinationAccount)
                     .HasForeignKey(t => t.DestinationAccountId);
+
+                entity.HasQueryFilter(a => !a.IsDeleted);
             }
         );
 
