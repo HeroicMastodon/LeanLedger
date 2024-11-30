@@ -16,11 +16,7 @@
             <h1 class="h1">Account</h1>
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
             <button onclick={showDeleteConfirmation} class="btn variant-outline-error">Delete</button>
-            <dialog
-                onclick={ (event) => {if (event.target === event.currentTarget) confirmationDialog?.close() }}
-                bind:this={confirmationDialog}
-                class="card p-8 mt-48 ml-auto mr-auto  text-on-surface-token"
-            >
+            <DefaultDialog bind:dialog={confirmationDialog}>
                 <div class="flex flex-col gap-4">
                     <h2 class="h2">Are you sure you want to delete?</h2>
                     <div class="flex gap-4">
@@ -29,7 +25,7 @@
                         <button onclick={deleteAccount} class="btn variant-filled-error">Delete</button>
                     </div>
                 </div>
-            </dialog>
+            </DefaultDialog>
             <p>Balance:
                 <Money amount={account.balance} />
             </p>
@@ -81,6 +77,7 @@
     import AccountForm from "$lib/accounts/AccountForm.svelte";
     import Money from "$lib/components/Money.svelte";
     import {goto} from "$app/navigation"
+    import DefaultDialog from "$lib/components/DefaultDialog.svelte";
 
     let {data}: { data: PageData } = $props();
     let account: AccountData | null = $state(null);

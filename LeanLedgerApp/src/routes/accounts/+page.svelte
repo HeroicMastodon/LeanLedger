@@ -1,11 +1,7 @@
 <div class="mb-8 flex gap-4 items-end">
     <h1 class="h1">Accounts</h1>
     <button onclick={() => accountDialog?.showModal()} class="btn variant-filled-primary">New Account</button>
-    <dialog
-        bind:this={accountDialog}
-        class="card p-8 mt-48 ml-auto mr-auto text-on-surface-token"
-        onclick={(event) => { if(event.target === event.currentTarget) accountDialog?.close() }}
-    >
+    <DefaultDialog bind:dialog={accountDialog}>
         <div class="flex flex-col gap-4">
             <h2 class="h2"> New Account </h2>
             <AccountForm bind:account={newAccount} />
@@ -14,7 +10,7 @@
                 <button onclick={saveNewAccount} class="btn variant-filled-success">Create</button>
             </div>
         </div>
-    </dialog>
+    </DefaultDialog>
 </div>
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
@@ -77,6 +73,7 @@
     import {goto} from "$app/navigation";
     import Money from "$lib/components/Money.svelte";
     import AccountForm from "$lib/accounts/AccountForm.svelte";
+    import DefaultDialog from "$lib/components/DefaultDialog.svelte";
 
     let accounts: AccountGrouping = $state({
         Bank: [],
