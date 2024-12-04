@@ -141,7 +141,6 @@ public static class Endpoints {
         account.Name = accountUpdate.Name;
         account.AccountType = accountType;
         account.OpeningBalance = accountUpdate.OpeningBalance;
-        // account.OpeningDate = DateOnly.FromDateTime(accountUpdate.OpeningDate);
         account.OpeningDate = accountUpdate.OpeningDate;
         account.Active = accountUpdate.Active;
         account.IncludeInNetWorth = accountUpdate.IncludeInNetWorth;

@@ -1,3 +1,43 @@
+<script lang="ts">
+    import type {PageData} from "./$types";
+    import {apiClient} from "$lib/apiClient";
+    import {type AccountData, accountTypes} from "$lib/accounts";
+    import {ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
+    import AccountForm from "$lib/accounts/AccountForm.svelte";
+    import Money from "$lib/components/Money.svelte";
+    import {goto} from "$app/navigation"
+    import DefaultDialog from "$lib/components/DefaultDialog.svelte";
+    import TransactionTable from "$lib/transactions/TransactionTable.svelte";
+
+    let {data}: { data: PageData } = $props();
+    let account: AccountData | null = $state(null);
+    let isSaving = $state(false);
+
+    async function load() {
+        const response = await apiClient.get<AccountData>(`accounts/${data.id}`);
+        account = response.data;
+        console.dir(response.data)
+    }
+
+    async function saveChanges() {
+        isSaving = true;
+        const response = await apiClient.put(`accounts/${data.id}`, account)
+        console.dir(response)
+        isSaving = false;
+    }
+
+    let confirmationDialog: HTMLDialogElement | undefined = $state()
+
+    function showDeleteConfirmation() {
+        confirmationDialog?.showModal()
+    }
+
+    async function deleteAccount() {
+        const response = await apiClient.delete(`accounts/${data.id}`);
+        await goto("/accounts")
+    }
+</script>
+
 {#snippet errorMessage(err: any)}
     <div class="alert variant-filled-error">
         <div class="alert-message">
@@ -36,74 +76,10 @@
         <AccountForm bind:account={account} />
         <!--TODO: Add metrics-->
         <h2 class="h2 mt-8 mb-4">Transactions</h2>
-        <div class="table-container">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Source Account</th>
-                    <th>Destination Account</th>
-                    <th>Category</th>
-                </tr>
-                </thead>
-                <tbody>
-                {#each account.transactions as transaction}
-                    <tr>
-                        <td>{transaction.description}</td>
-                        <td>${transaction.amount}</td>
-                        <td>{transaction.date}</td>
-                        <td>{transaction.sourceAccount?.name ?? ""}</td>
-                        <td>{transaction.destinationAccount?.name ?? ""}</td>
-                        <td>{transaction.category ?? ""}</td>
-                    </tr>
-                {/each}
-                </tbody>
-            </table>
-        </div>
+        <TransactionTable transactions={account.transactions} />
     {/if}
 
 {:catch err}
     {@render errorMessage(err)}
 {/await}
-<script lang="ts">
-    import type {PageData} from "./$types";
-    import {Fa} from "svelte-fa";
-    import {faDollar} from "@fortawesome/free-solid-svg-icons";
-    import {apiClient} from "$lib/apiClient";
-    import {type AccountData, accountTypes} from "$lib/accounts";
-    import {ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
-    import AccountForm from "$lib/accounts/AccountForm.svelte";
-    import Money from "$lib/components/Money.svelte";
-    import {goto} from "$app/navigation"
-    import DefaultDialog from "$lib/components/DefaultDialog.svelte";
 
-    let {data}: { data: PageData } = $props();
-    let account: AccountData | null = $state(null);
-    let isSaving = $state(false);
-
-    async function load() {
-        const response = await apiClient.get<AccountData>(`accounts/${data.id}`);
-        account = response.data;
-        console.dir(response.data)
-    }
-
-    async function saveChanges() {
-        isSaving = true;
-        const response = await apiClient.put(`accounts/${data.id}`, account)
-        console.dir(response)
-        isSaving = false;
-    }
-
-    let confirmationDialog: HTMLDialogElement | undefined = $state()
-
-    function showDeleteConfirmation() {
-        confirmationDialog?.showModal()
-    }
-
-    async function deleteAccount() {
-        const response = await apiClient.delete(`accounts/${data.id}`);
-        await goto("/accounts")
-    }
-</script>

@@ -18,7 +18,7 @@
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 </script>
 {#snippet navItem(href: string, title: string)}
-    <li>
+    <li class="mt-2 mb-2">
         <a href="{href}" class:bg-primary-active-token={href === $page.url.pathname} data-sveltekit-preload-data="hover">
             <span class="flex-auto">{title}</span>
         </a>
@@ -49,6 +49,7 @@
                 <nav class="list-nav">
                     <ul>
                         {@render navItem("/accounts", "Accounts")}
+                        {@render navItem("/transactions", "Transactions")}
                     </ul>
                 </nav>
             </section>
