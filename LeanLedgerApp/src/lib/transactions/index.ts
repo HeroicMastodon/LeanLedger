@@ -1,3 +1,5 @@
+import type {SelectOption} from "$lib";
+
 export type Transaction = {
     id: string;
     description: string;
@@ -6,11 +8,29 @@ export type Transaction = {
     sourceAccount?: AttachedAccount;
     destinationAccount?: AttachedAccount;
     category?: string;
+    type: TransactionType;
 }
 export type AttachedAccount = {
     id: string;
     name: string;
 }
+
+export type TransactionType = 'Deposit' | 'Withdrawal' | 'Transfer';
+
+export const TransactionTypeOptions: SelectOption<TransactionType>[] = [
+    {
+        display: "Deposit",
+        value: "Deposit",
+    },
+    {
+        display: "Withdrawal",
+        value: "Withdrawal",
+    },
+    {
+        display: "Transfer",
+        value: "Transfer",
+    },
+]
 
 export function defaultTransaction(): Transaction {
     return {
@@ -19,5 +39,6 @@ export function defaultTransaction(): Transaction {
         amount: 0,
         category: "",
         date: "",
+        type: "Deposit"
     }
 }

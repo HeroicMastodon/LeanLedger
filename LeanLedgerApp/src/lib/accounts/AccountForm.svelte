@@ -1,11 +1,12 @@
 <script lang="ts">
-    import {accountTypes} from "$lib/accounts/index.js";
+    import {accountTypeOptions, accountTypes} from "$lib/accounts/index.js";
     import {splitPascal} from "$lib";
     import {faDollar} from "@fortawesome/free-solid-svg-icons";
     import {Fa} from "svelte-fa";
     import {type AccountData} from "$lib/accounts";
     import MoneyInput from "$lib/components/MoneyInput.svelte";
     import LabeledInput from "$lib/components/LabeledInput.svelte";
+    import LabeledSelect from "$lib/components/LabeledSelect.svelte";
 
     let {account = $bindable()}: { account: AccountData } = $props();
 </script>
@@ -18,14 +19,12 @@
         bind:value={account.name}
         placeholder="America First"
     />
-    <label class="label md:col-span-3">
-        <span>Account Type</span>
-        <select class="select" bind:value={account.accountType}>
-            {#each accountTypes as accountType}
-                <option value={ accountType }>{splitPascal(accountType)}</option>
-            {/each}
-        </select>
-    </label>
+    <LabeledSelect
+        bind:value={account.accountType}
+        label="Account Type"
+        options={accountTypeOptions}
+        class="md:col-span-3"
+    />
     <MoneyInput
         class="md:col-span-2"
         label="Opening Balance"

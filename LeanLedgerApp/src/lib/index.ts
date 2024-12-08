@@ -14,3 +14,8 @@ export function dateFromString(date: string) {
         day: 'numeric'
     })
 }
+
+export type SelectOption<T> = {
+    value: T;
+    display: string;
+}
