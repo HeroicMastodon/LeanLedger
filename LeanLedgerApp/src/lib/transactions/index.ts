@@ -38,7 +38,7 @@ export function defaultTransaction(): Transaction {
         description: "",
         amount: 0,
         category: "",
-        date: "",
+        date: "2024-01-01",
         type: "Deposit"
     }
 }
