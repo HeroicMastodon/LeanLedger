@@ -20,7 +20,7 @@
     <span>{label}</span>
     <select class="select" bind:value={value}>
         {#if optional}
-            <option value={null}>(none)</option>
+            <option value={undefined}>(none)</option>
         {/if}
         {#each options as option}
             <option value={ option.value }>{option.display}</option>

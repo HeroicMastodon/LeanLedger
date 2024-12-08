@@ -4,13 +4,22 @@
     import MoneyInput from "$lib/components/MoneyInput.svelte";
     import PredictiveText from "$lib/components/PredictiveText.svelte";
     import LabeledSelect from "$lib/components/LabeledSelect.svelte";
+    import {onMount} from "svelte";
+    import {apiClient} from "$lib/apiClient";
+    import type {PageData} from "./$types";
 
-    const transaction: Transaction = $state(defaultTransaction());
-    // TODO: Load transaction
+    const {data}: {data: PageData;} = $props();
+
+    let transaction: Transaction = $state(defaultTransaction());
     // TODO: Load Categories
     // TODO: Load Accounts
     $effect(() => {
         console.dir($state.snapshot(transaction));
+    })
+
+    onMount(async () => {
+        const res = await apiClient.get<Transaction>(`transactions/${data.id}`)
+        transaction = res.data;
     })
 </script>
 
