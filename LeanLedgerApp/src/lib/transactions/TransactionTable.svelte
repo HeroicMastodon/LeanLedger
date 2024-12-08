@@ -22,7 +22,7 @@
         {#each transactions as transaction}
             <tr>
                 <td>
-                    <a href="/transactions/{transaction.id}">
+                    <a class="text-primary-400" href="/transactions/{transaction.id}">
                         {transaction.description}
                     </a>
                 </td>
@@ -32,14 +32,14 @@
                 <td>{dateFromString(transaction.date)}</td>
                 <td>
                     {#if transaction.sourceAccount}
-                       <a href="/accounts/{transaction.sourceAccount.id}">
+                       <a class="text-primary-400" href="/accounts/{transaction.sourceAccount.id}">
                            {transaction.sourceAccount.name}
                        </a>
                     {/if}
                 </td>
                 <td>
                     {#if transaction.destinationAccount}
-                       <a href="/accounts/{transaction.destinationAccount.id}">
+                       <a class="text-primary-400" href="/accounts/{transaction.destinationAccount.id}">
                            {transaction.destinationAccount.name}
                        </a>
                     {/if}

@@ -11,3 +11,13 @@ export type AttachedAccount = {
     id: string;
     name: string;
 }
+
+export function defaultTransaction(): Transaction {
+    return {
+        id: "",
+        description: "",
+        amount: 0,
+        category: "",
+        date: "",
+    }
+}
