@@ -1,4 +1,6 @@
 <script lang="ts">
+    import {filter} from "@skeletonlabs/skeleton";
+
     let {
         value = $bindable(),
         label,
@@ -14,12 +16,11 @@
         inputId: string;
         datalistId: string;
     } = $props();
-
 </script>
 
 <label class="label {className ?? ''}">
     <span>{label}</span>
-    <input list={datalistId} id={inputId} type="text" class="input">
+    <input bind:value list={datalistId} id={inputId} type="text" class="input">
     <datalist id={datalistId}>
         {#each options as option}
             <option value={ option }>{option}</option>

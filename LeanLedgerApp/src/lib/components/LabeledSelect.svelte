@@ -23,7 +23,7 @@
             <option value={undefined}>(none)</option>
         {/if}
         {#each options as option}
-            <option value={ option.value }>{option.display}</option>
+            <option value={option.value}>{option.display}</option>
         {/each}
     </select>
 </label>

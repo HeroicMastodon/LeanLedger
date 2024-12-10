@@ -1,25 +1,44 @@
 <script lang="ts">
     import LabeledInput from "$lib/components/LabeledInput.svelte";
-    import {defaultTransaction, type Transaction, TransactionTypeOptions} from "$lib/transactions";
+    import {
+        type AttachedAccount,
+        defaultTransaction, type EditableTransaction, loadAccountOptions, loadCategoryOptions,
+        type Transaction,
+        TransactionTypeOptions
+    } from "$lib/transactions";
     import MoneyInput from "$lib/components/MoneyInput.svelte";
     import PredictiveText from "$lib/components/PredictiveText.svelte";
     import LabeledSelect from "$lib/components/LabeledSelect.svelte";
     import {onMount} from "svelte";
     import {apiClient} from "$lib/apiClient";
     import type {PageData} from "./$types";
+    import type {SelectOption} from "$lib";
+    import {type PopupSettings, popup} from "@skeletonlabs/skeleton";
+    import PredictiveSelect from "$lib/components/PredictiveSelect.svelte";
 
-    const {data}: {data: PageData;} = $props();
+    const popupSettings: PopupSettings = {
+        event: 'focus-click',
+        target: 'select',
+        placement: 'bottom',
+    };
 
-    let transaction: Transaction = $state(defaultTransaction());
-    // TODO: Load Categories
-    // TODO: Load Accounts
+    const {data}: { data: PageData; } = $props();
+
+    let transaction: EditableTransaction = $state(defaultTransaction());
+
     $effect(() => {
-        console.dir($state.snapshot(transaction));
+        console.dir($state.snapshot(transaction))
+        console.dir($state.snapshot(transaction.type))
     })
 
+    let categories: string[] = $state([]);
+    let accounts: SelectOption<string>[] = $state([]);
     onMount(async () => {
-        const res = await apiClient.get<Transaction>(`transactions/${data.id}`)
+        const res = await apiClient.get<EditableTransaction>(`transactions/${data.id}`)
+        console.dir(res.data);
         transaction = res.data;
+        categories = await loadCategoryOptions();
+        accounts = await loadAccountOptions();
     })
 </script>
 
@@ -54,51 +73,23 @@
         inputId="category"
         datalistId="categories"
         label="Category"
-        options={["Groceries", "Gas"]}
+        options={categories}
         class="md:col-span-2"
     />
-    <LabeledSelect
+    <PredictiveSelect
         class="md:col-span-3"
-        bind:value={transaction.sourceAccount}
         label="Source Account"
+        popupTargetName="source-account"
+        options={accounts}
         optional
-        options={[
-            {
-                display: "Savings",
-                value: {
-                    id: "savings",
-                    name: "Savings"
-                }
-            },
-            {
-                display: "Checking",
-                value: {
-                    id: "checking",
-                    name: "Checking"
-                }
-            },
-        ]}
+        bind:value={transaction.sourceAccountId}
     />
-    <LabeledSelect
-        bind:value={transaction.destinationAccount}
-        label="Destination Account"
+    <PredictiveSelect
         class="md:col-span-3"
+        label="Destination Account"
+        popupTargetName="destination-account"
+        options={accounts}
         optional
-        options={[
-            {
-                display: "Savings",
-                value: {
-                    id: "savings",
-                    name: "Savings"
-                }
-            },
-            {
-                display: "Checking",
-                value: {
-                    id: "checking",
-                    name: "Checking"
-                }
-            },
-        ]}
+        bind:value={transaction.destinationAccountId}
     />
 </div>

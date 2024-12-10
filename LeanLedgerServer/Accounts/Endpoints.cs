@@ -14,7 +14,9 @@ public static class Endpoints {
         accounts.MapPost("", CreateAccount);
         accounts.MapPut("{id:guid}", UpdateAccount);
         accounts.MapDelete("{id:guid}", DeleteAccount);
+        accounts.MapGet("options", ListAccountOptions);
     }
+
 
     private static async Task<IResult> ListAccounts([FromServices] LedgerDbContext dbContext) {
         var accounts = await dbContext.Accounts
@@ -164,6 +166,14 @@ public static class Endpoints {
         await dbContext.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private static async Task<IResult> ListAccountOptions([FromServices] LedgerDbContext dbContext) {
+        var accounts = await dbContext.Accounts
+            .OrderBy(a => a.AccountType)
+            .Select(a => new { Name = string.Concat(a.Name, " - (", a.AccountType.ToString(), ")"), a.Id }).ToListAsync();
+
+        return Ok(accounts);
     }
 
     private record AccountRequest(

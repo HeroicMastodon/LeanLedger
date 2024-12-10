@@ -1,4 +1,5 @@
 import type {SelectOption} from "$lib";
+import {apiClient} from "$lib/apiClient";
 
 export type Transaction = {
     id: string;
@@ -10,21 +11,25 @@ export type Transaction = {
     category?: string;
     type: TransactionType;
 }
+export type EditableTransaction = Omit<Transaction, 'sourceAccount' | 'destinationAccount'> & {
+    sourceAccountId?: string;
+    destinationAccountId?: string;
+}
 export type AttachedAccount = {
     id: string;
     name: string;
 }
 
-export type TransactionType = 'Deposit' | 'Withdrawal' | 'Transfer';
+export type TransactionType = 'Income' | 'Expense' | 'Transfer';
 
 export const TransactionTypeOptions: SelectOption<TransactionType>[] = [
     {
         display: "Deposit",
-        value: "Deposit",
+        value: "Income",
     },
     {
         display: "Withdrawal",
-        value: "Withdrawal",
+        value: "Expense",
     },
     {
         display: "Transfer",
@@ -39,6 +44,16 @@ export function defaultTransaction(): Transaction {
         amount: 0,
         category: "",
         date: "2024-01-01",
-        type: "Deposit"
+        type: "Income"
     }
+}
+
+export async function loadCategoryOptions(): Promise<string[]> {
+    const res = await apiClient.get<string[]>("categories/options");
+    return res.data;
+}
+
+export async function loadAccountOptions(): Promise<SelectOption<string>[]> {
+    const res = await apiClient.get<AttachedAccount[]>("accounts/options");
+    return res.data.map(a => ({value: a.id, display: a.name}));
 }

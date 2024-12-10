@@ -1,4 +1,5 @@
 using LeanLedgerServer.Accounts;
+using LeanLedgerServer.Categories;
 using LeanLedgerServer.Common;
 using LeanLedgerServer.Transactions;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -16,6 +17,7 @@ app.UseStaticFiles();
 var baseRoute = app.MapGroup("api");
 baseRoute.MapAccounts();
 baseRoute.MapTransactions();
+baseRoute.MapCategories();
 
 // baseRoute.MapGet("categories",
 //     async ([FromServices] LedgerDbContext db) => {

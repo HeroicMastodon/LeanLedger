@@ -17,6 +17,7 @@ public static class Endpoints {
 
     private static async Task<IResult> GetTransaction(Guid id, [FromServices] LedgerDbContext db) {
         var transaction = await db.Transactions.FindAsync(id);
+
         return transaction is null ? NotFound() : Ok(transaction);
     }
 
