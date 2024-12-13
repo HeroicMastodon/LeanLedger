@@ -37,7 +37,7 @@ export const TransactionTypeOptions: SelectOption<TransactionType>[] = [
     },
 ]
 
-export function defaultTransaction(): Transaction {
+export function defaultTransaction(): EditableTransaction {
     return {
         id: "",
         description: "",
