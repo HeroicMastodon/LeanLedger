@@ -51,12 +51,10 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext db
     ) {
-        if (!Enum.TryParse<TransactionType>(newTransaction.Type, out var transactionType)) {
-            return Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid type",
-                detail: $"Transaction type {newTransaction.Type} is invalid"
-            );
+        var (transactionType, err) = ValidateTransactionType(newTransaction);
+
+        if (err is not null) {
+            return err;
         }
 
         var transactionHash = Guid.NewGuid().ToString();
@@ -99,12 +97,10 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext db
     ) {
-        if (!Enum.TryParse<TransactionType>(transactionUpdate.Type, out var transactionType)) {
-            return Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid type",
-                detail: $"Transaction type {transactionUpdate.Type} is invalid"
-            );
+        var (transactionType, err) = ValidateTransactionType(transactionUpdate);
+
+        if (err is not null) {
+            return err;
         }
 
         var transaction = await db.Transactions.FindAsync(id);
@@ -139,6 +135,40 @@ public static class Endpoints {
         await db.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    private static (TransactionType, IResult?) ValidateTransactionType(TransactionRequest request) {
+        if (!Enum.TryParse<TransactionType>(request.Type, out var transactionType)) {
+            return (TransactionType.Expense, Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid type",
+                detail: $"Transaction type {request.Type} is invalid"
+            ));
+        }
+
+        var problemDetail = (transactionType, request) switch {
+            (TransactionType.Expense, { SourceAccountId: null })
+                => "Expenses must have a source account",
+            (TransactionType.Income, { DestinationAccountId: null })
+                => "Income transactions must have a destination account",
+            (TransactionType.Transfer, { SourceAccountId: null, } or { DestinationAccountId: null })
+                => "Transfers must specify both and source account and destination account",
+            (TransactionType.Transfer, { SourceAccountId: not null, DestinationAccountId: not null })
+                when request.DestinationAccountId == request.SourceAccountId =>
+                "Transfers cannot specify the same source and destination account",
+            _ => null
+        };
+
+        return (
+            transactionType,
+            problemDetail is null
+                ? null
+                : Problem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Invalid transaction",
+                    detail: problemDetail
+                )
+        );
     }
 
     private record TransactionRequest(
