@@ -73,7 +73,6 @@
 
     {/snippet}
     {#snippet sidebarLeft()}
-
         <!-- Nav List -->
         <div class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ?? ''}">
             <section class="p-4 pb-20 space-y-4 overflow-y-auto">

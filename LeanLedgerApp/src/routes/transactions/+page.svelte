@@ -13,10 +13,9 @@
 </script>
 
 <h1 class="h1 mb-8">Transactions</h1>
+<TransactionTable transactions={transactions} />
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
-{:then _}
-    <TransactionTable transactions={transactions} />
 {:catch err}
     <div class="alert variant-filled-error">
         <div class="alert-message">
