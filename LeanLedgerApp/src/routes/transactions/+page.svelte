@@ -1,11 +1,12 @@
 <script lang="ts">
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
-    import {defaultTransaction, type Transaction} from "$lib/transactions";
+    import {defaultTransaction, type EditableTransaction, type Transaction} from "$lib/transactions";
     import {apiClient} from "$lib/apiClient";
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import DefaultDialog from "$lib/components/DefaultDialog.svelte";
     import TransactionForm from "$lib/transactions/TransactionForm.svelte";
     import {goto} from "$app/navigation";
+    import type {AxiosError} from "axios";
 
     let transactions: Transaction[] = $state([]);
 
@@ -16,18 +17,27 @@
 
     let transactionDialog: HTMLDialogElement | undefined = $state();
     let transaction = $state(defaultTransaction());
+    let error: string | undefined = $state();
+
     async function saveTransaction() {
-        const resp = await apiClient.post("transactions", transaction);
-        transactionDialog?.close();
-        transaction = defaultTransaction();
-        await load();
+        try {
+            error = undefined;
+            const resp = await apiClient.post<EditableTransaction>("transactions", transaction);
+            transactionDialog?.close();
+            transaction = defaultTransaction();
+            await load();
+        } catch (e) {
+            const err = e as AxiosError<{ detail: string; }>;
+            console.dir(err.response?.data.detail);
+            error = err.response?.data.detail;
+        }
     }
 </script>
 <div class="mb-8 flex justify-start items-center gap-8">
     <h1 class="h1">Transactions</h1>
     <button
-        onclick={() => transactionDialog?.showModal()}
-        class="btn variant-filled-primary"
+            onclick={() => transactionDialog?.showModal()}
+            class="btn variant-filled-primary"
     >New Transaction
     </button>
     <DefaultDialog bind:dialog={transactionDialog}>
@@ -36,16 +46,23 @@
             <TransactionForm bind:transaction />
             <div class="flex flex-row gap-4 justify-center">
                 <button
-                    onclick={() => transactionDialog?.close()}
-                    class="btn variant-outline-error"
+                        onclick={() => transactionDialog?.close()}
+                        class="btn variant-outline-error"
                 >Cancel
                 </button>
                 <button
-                    onclick={saveTransaction}
-                    class="btn variant-filled-success"
+                        onclick={saveTransaction}
+                        class="btn variant-filled-success"
                 >Save
                 </button>
             </div>
+            {#if error}
+                <div class="alert variant-filled-error">
+                    <div class="alert-message">
+                        <p>{error}</p>
+                    </div>
+                </div>
+            {/if}
         </div>
     </DefaultDialog>
 </div>
