@@ -1,4 +1,5 @@
 import type {Transaction} from "$lib/transactions";
+import type {SelectOption} from "$lib";
 
 export type Account = {
     id: string;
@@ -10,6 +11,7 @@ export type Account = {
 }
 export type AccountGrouping = Record<AccountType, Account[]>;
 export const accountTypes = ["Bank", "CreditCard", "Merchant"] as const;
+export const accountTypeOptions: SelectOption<AccountType>[] = accountTypes.map(a => ({display: a, value: a}));
 export type AccountType = typeof accountTypes[number];
 
 export type AccountData = {

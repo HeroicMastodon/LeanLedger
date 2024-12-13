@@ -17,6 +17,7 @@ public static class Endpoints {
 
     private static async Task<IResult> GetTransaction(Guid id, [FromServices] LedgerDbContext db) {
         var transaction = await db.Transactions.FindAsync(id);
+
         return transaction is null ? NotFound() : Ok(transaction);
     }
 
@@ -24,9 +25,24 @@ public static class Endpoints {
         var transactions = await db.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
+            .OrderByDescending(t => t.Date)
             .ToListAsync();
 
-        return Ok(new {Transactions = transactions});
+        return Ok(
+            new {
+                Transactions = transactions.Select(
+                    t => new {
+                        t.Id,
+                        t.Description,
+                        t.Amount,
+                        t.Date,
+                        t.Category,
+                        SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
+                        DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
+                    }
+                )
+            }
+        );
     }
 
     private static async Task<IResult> CreateTransaction(
@@ -112,17 +128,17 @@ public static class Endpoints {
     }
 
     private static async Task<IResult> DeleteTransaction(Guid id, [FromServices] LedgerDbContext db) {
-       var transaction = await db.Transactions.FindAsync(id);
+        var transaction = await db.Transactions.FindAsync(id);
 
-       if (transaction is null) {
-           return NoContent();
-       }
+        if (transaction is null) {
+            return NoContent();
+        }
 
-       transaction.IsDeleted = true;
-       db.Update(transaction);
-       await db.SaveChangesAsync();
+        transaction.IsDeleted = true;
+        db.Update(transaction);
+        await db.SaveChangesAsync();
 
-       return NoContent();
+        return NoContent();
     }
 
     private record TransactionRequest(
