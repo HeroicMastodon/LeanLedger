@@ -32,19 +32,26 @@
                 <td>{dateFromString(transaction.date)}</td>
                 <td>
                     {#if transaction.sourceAccount}
-                       <a class="text-primary-400" href="/accounts/{transaction.sourceAccount.id}">
-                           {transaction.sourceAccount.name}
-                       </a>
+                        <a class="text-primary-400" href="/accounts/{transaction.sourceAccount.id}">
+                            {transaction.sourceAccount.name}
+                        </a>
                     {/if}
                 </td>
                 <td>
                     {#if transaction.destinationAccount}
-                       <a class="text-primary-400" href="/accounts/{transaction.destinationAccount.id}">
-                           {transaction.destinationAccount.name}
-                       </a>
+                        <a class="text-primary-400" href="/accounts/{transaction.destinationAccount.id}">
+                            {transaction.destinationAccount.name}
+                        </a>
                     {/if}
                 </td>
-                <td>{transaction.category ?? ""}</td>
+                <td>
+                    <a
+                            class="text-primary-400"
+                            href="/categories/{transaction.category ? transaction.category : '(none)'}"
+                    >
+                        {transaction.category ? transaction.category : '(none)'}
+                    </a>
+                </td>
             </tr>
         {/each}
         </tbody>

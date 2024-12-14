@@ -23,7 +23,7 @@
     let selectedTheme = $state('carbon-fox');
 </script>
 {#snippet navItem(href: string, title: string)}
-    <li class="mt-2 mb-2">
+    <li>
         <a href="{href}"
            class:bg-primary-active-token={href === $page.url.pathname}
            data-sveltekit-preload-data="hover"
@@ -80,6 +80,7 @@
                     <ul>
                         {@render navItem("/accounts", "Accounts")}
                         {@render navItem("/transactions", "Transactions")}
+                        {@render navItem("/categories", "Categories")}
                     </ul>
                 </nav>
             </section>

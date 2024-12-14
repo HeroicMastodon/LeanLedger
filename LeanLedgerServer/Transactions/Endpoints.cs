@@ -155,6 +155,14 @@ public static class Endpoints {
             ));
         }
 
+        if (request.Category == "(none)") {
+            return (TransactionType.Expense, Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid category",
+                detail: "Category cannot be '(none)'."
+            ));
+        }
+
         var problemDetail = (transactionType, request) switch {
             (TransactionType.Expense, { SourceAccountId: null })
                 => "Expenses must have a source account",
