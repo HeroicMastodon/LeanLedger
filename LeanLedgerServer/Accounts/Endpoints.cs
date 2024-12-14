@@ -27,12 +27,14 @@ public static class Endpoints {
                     a.Name,
                     a.Active,
                     a.IncludeInNetWorth,
-                    Balance = a.Withdrawls.Sum(t => t.Amount) + a.Deposits.Sum(t => t.Amount) + a.OpeningBalance,
+                    Balance = a.Deposits.Sum(t => t.Amount) - a.Withdrawls.Sum(t => t.Amount) + a.OpeningBalance,
                     // TODO: This will probably be better as a separate query in the future
                     LastActivityDate = a.Withdrawls.Any()
-                        ? (DateOnly?)a.Withdrawls.OrderByDescending(t => t.Date).First().Date
-                        : null,
-                    BalanceChange = a.Withdrawls.Sum(t => t.Amount) + a.Deposits.Sum(t => t.Amount),
+                        ? a.Withdrawls.OrderByDescending(t => t.Date).First().Date
+                        : a.Deposits.Any()
+                            ? (DateOnly?)a.Deposits.OrderByDescending(t => t.Date).First().Date
+                            : null,
+                    BalanceChange = a.Deposits.Sum(t => t.Amount) - a.Withdrawls.Sum(t => t.Amount),
                 }
             )
             .ToListAsync();
@@ -65,7 +67,7 @@ public static class Endpoints {
                 account.Active,
                 account.IncludeInNetWorth,
                 account.Notes,
-                Balance = account.Withdrawls.Sum(t => t.Amount) +
+                Balance = account.Deposits.Sum(t => t.Amount) -
                           account.Deposits.Sum(t => t.Amount) +
                           account.OpeningBalance,
                 Transactions = account
@@ -79,6 +81,7 @@ public static class Endpoints {
                             t.Amount,
                             t.Date,
                             t.Category,
+                            Type = t.Type.ToString(),
                             SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
                             DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
                         }
@@ -171,7 +174,8 @@ public static class Endpoints {
     private static async Task<IResult> ListAccountOptions([FromServices] LedgerDbContext dbContext) {
         var accounts = await dbContext.Accounts
             .OrderBy(a => a.AccountType)
-            .Select(a => new { Name = string.Concat(a.Name, " - (", a.AccountType.ToString(), ")"), a.Id }).ToListAsync();
+            .Select(a => new { Name = string.Concat(a.Name, " - (", a.AccountType.ToString(), ")"), a.Id })
+            .ToListAsync();
 
         return Ok(accounts);
     }

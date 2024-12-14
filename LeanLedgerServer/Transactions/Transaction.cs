@@ -9,7 +9,7 @@ public class Transaction {
     public DateOnly Date { get; set; }
     public decimal Amount { get; set; }
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public required TransactionType Type { get; set; }
+    public TransactionType Type { get; set; }
     public required string UniqueHash { get; init; }
     public string? Category { get; set; }
     public bool IsDeleted { get; set; }

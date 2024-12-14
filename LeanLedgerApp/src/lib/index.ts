@@ -1,9 +1,15 @@
 // place files you want to import through the `$lib` alias in this folder.
+import type {TransactionType} from "$lib/transactions";
+
 export function splitPascal(words: string) {
     return words.replace(/([a-z])([A-Z])/g, '$1 $2')
 }
 
-export function formatMoney(amount: number) {
+export function formatMoney(amount: number, type?: TransactionType) {
+    if (type) {
+        return type !== "Expense" ? `$${amount}` : `-$${amount}`;
+    }
+
     return amount >= 0 ? `$${amount}` : `-$${amount * -1}`;
 }
 

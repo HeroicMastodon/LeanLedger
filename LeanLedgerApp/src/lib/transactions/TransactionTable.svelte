@@ -27,7 +27,7 @@
                     </a>
                 </td>
                 <td>
-                    <Money amount={transaction.amount} />
+                    <Money amount={transaction.amount} type={transaction.type} />
                 </td>
                 <td>{dateFromString(transaction.date)}</td>
                 <td>
