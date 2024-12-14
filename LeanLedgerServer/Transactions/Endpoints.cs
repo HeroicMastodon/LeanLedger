@@ -37,6 +37,7 @@ public static class Endpoints {
                         t.Amount,
                         t.Date,
                         t.Category,
+                        Type = t.Type.ToString(),
                         SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
                         DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
                     }
@@ -51,7 +52,7 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext db
     ) {
-        var (transactionType, err) = ValidateTransactionType(newTransaction);
+        var (transactionType, err) = ValidateTransaction(newTransaction);
 
         if (err is not null) {
             return err;
@@ -97,7 +98,7 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext db
     ) {
-        var (transactionType, err) = ValidateTransactionType(transactionUpdate);
+        var (transactionType, err) = ValidateTransaction(transactionUpdate);
 
         if (err is not null) {
             return err;
@@ -137,12 +138,20 @@ public static class Endpoints {
         return NoContent();
     }
 
-    private static (TransactionType, IResult?) ValidateTransactionType(TransactionRequest request) {
+    private static (TransactionType, IResult?) ValidateTransaction(TransactionRequest request) {
         if (!Enum.TryParse<TransactionType>(request.Type, out var transactionType)) {
             return (TransactionType.Expense, Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid type",
                 detail: $"Transaction type {request.Type} is invalid"
+            ));
+        }
+
+        if (request.Amount < 0) {
+            return (TransactionType.Expense, Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid amount",
+                detail: "Amount cannot be negative."
             ));
         }
 
