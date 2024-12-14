@@ -19,9 +19,10 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext dbContext
     ) {
+        var categoryToCompare = category == "(none)" ? "" : category;
         var transactions = await dbContext.Transactions
             .Where(t => t.Type == TransactionType.Expense)
-            .Where(t => t.Category == category)
+            .Where(t => t.Category == categoryToCompare)
             .ToListAsync();
 
         return Ok(new { Category = category, Transactions = transactions, });
@@ -34,7 +35,7 @@ public static class Endpoints {
         var transactions = await dbContext.Transactions
             .Where(t => t.Type == TransactionType.Expense)
             .GroupBy(t => t.Category)
-            .Select(g => new { Category = g.Key, Amount = g.Select(t => t.Amount).Sum() })
+            .Select(g => new { Name = string.IsNullOrWhiteSpace(g.Key) ? "(none)" : g.Key, Amount = g.Select(t => t.Amount).Sum() })
             .ToListAsync();
 
         return Ok(transactions);
