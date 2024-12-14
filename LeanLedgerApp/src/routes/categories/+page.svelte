@@ -13,7 +13,7 @@
     }
 </script>
 
-<h1 class="h1 mb-4"> Categories </h1>
+<h1 class="h1 mb-8"> Categories </h1>
 
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
