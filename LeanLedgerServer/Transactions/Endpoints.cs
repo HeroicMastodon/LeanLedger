@@ -1,5 +1,6 @@
 namespace LeanLedgerServer.Transactions;
 
+using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,29 +29,16 @@ public static class Endpoints {
             .OrderByDescending(t => t.Date)
             .ToListAsync();
 
-        return Ok(
-            new {
-                Transactions = transactions.Select(
-                    t => new {
-                        t.Id,
-                        t.Description,
-                        t.Amount,
-                        t.Date,
-                        t.Category,
-                        Type = t.Type.ToString(),
-                        SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
-                        DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
-                    }
-                )
-            }
-        );
+        return Ok(transactions.Select(TableTransaction.FromTransaction));
     }
 
     private static async Task<IResult> CreateTransaction(
         [FromBody]
         TransactionRequest newTransaction,
         [FromServices]
-        LedgerDbContext db
+        LedgerDbContext db,
+        [FromServices]
+        IMapper mapper
     ) {
         var (transactionType, err) = ValidateTransaction(newTransaction);
 
@@ -73,17 +61,8 @@ public static class Endpoints {
             }
         }
 
-        var transaction = new Transaction {
-            Id = Guid.NewGuid(),
-            UniqueHash = transactionHash,
-            Type = transactionType,
-            Date = newTransaction.Date,
-            Amount = newTransaction.Amount,
-            Description = newTransaction.Description,
-            SourceAccountId = newTransaction.SourceAccountId,
-            DestinationAccountId = newTransaction.DestinationAccountId,
-            Category = newTransaction.Category,
-        };
+        var transaction = new Transaction { Id = Guid.NewGuid(), UniqueHash = transactionHash, Type = transactionType, };
+        mapper.Map(newTransaction, transaction);
 
         db.Transactions.Add(transaction);
         await db.SaveChangesAsync();
@@ -96,7 +75,9 @@ public static class Endpoints {
         [FromBody]
         TransactionRequest transactionUpdate,
         [FromServices]
-        LedgerDbContext db
+        LedgerDbContext db,
+        [FromServices]
+        IMapper mapper
     ) {
         var (transactionType, err) = ValidateTransaction(transactionUpdate);
 
@@ -111,12 +92,7 @@ public static class Endpoints {
         }
 
         transaction.Type = transactionType;
-        transaction.Date = transactionUpdate.Date;
-        transaction.Amount = transactionUpdate.Amount;
-        transaction.Description = transactionUpdate.Description;
-        transaction.SourceAccountId = transactionUpdate.SourceAccountId;
-        transaction.DestinationAccountId = transactionUpdate.DestinationAccountId;
-        transaction.Category = transactionUpdate.Category;
+        mapper.Map(transactionUpdate, transaction);
 
         db.Update(transaction);
         await db.SaveChangesAsync();
@@ -187,15 +163,22 @@ public static class Endpoints {
                 )
         );
     }
+}
 
-    private record TransactionRequest(
-        string Type,
-        string Description,
-        DateOnly Date,
-        decimal Amount,
-        Guid? SourceAccountId,
-        Guid? DestinationAccountId,
-        string? Category,
-        bool SkipHashCheck = false
-    );
+public record TransactionRequest(
+    string Type,
+    string Description,
+    DateOnly Date,
+    decimal Amount,
+    Guid? SourceAccountId,
+    Guid? DestinationAccountId,
+    string? Category,
+    bool SkipHashCheck = false
+);
+
+public class TransactionProfile: Profile {
+    public TransactionProfile() {
+        CreateMap<TransactionRequest, Transaction>()
+            .ForMember(t => t.Type, opt => opt.Ignore());
+    }
 }

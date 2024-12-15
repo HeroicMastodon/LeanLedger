@@ -11,8 +11,8 @@
     let transactions: Transaction[] = $state([]);
 
     async function load() {
-        const response = await apiClient.get<{ transactions: Transaction[] }>("transactions");
-        transactions = response.data.transactions;
+        const response = await apiClient.get<Transaction[]>("transactions");
+        transactions = response.data;
     }
 
     let transactionDialog: HTMLDialogElement | undefined = $state();
