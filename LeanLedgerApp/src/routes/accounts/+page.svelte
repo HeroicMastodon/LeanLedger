@@ -1,16 +1,12 @@
 <div class="mb-8 flex gap-4 items-end">
     <h1 class="h1">Accounts</h1>
-    <button onclick={() => accountDialog?.showModal()} class="btn variant-filled-primary">New Account</button>
-    <DefaultDialog bind:dialog={accountDialog}>
-        <div class="flex flex-col gap-4">
-            <h2 class="h2"> New Account </h2>
-            <AccountForm bind:account={newAccount} />
-            <div class="flex gap-4 items-center justify-around">
-                <button onclick={() => accountDialog?.close()} class="btn variant-outline-error">Cancel</button>
-                <button onclick={saveNewAccount} class="btn variant-filled-success">Create</button>
-            </div>
-        </div>
-    </DefaultDialog>
+    <FormButton
+        text="New Account"
+        onConfirm={saveNewAccount}
+        confirmText="Create"
+    >
+        <AccountForm bind:account={newAccount} />
+    </FormButton>
 </div>
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
@@ -73,7 +69,8 @@
     import {goto} from "$app/navigation";
     import Money from "$lib/components/Money.svelte";
     import AccountForm from "$lib/accounts/AccountForm.svelte";
-    import DefaultDialog from "$lib/components/DefaultDialog.svelte";
+    import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
 
     let accounts: AccountGrouping = $state({
         Bank: [],
@@ -86,13 +83,12 @@
         accounts = response.data;
     }
 
-    let accountDialog: HTMLDialogElement | undefined = $state();
     let newAccount: AccountData = $state(defaultAccountData());
 
     async function saveNewAccount() {
         const response = await apiClient.post<AccountData>("accounts", newAccount);
         await load();
         newAccount = defaultAccountData();
-        accountDialog?.close();
+        return true;
     }
 </script>
