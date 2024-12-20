@@ -1,0 +1,15 @@
+meta {
+  name: Get Import Settings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/imports/settings/{{accountId}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  accountId: 0c80937d-8d20-44b7-a185-c7adea19d394
+}

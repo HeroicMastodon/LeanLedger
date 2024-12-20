@@ -2,6 +2,7 @@ using System.Reflection;
 using LeanLedgerServer.Accounts;
 using LeanLedgerServer.Categories;
 using LeanLedgerServer.Common;
+using LeanLedgerServer.TransactionImport;
 using LeanLedgerServer.Transactions;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,5 +20,6 @@ var baseRoute = app.MapGroup("api");
 baseRoute.MapAccounts();
 baseRoute.MapTransactions();
 baseRoute.MapCategories();
+baseRoute.MapImport();
 
 app.Run();

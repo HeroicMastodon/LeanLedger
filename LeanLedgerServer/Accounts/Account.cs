@@ -21,6 +21,7 @@ public class Account
     public List<Transaction> Deposits { get; set; } = [];
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AccountType
 {
     Bank,

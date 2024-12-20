@@ -11,6 +11,7 @@ using Transactions;
 public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbContext(options) {
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<ImportSettings> ImportSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Account>(
