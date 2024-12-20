@@ -1,6 +1,7 @@
 namespace LeanLedgerServer.Accounts;
 
 using System.Text.Json.Serialization;
+using TransactionImport;
 using Transactions;
 
 public class Account
@@ -20,6 +21,7 @@ public class Account
     public List<Transaction> Deposits { get; set; } = [];
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AccountType
 {
     Bank,
