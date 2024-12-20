@@ -4,23 +4,26 @@
     import Alert from "$lib/components/Alert.svelte";
     import type {MaybePromise} from "$lib";
 
-    let {children, onConfirm, error = $bindable(), text, confirmText}: {
+    let {children, onConfirm, error = $bindable(), text, confirmText, onClick, class:className = "variant-filled-primary"}: {
         onConfirm: () => MaybePromise<boolean>;
         children: any,
         error?: string;
         text: string;
         confirmText?: string;
+        onClick?: () => MaybePromise<any>,
+        class?: string;
     } = $props();
 </script>
 
 <DialogButton
-    class="variant-filled-primary"
+    class={className}
     title={text}
     text={text}
     onConfirm={onConfirm}
     confirmText={confirmText ?? "Save"}
     confirmButtonColorType="success"
     cancelButtonColorType="error"
+    onclick={onClick}
 >
     {@render children()}
     <Alert show={!!error} class="variant-filled-error">

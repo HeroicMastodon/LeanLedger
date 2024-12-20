@@ -91,7 +91,7 @@ public static class Endpoints {
         return settings;
     }
 
-    private static ImportSettings CreateDefaultSettings(Account account) => new() { AttachedAccount = account, AttachedAccountId = account.Id, ImportMappings = [] };
+    private static ImportSettings CreateDefaultSettings(Account account) => new() { AttachedAccount = account, AttachedAccountId = account.Id, ImportMappings = [], CsvDelimiter = ','};
 
     private record ImportSettingsRequest(
         char? CsvDelimiter,

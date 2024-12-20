@@ -15,6 +15,7 @@
         class?: string;
         confirmButtonColorType?: ColorType;
         cancelButtonColorType?: ColorType;
+        onclick?: () => MaybePromise<any>;
     } = $props();
 
     async function onConfirm() {
@@ -24,10 +25,17 @@
             dialog?.close();
         }
     }
+    async function onClick() {
+        if (props.onclick) {
+            await props.onclick();
+        }
+
+        dialog?.showModal();
+    }
 </script>
 
 <button
-    onclick={() => dialog?.showModal()}
+    onclick={onClick}
     class="btn {props.class ?? ''}"
 >{props.text}
 </button>
