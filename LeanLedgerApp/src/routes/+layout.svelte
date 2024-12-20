@@ -25,7 +25,7 @@
 {#snippet navItem(href: string, title: string)}
     <li>
         <a href="{href}"
-           class:bg-primary-active-token={href === $page.url.pathname}
+           class:bg-primary-active-token={$page.url.pathname.startsWith(href)}
            data-sveltekit-preload-data="hover"
         >
             <span class="flex-auto">{title}</span>

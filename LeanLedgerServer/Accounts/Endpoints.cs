@@ -1,9 +1,11 @@
 namespace LeanLedgerServer.Accounts;
 
 using System.Collections.Immutable;
+using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Transactions;
 using static Results;
 
 public static class Endpoints {
@@ -17,9 +19,10 @@ public static class Endpoints {
         accounts.MapGet("options", ListAccountOptions);
     }
 
-
     private static async Task<IResult> ListAccounts([FromServices] LedgerDbContext dbContext) {
         var accounts = await dbContext.Accounts
+            .Include(a => a.Withdrawls)
+            .Include(a => a.Deposits)
             .Select(
                 a => new {
                     a.Id,
@@ -27,11 +30,10 @@ public static class Endpoints {
                     a.Name,
                     a.Active,
                     a.IncludeInNetWorth,
-                    Balance = a.Deposits.Sum(t => t.Amount) - a.Withdrawls.Sum(t => t.Amount) + a.OpeningBalance,
-                    // TODO: This will probably be better as a separate query in the future
-                    LastActivityDate = a.Withdrawls.Any()
+                    Balance = CalculateBalance(a),
+                    LastActivityDate = a.Withdrawls.Count != 0
                         ? a.Withdrawls.OrderByDescending(t => t.Date).First().Date
-                        : a.Deposits.Any()
+                        : a.Deposits.Count != 0
                             ? (DateOnly?)a.Deposits.OrderByDescending(t => t.Date).First().Date
                             : null,
                     BalanceChange = a.Deposits.Sum(t => t.Amount) - a.Withdrawls.Sum(t => t.Amount),
@@ -43,6 +45,12 @@ public static class Endpoints {
             .ToDictionary(group => group.Key, group => group);
         return Ok(grouped);
     }
+
+    private static decimal CalculateBalance(Account a) =>
+        a.Deposits.Sum(t => t.Amount) -
+        a.Withdrawls.Sum(t => t.Amount) +
+        a.OpeningBalance;
+
 
     private static async Task<IResult> GetAccount(Guid id, [FromServices] LedgerDbContext dbContext) {
         var account = await dbContext
@@ -67,25 +75,12 @@ public static class Endpoints {
                 account.Active,
                 account.IncludeInNetWorth,
                 account.Notes,
-                Balance = account.Deposits.Sum(t => t.Amount) -
-                          account.Deposits.Sum(t => t.Amount) +
-                          account.OpeningBalance,
+                Balance = CalculateBalance(account),
                 Transactions = account
                     .Withdrawls
                     .ToImmutableArray()
                     .AddRange(account.Deposits)
-                    .Select(
-                        t => new {
-                            t.Id,
-                            t.Description,
-                            t.Amount,
-                            t.Date,
-                            t.Category,
-                            Type = t.Type.ToString(),
-                            SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
-                            DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
-                        }
-                    )
+                    .Select(TableTransaction.FromTransaction)
             }
         );
     }
@@ -94,7 +89,9 @@ public static class Endpoints {
         [FromBody]
         AccountRequest newAccount,
         [FromServices]
-        LedgerDbContext dbContext
+        LedgerDbContext dbContext,
+        [FromServices]
+        IMapper mapper
     ) {
         if (!Enum.TryParse<AccountType>(newAccount.AccountType, out var accountType)) {
             return Problem(
@@ -106,15 +103,9 @@ public static class Endpoints {
 
         var account = new Account {
             Id = Guid.NewGuid(),
-            Name = newAccount.Name,
             AccountType = accountType,
-            OpeningBalance = newAccount.OpeningBalance,
-            // OpeningDate = DateOnly.FromDateTime(newAccount.OpeningDate),
-            OpeningDate = newAccount.OpeningDate,
-            Active = newAccount.Active,
-            IncludeInNetWorth = newAccount.IncludeInNetWorth,
-            Notes = newAccount.Notes
         };
+        mapper.Map(newAccount, account);
 
         dbContext.Accounts.Add(account);
         await dbContext.SaveChangesAsync();
@@ -127,7 +118,9 @@ public static class Endpoints {
         [FromBody]
         AccountRequest accountUpdate,
         [FromServices]
-        LedgerDbContext dbContext
+        LedgerDbContext dbContext,
+        [FromServices]
+        IMapper mapper
     ) {
         var account = await dbContext.Accounts.SingleOrDefaultAsync(a => a.Id == id);
 
@@ -143,13 +136,8 @@ public static class Endpoints {
             );
         }
 
-        account.Name = accountUpdate.Name;
         account.AccountType = accountType;
-        account.OpeningBalance = accountUpdate.OpeningBalance;
-        account.OpeningDate = accountUpdate.OpeningDate;
-        account.Active = accountUpdate.Active;
-        account.IncludeInNetWorth = accountUpdate.IncludeInNetWorth;
-        account.Notes = accountUpdate.Notes;
+        mapper.Map(accountUpdate, account);
 
         dbContext.Update(account);
         await dbContext.SaveChangesAsync();
@@ -179,14 +167,21 @@ public static class Endpoints {
 
         return Ok(accounts);
     }
+}
 
-    private record AccountRequest(
-        string Name,
-        string AccountType,
-        decimal OpeningBalance,
-        DateOnly OpeningDate,
-        bool Active,
-        bool IncludeInNetWorth,
-        string Notes
-    );
+public record AccountRequest(
+    string Name,
+    string AccountType,
+    decimal OpeningBalance,
+    DateOnly OpeningDate,
+    bool Active,
+    bool IncludeInNetWorth,
+    string Notes
+);
+
+public class AccountProfile: Profile {
+    public AccountProfile() {
+        CreateMap<AccountRequest, Account>()
+            .ForMember(a => a.AccountType, opt => opt.Ignore());
+    }
 }

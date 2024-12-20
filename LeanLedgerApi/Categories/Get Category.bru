@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/categories
+  url: {{baseUrl}}/categories/{{category}}
   body: none
   auth: none
+}
+
+vars:pre-request {
+  category: Groceries
 }

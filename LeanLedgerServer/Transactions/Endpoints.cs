@@ -1,9 +1,12 @@
 namespace LeanLedgerServer.Transactions;
 
+using System.Diagnostics;
+using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Results;
+using static TransactionFunctions;
 
 public static class Endpoints {
     public static void MapTransactions(this IEndpointRouteBuilder endpoints) {
@@ -28,67 +31,40 @@ public static class Endpoints {
             .OrderByDescending(t => t.Date)
             .ToListAsync();
 
-        return Ok(
-            new {
-                Transactions = transactions.Select(
-                    t => new {
-                        t.Id,
-                        t.Description,
-                        t.Amount,
-                        t.Date,
-                        t.Category,
-                        Type = t.Type.ToString(),
-                        SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
-                        DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
-                    }
-                )
-            }
-        );
+        return Ok(transactions.Select(TableTransaction.FromTransaction));
     }
 
     private static async Task<IResult> CreateTransaction(
         [FromBody]
         TransactionRequest newTransaction,
         [FromServices]
-        LedgerDbContext db
+        LedgerDbContext db,
+        [FromServices]
+        IMapper mapper
     ) {
-        var (transactionType, err) = ValidateTransaction(newTransaction);
+        var (transaction, err) = await CreateNewTransaction(newTransaction, db.Transactions, mapper);
 
         if (err is not null) {
-            return err;
-        }
-
-        var transactionHash = Guid.NewGuid().ToString();
-
-        if (!newTransaction.SkipHashCheck) {
-            var existingHash = await db.Transactions.FirstOrDefaultAsync(t => t.UniqueHash == transactionHash);
-
-            if (existingHash is not null) {
-                return Problem(
+            return err switch {
+                InvalidRequest invalidRequest => Problem(
                     statusCode: StatusCodes.Status400BadRequest,
-                    title: "Transaction Hash Conflict",
-                    detail: $"Transaction already exists: {existingHash.UniqueHash}",
-                    extensions: new Dictionary<string, object?>() { { "hash", transactionHash }, { "existingTransaction", existingHash } }
-                );
-            }
+                    title: invalidRequest.Title,
+                    detail: invalidRequest.Message
+                ),
+                ConflictingHash conflictingHash => Problem(
+                    statusCode: StatusCodes.Status409Conflict,
+                    title: "Conflicting transaction has found",
+                    detail: $"Transaction already exists: {conflictingHash.Hash}",
+                    extensions: new Dictionary<string, object?>() { { "hash", conflictingHash.Hash }, { "existingTransaction", conflictingHash.Transaction } }
+                ),
+                _ => throw new UnreachableException(nameof(err))
+            };
         }
 
-        var transaction = new Transaction {
-            Id = Guid.NewGuid(),
-            UniqueHash = transactionHash,
-            Type = transactionType,
-            Date = newTransaction.Date,
-            Amount = newTransaction.Amount,
-            Description = newTransaction.Description,
-            SourceAccountId = newTransaction.SourceAccountId,
-            DestinationAccountId = newTransaction.DestinationAccountId,
-            Category = newTransaction.Category,
-        };
-
-        db.Transactions.Add(transaction);
+        db.Transactions.Add(transaction!);
         await db.SaveChangesAsync();
 
-        return Created($"/api/transactions/{transaction.Id}", transaction);
+        return Created($"/api/transactions/{transaction!.Id}", transaction);
     }
 
     private static async Task<IResult> UpdateTransaction(
@@ -96,12 +72,18 @@ public static class Endpoints {
         [FromBody]
         TransactionRequest transactionUpdate,
         [FromServices]
-        LedgerDbContext db
+        LedgerDbContext db,
+        [FromServices]
+        IMapper mapper
     ) {
         var (transactionType, err) = ValidateTransaction(transactionUpdate);
 
         if (err is not null) {
-            return err;
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: err.Title,
+                detail: err.Message
+            );
         }
 
         var transaction = await db.Transactions.FindAsync(id);
@@ -110,13 +92,8 @@ public static class Endpoints {
             return NotFound();
         }
 
-        transaction.Type = transactionType;
-        transaction.Date = transactionUpdate.Date;
-        transaction.Amount = transactionUpdate.Amount;
-        transaction.Description = transactionUpdate.Description;
-        transaction.SourceAccountId = transactionUpdate.SourceAccountId;
-        transaction.DestinationAccountId = transactionUpdate.DestinationAccountId;
-        transaction.Category = transactionUpdate.Category;
+        transaction.Type = transactionType!.Value;
+        mapper.Map(transactionUpdate, transaction);
 
         db.Update(transaction);
         await db.SaveChangesAsync();
@@ -137,65 +114,22 @@ public static class Endpoints {
 
         return NoContent();
     }
+}
 
-    private static (TransactionType, IResult?) ValidateTransaction(TransactionRequest request) {
-        if (!Enum.TryParse<TransactionType>(request.Type, out var transactionType)) {
-            return (TransactionType.Expense, Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid type",
-                detail: $"Transaction type {request.Type} is invalid"
-            ));
-        }
+public record TransactionRequest(
+    string Type,
+    string Description,
+    DateOnly Date,
+    decimal Amount,
+    Guid? SourceAccountId,
+    Guid? DestinationAccountId,
+    string? Category,
+    bool SkipHashCheck = false
+);
 
-        if (request.Amount < 0) {
-            return (TransactionType.Expense, Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid amount",
-                detail: "Amount cannot be negative."
-            ));
-        }
-
-        if (request.Category == "(none)") {
-            return (TransactionType.Expense, Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid category",
-                detail: "Category cannot be '(none)'."
-            ));
-        }
-
-        var problemDetail = (transactionType, request) switch {
-            (TransactionType.Expense, { SourceAccountId: null })
-                => "Expenses must have a source account",
-            (TransactionType.Income, { DestinationAccountId: null })
-                => "Income transactions must have a destination account",
-            (TransactionType.Transfer, { SourceAccountId: null, } or { DestinationAccountId: null })
-                => "Transfers must specify both and source account and destination account",
-            (TransactionType.Transfer, { SourceAccountId: not null, DestinationAccountId: not null })
-                when request.DestinationAccountId == request.SourceAccountId =>
-                "Transfers cannot specify the same source and destination account",
-            _ => null
-        };
-
-        return (
-            transactionType,
-            problemDetail is null
-                ? null
-                : Problem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: "Invalid transaction",
-                    detail: problemDetail
-                )
-        );
+public class TransactionProfile: Profile {
+    public TransactionProfile() {
+        CreateMap<TransactionRequest, Transaction>()
+            .ForMember(t => t.Type, opt => opt.Ignore());
     }
-
-    private record TransactionRequest(
-        string Type,
-        string Description,
-        DateOnly Date,
-        decimal Amount,
-        Guid? SourceAccountId,
-        Guid? DestinationAccountId,
-        string? Category,
-        bool SkipHashCheck = false
-    );
 }

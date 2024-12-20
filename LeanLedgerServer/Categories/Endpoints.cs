@@ -7,6 +7,8 @@ using Transactions;
 using static Results;
 
 public static class Endpoints {
+    private const string NULL_CATEGORY_NAME = "(none)";
+
     public static void MapCategories(this IEndpointRouteBuilder endpoints) {
         var categories = endpoints.MapGroup("categories");
         categories.MapGet("options", ListCategoryOptions);
@@ -19,7 +21,7 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext dbContext
     ) {
-        var categoryToCompare = category == "(none)" ? "" : category;
+        var categoryToCompare = category == NULL_CATEGORY_NAME ? "" : category;
         var transactions = await dbContext.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
@@ -30,33 +32,41 @@ public static class Endpoints {
             new {
                 Name = category,
                 Transactions = transactions.Select(
-                    t => new {
-                        t.Id,
-                        t.Description,
-                        t.Amount,
-                        t.Date,
-                        t.Category,
-                        Type = t.Type.ToString(),
-                        SourceAccount = new { t.SourceAccount?.Id, t.SourceAccount?.Name },
-                        DestinationAccount = new { t.DestinationAccount?.Id, t.DestinationAccount?.Name },
-                    }
+                    TableTransaction.FromTransaction
                 ),
-                Amount = transactions.Sum(t => t.Type is TransactionType.Income ? t.Amount : -1 * t.Amount)
+                Amount = transactions.Sum(
+                    TransactionAmount
+                )
             }
         );
     }
+
 
     private static async Task<IResult> ListCategories(
         [FromServices]
         LedgerDbContext dbContext
     ) {
+        // ? Watch this for performance issues
         var transactions = await dbContext.Transactions
             .GroupBy(t => t.Category)
-            .Select(g => new { Name = string.IsNullOrWhiteSpace(g.Key) ? "(none)" : g.Key, Amount = g.Select(t => t.Type == TransactionType.Income ? t.Amount : -1 * t.Amount).Sum() })
             .ToListAsync();
 
-        return Ok(transactions);
+        return Ok(
+            transactions.Select(
+                g => new {
+                    Name = string.IsNullOrWhiteSpace(g.Key)
+                        ? NULL_CATEGORY_NAME
+                        : g.Key,
+                    Amount = g.Select(TransactionAmount).Sum()
+                }
+            )
+        );
     }
+
+    private static decimal TransactionAmount(Transaction t) =>
+        t.Type is TransactionType.Income
+            ? t.Amount
+            : -1 * t.Amount;
 
     private static async Task<IResult> ListCategoryOptions(
         [FromServices]

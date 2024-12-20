@@ -1,13 +1,14 @@
 <script lang="ts">
     import type {PageData} from "./$types";
     import {apiClient} from "$lib/apiClient";
-    import {type AccountData, accountTypes} from "$lib/accounts";
+    import {type AccountData} from "$lib/accounts";
     import {ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
     import AccountForm from "$lib/accounts/AccountForm.svelte";
     import Money from "$lib/components/Money.svelte";
     import {goto} from "$app/navigation"
-    import DefaultDialog from "$lib/components/DefaultDialog.svelte";
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
+    import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
+    import Alert from "$lib/components/Alert.svelte";
 
     let {data}: { data: PageData } = $props();
     let account: AccountData | null = $state(null);
@@ -26,25 +27,19 @@
         isSaving = false;
     }
 
-    let confirmationDialog: HTMLDialogElement | undefined = $state()
-
-    function showDeleteConfirmation() {
-        confirmationDialog?.showModal()
-    }
-
     async function deleteAccount() {
         const response = await apiClient.delete(`accounts/${data.id}`);
         await goto("/accounts")
+
+        return false;
     }
 </script>
 
 {#snippet errorMessage(err: any)}
-    <div class="alert variant-filled-error">
-        <div class="alert-message">
-            <h3 class="h3">Something went wrong</h3>
-            <p>We couldn't load the account. Please try again {!!err ? err : ""}</p>
-        </div>
-    </div>
+    <Alert show class="variant-filled-error">
+        <h3 class="h3">Something went wrong</h3>
+        <p>We couldn't load the account. Please try again {!!err ? err : ""}</p>
+    </Alert>
 {/snippet}
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
@@ -55,17 +50,7 @@
         <div class="mb-4 flex gap-4 justify-start items-center">
             <h1 class="h1">Account</h1>
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
-            <button onclick={showDeleteConfirmation} class="btn variant-outline-error">Delete</button>
-            <DefaultDialog bind:dialog={confirmationDialog}>
-                <div class="flex flex-col gap-4">
-                    <h2 class="h2">Are you sure you want to delete?</h2>
-                    <div class="flex gap-4">
-                        <button onclick={() => confirmationDialog?.close()} class="btn variant-outline-success">Cancel
-                        </button>
-                        <button onclick={deleteAccount} class="btn variant-filled-error">Delete</button>
-                    </div>
-                </div>
-            </DefaultDialog>
+            <DeleteConfirmationButton onDelete={deleteAccount} />
             <p>Balance:
                 <Money amount={account.balance} />
             </p>
