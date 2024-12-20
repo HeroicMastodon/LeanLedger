@@ -9,6 +9,8 @@
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import Alert from "$lib/components/Alert.svelte";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import ImportSettingsButton from "$lib/accounts/ImportSettingsButton.svelte";
 
     let {data}: { data: PageData } = $props();
     let account: AccountData | null = $state(null);
@@ -50,6 +52,9 @@
         <div class="mb-4 flex gap-4 justify-start items-center">
             <h1 class="h1">Account</h1>
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
+            {#if account.accountType !== "Merchant"}
+                <ImportSettingsButton accountId={account.id} />
+            {/if}
             <DeleteConfirmationButton onDelete={deleteAccount} />
             <p>Balance:
                 <Money amount={account.balance} />
