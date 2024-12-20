@@ -2,7 +2,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LeanLedgerServer.Common;
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Accounts;
+using TransactionImport;
 using Transactions;
 
 public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbContext(options) {
@@ -13,7 +16,7 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
         modelBuilder.Entity<Account>(
             entity => {
                 entity.HasKey(a => a.Id);
-                entity.Property(a => a.AccountType) .HasConversion<string>();
+                entity.Property(a => a.AccountType).HasConversion<string>();
                 entity.Property(a => a.IncludeInNetWorth).HasDefaultValue(false);
 
                 entity.HasMany(t => t.Withdrawls)
@@ -43,6 +46,29 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
                     .HasForeignKey(t => t.DestinationAccountId);
 
                 entity.HasQueryFilter(t => !t.IsDeleted);
+            }
+        );
+
+        modelBuilder.Entity<ImportSettings>(
+            entity => {
+                entity.HasKey(s => s.Id);
+
+                var jsonSerializerSettings = new JsonSerializerOptions {
+                   DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                entity.Property(s => s.AttachedAccountId).IsRequired();
+                entity.Property(s => s.ImportMappings)
+                    .HasConversion(
+                        im => JsonSerializer.Serialize(im, jsonSerializerSettings),
+                        json => JsonSerializer.Deserialize<List<ImportMapping>>(json, jsonSerializerSettings) ??
+                                new List<ImportMapping>()
+                    );
+
+                entity.HasOne(s => s.AttachedAccount)
+                    .WithOne()
+                    .HasForeignKey<ImportSettings>(s => s.AttachedAccountId);
+
+                entity.HasQueryFilter(s => !s.IsDeleted);
             }
         );
     }

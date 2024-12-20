@@ -1,6 +1,7 @@
 namespace LeanLedgerServer.Accounts;
 
 using System.Text.Json.Serialization;
+using TransactionImport;
 using Transactions;
 
 public class Account

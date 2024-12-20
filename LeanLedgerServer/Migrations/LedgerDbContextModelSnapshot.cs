@@ -57,6 +57,36 @@ namespace LeanLedgerServer.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("LeanLedgerServer.TransactionImport.ImportSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AttachedAccountId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<char?>("CsvDelimiter")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DateFormat")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImportMappings")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttachedAccountId")
+                        .IsUnique();
+
+                    b.ToTable("ImportSettings");
+                });
+
             modelBuilder.Entity("LeanLedgerServer.Transactions.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -100,6 +130,17 @@ namespace LeanLedgerServer.Migrations
                     b.HasIndex("SourceAccountId");
 
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("LeanLedgerServer.TransactionImport.ImportSettings", b =>
+                {
+                    b.HasOne("LeanLedgerServer.Accounts.Account", "AttachedAccount")
+                        .WithOne()
+                        .HasForeignKey("LeanLedgerServer.TransactionImport.ImportSettings", "AttachedAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AttachedAccount");
                 });
 
             modelBuilder.Entity("LeanLedgerServer.Transactions.Transaction", b =>
