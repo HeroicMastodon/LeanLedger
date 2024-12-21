@@ -9,7 +9,6 @@
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import Alert from "$lib/components/Alert.svelte";
-    import FormButton from "$lib/components/dialog/FormButton.svelte";
     import ImportSettingsButton from "$lib/accounts/ImportSettingsButton.svelte";
 
     let {data}: { data: PageData } = $props();
