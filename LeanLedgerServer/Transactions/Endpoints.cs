@@ -41,31 +41,19 @@ public static class Endpoints {
         LedgerDbContext db,
         [FromServices]
         IMapper mapper
-    ) {
-        var (transaction, err) = await CreateNewTransaction(newTransaction, db.Transactions, mapper);
+    ) => await CreateNewTransaction(newTransaction, db.Transactions, mapper)
+        .ThenAsync(
+            async transaction => {
+                db.Transactions.Add(transaction!);
+                await db.SaveChangesAsync();
 
-        if (err is not null) {
-            return err switch {
-                InvalidRequest invalidRequest => Problem(
-                    statusCode: StatusCodes.Status400BadRequest,
-                    title: invalidRequest.Title,
-                    detail: invalidRequest.Message
-                ),
-                ConflictingHash conflictingHash => Problem(
-                    statusCode: StatusCodes.Status409Conflict,
-                    title: "Conflicting transaction has found",
-                    detail: $"Transaction already exists: {conflictingHash.Hash}",
-                    extensions: new Dictionary<string, object?>() { { "hash", conflictingHash.Hash }, { "existingTransaction", conflictingHash.Transaction } }
-                ),
-                _ => throw new UnreachableException(nameof(err))
-            };
-        }
-
-        db.Transactions.Add(transaction!);
-        await db.SaveChangesAsync();
-
-        return Created($"/api/transactions/{transaction!.Id}", transaction);
-    }
+                return Created($"/api/transactions/{transaction!.Id}", transaction);
+            }
+        )
+        .When(
+            ok: result => result,
+            error: err => err.ToHttpResult()
+        );
 
     private static async Task<IResult> UpdateTransaction(
         Guid id,
@@ -75,31 +63,28 @@ public static class Endpoints {
         LedgerDbContext db,
         [FromServices]
         IMapper mapper
-    ) {
-        var (transactionType, err) = ValidateTransaction(transactionUpdate);
+    ) => await ValidateTransaction(transactionUpdate)
+        .ThenAsync(
+            async type => {
+                var transaction = await db.Transactions.FindAsync(id);
 
-        if (err is not null) {
-            return Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: err.Title,
-                detail: err.Message
-            );
-        }
+                if (transaction is null) {
+                    return NotFound();
+                }
 
-        var transaction = await db.Transactions.FindAsync(id);
+                transaction.Type = type;
+                mapper.Map(transactionUpdate, transaction);
 
-        if (transaction is null) {
-            return NotFound();
-        }
+                db.Update(transaction);
+                await db.SaveChangesAsync();
 
-        transaction.Type = transactionType!.Value;
-        mapper.Map(transactionUpdate, transaction);
-
-        db.Update(transaction);
-        await db.SaveChangesAsync();
-
-        return Ok(transaction);
-    }
+                return Ok(transaction);
+            }
+        )
+        .When(
+            ok: result => result,
+            error => error.ToHttpResult()
+        );
 
     private static async Task<IResult> DeleteTransaction(Guid id, [FromServices] LedgerDbContext db) {
         var transaction = await db.Transactions.FindAsync(id);

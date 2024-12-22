@@ -5,8 +5,6 @@ using System.Globalization;
 using Accounts;
 using AutoMapper;
 using Common;
-using CsvHelper;
-using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
@@ -33,113 +31,159 @@ public static class Endpoints {
         LedgerDbContext dbContext,
         [FromServices]
         IMapper mapper
-    ) {
-        var (account, err) = await GetValidAccount(accountId, dbContext);
-        if (err is not null) {
-            return err;
-        }
+    ) => await GetValidAccount(accountId, dbContext)
+        .ThenAsync(
+            async account => {
+                var settings = await EnsureSettingsExist(account, dbContext);
+                var csv = await ReadCsvToList(csvFile);
 
-        var settings = await EnsureSettingsExist(account!, dbContext);
-        var csv = await ReadCsvToList(csvFile);
+                var mappedTransactions = MapTransactions(csv, settings);
 
-        List<MappedTransaction> mappedTransactions = [];
-        foreach (var line in csv) {
-            var mappedTransaction = new MappedTransaction();
-            foreach (var (columnName, field) in settings.ImportMappings) {
-                var columnValue = line[columnName];
-                if (columnValue is null) {
-                    continue;
+                var transactionTasks = mappedTransactions.Select(
+                        tr => {
+                            var transactionType = TransactionType.Income;
+                            if (tr.Amount < 0) {
+                                transactionType = TransactionType.Expense;
+                                tr.Amount *= -1;
+                            }
+
+                            return new TransactionRequest(
+                                transactionType.ToString(),
+                                tr.Description ?? "",
+                                tr.Date ?? DateOnly.FromDateTime(DateTime.Now),
+                                tr.Amount!.Value,
+                                transactionType == TransactionType.Expense ? accountId : null,
+                                transactionType == TransactionType.Income ? accountId : null,
+                                tr.Category
+                            );
+                        }
+                    )
+                    .Select(tr => CreateNewTransaction(tr, dbContext.Transactions, mapper));
+
+                var transactions = await Task.WhenAll(transactionTasks);
+                foreach (var transaction in transactions) {
+                    await dbContext.AddAsync(transaction.Unwrap);
                 }
 
-                switch (field) {
-                    case TransactionField.Amount:
-                        mappedTransaction.Amount = decimal.Parse(
-                            columnValue,
-                            CultureInfo.CurrentCulture
-                        );
-                        break;
-                    case TransactionField.NegatedAmount:
-                        mappedTransaction.Amount = decimal.Parse(columnValue, CultureInfo.CurrentCulture) * -1;
-                        break;
-                    case TransactionField.Date:
-                        mappedTransaction.Date = DateOnly.ParseExact(columnValue, settings.DateFormat ?? "yyyy/mm/dd");
-                        break;
-                    case TransactionField.Description:
-                        mappedTransaction.Description = columnValue;
-                        break;
-                    case TransactionField.Category:
-                        mappedTransaction.Category = columnValue;
-                        break;
-                    case TransactionField.Ignore:
-                        break;
-                    default:
-                        throw new UnreachableException();
-                }
+                await dbContext.SaveChangesAsync();
+
+                return Ok(transactions.Select(res => res));
             }
+        )
+        .When(
+            ok: result => result,
+            error: err => err.ToHttpResult()
+        );
 
-            // TODO: I need more precise error handling so I can still move on
-            if (mappedTransaction.Amount is null) {
-                throw new Exception("how could this have happened?");
-            }
-
-            mappedTransactions.Add(mappedTransaction);
-        }
-
-        var transactionTasks = mappedTransactions.Select(
-                tr => {
-                    var transactionType = TransactionType.Income;
-                    if (tr.Amount < 0) {
-                        transactionType = TransactionType.Expense;
-                        tr.Amount *= -1;
+    private static List<MappedTransaction> MapTransactions(
+        List<Dictionary<string, string?>> csv,
+        ImportSettings settings
+    ) => csv.Select(
+            line => {
+                var mappedTransaction = new MappedTransaction();
+                foreach (var (columnName, field) in settings.ImportMappings) {
+                    var columnValue = line[columnName];
+                    if (columnValue is null) {
+                        continue;
                     }
 
-                    return new TransactionRequest(
-                        transactionType.ToString(),
-                        tr.Description ?? "",
-                        tr.Date ?? DateOnly.FromDateTime(DateTime.Now),
-                        tr.Amount!.Value,
-                        transactionType == TransactionType.Expense ? accountId : null,
-                        transactionType == TransactionType.Income ? accountId : null,
-                        tr.Category
-                    );
+                    switch (field) {
+                        case TransactionField.Amount:
+                            mappedTransaction.Amount = decimal.Parse(
+                                columnValue,
+                                CultureInfo.CurrentCulture
+                            );
+                            break;
+                        case TransactionField.NegatedAmount:
+                            mappedTransaction.Amount = decimal.Parse(columnValue, CultureInfo.CurrentCulture) * -1;
+                            break;
+                        case TransactionField.Date:
+                            mappedTransaction.Date = DateOnly.ParseExact(columnValue, settings.DateFormat ?? "yyyy/mm/dd");
+                            break;
+                        case TransactionField.Description:
+                            mappedTransaction.Description = columnValue;
+                            break;
+                        case TransactionField.Category:
+                            mappedTransaction.Category = columnValue;
+                            break;
+                        case TransactionField.Ignore:
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
                 }
-            )
-            .Select(
-                tr => CreateNewTransaction(
-                    tr,
-                    dbContext.Transactions,
-                    mapper
-                )
-            );
-        var transactions = await Task.WhenAll(transactionTasks);
-        foreach (var (transaction, _) in transactions)
-        {
-            if (transaction is null) {
-                continue;
+
+                // TODO: I need more precise error handling so I can still move on
+                // Ideally, this would be it's own function that returns a result for every transaction
+                if (mappedTransaction.Amount is null) {
+                    throw new Exception("how could this have happened?");
+                }
+
+                return mappedTransaction;
             }
+        )
+        .ToList();
 
-            await dbContext.AddAsync(transaction);
-        }
-        await dbContext.SaveChangesAsync();
+//     List<MappedTransaction> mappedTransactions = [];
+//         foreach (var line in csv) {
+//         var mappedTransaction = new MappedTransaction();
+//         foreach (var (columnName, field) in settings.ImportMappings) {
+//             var columnValue = line[columnName];
+//             if (columnValue is null) {
+//                 continue;
+//             }
+//
+//             switch (field) {
+//                 case TransactionField.Amount:
+//                     mappedTransaction.Amount = decimal.Parse(
+//                         columnValue,
+//                         CultureInfo.CurrentCulture
+//                     );
+//                     break;
+//                 case TransactionField.NegatedAmount:
+//                     mappedTransaction.Amount = decimal.Parse(columnValue, CultureInfo.CurrentCulture) * -1;
+//                     break;
+//                 case TransactionField.Date:
+//                     mappedTransaction.Date = DateOnly.ParseExact(columnValue, settings.DateFormat ?? "yyyy/mm/dd");
+//                     break;
+//                 case TransactionField.Description:
+//                     mappedTransaction.Description = columnValue;
+//                     break;
+//                 case TransactionField.Category:
+//                     mappedTransaction.Category = columnValue;
+//                     break;
+//                 case TransactionField.Ignore:
+//                     break;
+//                 default:
+//                     throw new UnreachableException();
+//             }
+//         }
+//
+//         // TODO: I need more precise error handling so I can still move on
+//         // Ideally, this would be it's own function that returns a result for every transaction
+//         if (mappedTransaction.Amount is null) {
+//             throw new Exception("how could this have happened?");
+//         }
+//
+//         mappedTransactions.Add(mappedTransaction);
+//     }
+//
+// return mappedTransactions;
 
-        return Ok(transactions.Select(res => res.Item1));
-    }
 
     private static async Task<IResult> GetImportSettings(
         Guid accountId,
         [FromServices]
         LedgerDbContext dbContext
-    ) {
-        var (account, err) = await GetValidAccount(accountId, dbContext);
+    ) => await GetValidAccount(accountId, dbContext)
+        .WhenAsync(
+            ok: async account => {
+                var settings = await EnsureSettingsExist(account!, dbContext);
 
-        if (err is not null) {
-            return err;
-        }
-
-        var settings = await EnsureSettingsExist(account!, dbContext);
-
-        return Ok(new { settings.DateFormat, settings.CsvDelimiter, settings.ImportMappings });
-    }
+                return Ok(new { settings.DateFormat, settings.CsvDelimiter, settings.ImportMappings });
+            },
+            error: error => Task.FromResult(error.ToHttpResult())
+        );
 
     private static async Task<IResult> UpdateImportSettings(
         Guid accountId,
@@ -147,44 +191,39 @@ public static class Endpoints {
         LedgerDbContext dbContext,
         [FromBody]
         ImportSettingsRequest request
-    ) {
-        var (account, err) = await GetValidAccount(accountId, dbContext);
+    ) => await GetValidAccount(accountId, dbContext)
+        .WhenAsync(
+            ok: async account => {
+                var settings = await EnsureSettingsExist(account!, dbContext);
+                settings.CsvDelimiter = request.CsvDelimiter;
+                settings.DateFormat = request.DateFormat;
+                settings.ImportMappings = request.ImportMappings;
 
-        if (err is not null) {
-            return err;
-        }
+                dbContext.Update(settings);
+                await dbContext.SaveChangesAsync();
 
-        var settings = await EnsureSettingsExist(account!, dbContext);
-        settings.CsvDelimiter = request.CsvDelimiter;
-        settings.DateFormat = request.DateFormat;
-        settings.ImportMappings = request.ImportMappings;
+                return Ok(new { settings.DateFormat, settings.CsvDelimiter, settings.ImportMappings });
+            },
+            error: error => Task.FromResult(error.ToHttpResult())
+        );
 
-        dbContext.Update(settings);
-        await dbContext.SaveChangesAsync();
-
-        return Ok(new { settings.DateFormat, settings.CsvDelimiter, settings.ImportMappings });
-    }
-
-    private static async Task<(Account?, IResult?)> GetValidAccount(Guid accountId, LedgerDbContext dbContext) {
+    private static async Task<Result<Account>> GetValidAccount(Guid accountId, LedgerDbContext dbContext) {
         // merchants cannot have imports
         var account = await dbContext.Accounts
             .Where(a => a.Id == accountId)
             .FirstOrDefaultAsync();
 
         if (account is null) {
-            return (null, Problem($"Could not find an account with id {accountId}", statusCode: StatusCodes.Status404NotFound));
+            return new AccountNotFound(accountId);
         }
 
         var isMerchant = account.AccountType == AccountType.Merchant;
 
         if (isMerchant) {
-            return (null, Problem(
-                "Merchants cannot have an import configuration",
-                statusCode: StatusCodes.Status400BadRequest
-            ));
+            return new InvalidImportAccountType(account.AccountType);
         }
 
-        return (account, null);
+        return account;
     }
 
     private static async Task<ImportSettings> EnsureSettingsExist(Account account, LedgerDbContext dbContext) {
@@ -215,5 +254,12 @@ public static class Endpoints {
         public DateOnly? Date { get; set; }
         public decimal? Amount { get; set; }
         public string? Category { get; set; }
+    }
+
+    private record InvalidImportAccountType(AccountType Type): Err() {
+        public override IResult ToHttpResult() => Problem(
+            $"{Type}s cannot have an import configuration",
+            statusCode: StatusCodes.Status400BadRequest
+        );
     }
 }
