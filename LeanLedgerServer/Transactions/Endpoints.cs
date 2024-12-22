@@ -50,7 +50,7 @@ public static class Endpoints {
                 return Created($"/api/transactions/{transaction!.Id}", transaction);
             }
         )
-        .When(
+        .Map(
             ok: result => result,
             error: err => err.ToHttpResult()
         );
@@ -81,7 +81,7 @@ public static class Endpoints {
                 return Ok(transaction);
             }
         )
-        .When(
+        .Map(
             ok: result => result,
             error => error.ToHttpResult()
         );
@@ -109,8 +109,13 @@ public record TransactionRequest(
     Guid? SourceAccountId,
     Guid? DestinationAccountId,
     string? Category,
-    bool SkipHashCheck = false
-);
+    bool SkipHashCheck = false,
+    DateOnly? ImportDate = null
+) {
+    public string CreateHash() => Hashing.HashString(
+        $"{Type}{Description}{Date}{Amount}{SourceAccountId}{DestinationAccountId}{Category}"
+    );
+}
 
 public class TransactionProfile: Profile {
     public TransactionProfile() {

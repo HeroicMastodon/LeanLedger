@@ -37,17 +37,39 @@ public abstract record Result<T> {
         _ => throw new UnreachableException()
     };
 
-    public TNew When<TNew>(Func<T, TNew> ok, Func<Err, TNew> error) => this switch {
+    public TNew Map<TNew>(Func<T, TNew> ok, Func<Err, TNew> error) => this switch {
         Ok<T>(var val) => ok(val),
         Err<T>(var err) => error(err),
         _ => throw new UnreachableException()
     };
 
-    public Task<TNew> WhenAsync<TNew>(Func<T, Task<TNew>> ok, Func<Err, Task<TNew>> error) => this switch {
+    public Task<TNew> MapAsync<TNew>(Func<T, Task<TNew>> ok, Func<Err, Task<TNew>> error) => this switch {
         Ok<T>(var val) => ok(val),
         Err<T>(var err) => error(err),
         _ => throw new UnreachableException()
     };
+
+    public void When(Action<T> ok, Action<Err> error) {
+        switch (this) {
+            case Ok<T>(var val):
+                ok(val);
+                break;
+            case Err<T> (var err):
+                error(err);
+                break;
+        }
+    }
+
+    public async Task WhenAsync(Func<T, Task> ok, Func<Err, Task> error) {
+        switch (this) {
+            case Ok<T>(var val):
+                await ok(val);
+                break;
+            case Err<T> (var err):
+                await error(err);
+                break;
+        }
+    }
 
     public bool IsOk() => this switch {
         Ok<T> => true,
@@ -65,6 +87,11 @@ public abstract record Result<T> {
         result = this;
         return IsOk();
     }
+
+    public Result<T> MapError(Func<Err, Result<T>> mapper) => Map(
+        ok: r => r,
+        error: mapper
+    );
 
     public Err? GetError() => this switch {
         Ok<T> => null,
@@ -99,11 +126,22 @@ public static class ResultExtensions {
         return await result.ThenAsync(action);
     }
 
-    public static async Task<TNew> When<T, TNew>(this Task<Result<T>> task, Func<T, TNew> ok, Func<Err, TNew> error)
+    public static async Task<TNew> Map<T, TNew>(this Task<Result<T>> task, Func<T, TNew> ok, Func<Err, TNew> error)
+        => (await task).Map(ok, error);
+
+    public static async Task<TNew> MapAsync<T, TNew>(this Task<Result<T>> task, Func<T, Task<TNew>> ok, Func<Err, Task<TNew>> error)
+        => await (await task).MapAsync(ok, error);
+
+    public static async Task When<T>(this Task<Result<T>> task, Action<T> ok, Action<Err> error)
         => (await task).When(ok, error);
 
-    public static async Task<TNew> WhenAsync<T, TNew>(this Task<Result<T>> task, Func<T, Task<TNew>> ok, Func<Err, Task<TNew>> error)
+    public static async Task WhenAsync<T>(this Task<Result<T>> task, Func<T, Task> ok, Func<Err, Task> error)
         => await (await task).WhenAsync(ok, error);
+
+    public static Task<Result<T>> MapError<T>(this Task<Result<T>>task , Func<Err, Result<T>> mapper) => task.Map(
+        ok: r => r,
+        error: mapper
+    );
 }
 
 public record Ok<T>(T Value): Result<T>;

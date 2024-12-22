@@ -6,8 +6,6 @@ using Common;
 using Microsoft.EntityFrameworkCore;
 
 public static class TransactionFunctions {
-    public static string HashTransactionRequest(TransactionRequest request) => request.GetHashCode().ToString();
-
     public static async Task<Result<Transaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
@@ -15,7 +13,7 @@ public static class TransactionFunctions {
     ) => await ValidateTransaction(request)
         .ThenAsync(
             async transactionType => {
-                var transactionHash = HashTransactionRequest(request);
+                var transactionHash = request.CreateHash();
 
                 // ? In the future it might be a good idea to still check for a conflicting hash and add a (1) or something to it
                 if (!request.SkipHashCheck) {
@@ -26,7 +24,12 @@ public static class TransactionFunctions {
                     }
                 }
 
-                var transaction = new Transaction { Id = Guid.NewGuid(), UniqueHash = transactionHash, Type = transactionType, };
+                var transaction = new Transaction {
+                    Id = Guid.NewGuid(),
+                    UniqueHash = transactionHash,
+                    Type = transactionType,
+                    DateImported = request.ImportDate
+                };
                 mapper.Map(request, transaction);
 
                 return transaction.AsResult();
