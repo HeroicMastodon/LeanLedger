@@ -15,6 +15,7 @@ public class Transaction {
     public required string UniqueHash { get; init; }
     public string? Category { get; set; }
     public bool IsDeleted { get; set; }
+    public DateOnly? DateImported { get; init; }
 
     public Guid? SourceAccountId { get; set; }
 
@@ -25,6 +26,8 @@ public class Transaction {
 
     [JsonIgnore]
     public Account? DestinationAccount { get; set; }
+
+    public override string ToString() => $"{Type}, {Description}, {Date}, {Amount}, {Category ?? "(none)"}";
 }
 
 public enum TransactionType {

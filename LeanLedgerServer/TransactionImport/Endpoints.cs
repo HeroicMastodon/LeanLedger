@@ -1,34 +1,67 @@
 namespace LeanLedgerServer.TransactionImport;
 
 using Accounts;
+using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static ImportFunctions;
 using static Results;
 
 public static class Endpoints {
     public static void MapImport(this RouteGroupBuilder routes) {
         var imports = routes.MapGroup("imports");
+        imports
+            .MapPost("{accountId:guid}", RunImport)
+            .DisableAntiforgery();
+
         var settings = imports.MapGroup("settings");
         settings.MapGet("{accountId:guid}", GetImportSettings);
         settings.MapPut("{accountId:guid}", UpdateImportSettings);
     }
 
+    private static async Task<IResult> RunImport(
+        Guid accountId,
+        IFormFile csvFile,
+        [FromServices]
+        LedgerDbContext dbContext,
+        [FromServices]
+        IMapper mapper,
+        [FromServices]
+        Importer importer
+    ) => await GetValidAccount(accountId, dbContext)
+        .ThenAsync(
+            async account => {
+                var settings = await EnsureSettingsExist(account, dbContext);
+                var csv = await ReadCsvToList(csvFile);
+
+                return await importer.ImportCsv(account, settings, csv);
+            }
+        )
+        .Map(
+            ok: Ok,
+            error: err => err.ToHttpResult()
+        );
+
     private static async Task<IResult> GetImportSettings(
         Guid accountId,
         [FromServices]
         LedgerDbContext dbContext
-    ) {
-        var (account, err) = await GetValidAccount(accountId, dbContext);
+    ) => await GetValidAccount(accountId, dbContext)
+        .MapAsync(
+            ok: async account => {
+                var settings = await EnsureSettingsExist(account!, dbContext);
 
-        if (err is not null) {
-            return err;
-        }
-
-        var settings = await EnsureSettingsExist(account!, dbContext);
-
-        return Ok(new { settings.DateFormat, settings.CsvDelimiter, settings.ImportMappings });
-    }
+                return Ok(
+                    new {
+                        settings.DateFormat,
+                        settings.CsvDelimiter,
+                        settings.ImportMappings
+                    }
+                );
+            },
+            error: error => Task.FromResult(error.ToHttpResult())
+        );
 
     private static async Task<IResult> UpdateImportSettings(
         Guid accountId,
@@ -36,44 +69,45 @@ public static class Endpoints {
         LedgerDbContext dbContext,
         [FromBody]
         ImportSettingsRequest request
-    ) {
-        var (account, err) = await GetValidAccount(accountId, dbContext);
+    ) => await GetValidAccount(accountId, dbContext)
+        .MapAsync(
+            ok: async account => {
+                var settings = await EnsureSettingsExist(account!, dbContext);
+                settings.CsvDelimiter = request.CsvDelimiter;
+                settings.DateFormat = request.DateFormat;
+                settings.ImportMappings = request.ImportMappings;
 
-        if (err is not null) {
-            return err;
-        }
+                dbContext.Update(settings);
+                await dbContext.SaveChangesAsync();
 
-        var settings = await EnsureSettingsExist(account!, dbContext);
-        settings.CsvDelimiter = request.CsvDelimiter;
-        settings.DateFormat = request.DateFormat;
-        settings.ImportMappings = request.ImportMappings;
+                return Ok(
+                    new {
+                        settings.DateFormat,
+                        settings.CsvDelimiter,
+                        settings.ImportMappings
+                    }
+                );
+            },
+            error: error => Task.FromResult(error.ToHttpResult())
+        );
 
-        dbContext.Update(settings);
-        await dbContext.SaveChangesAsync();
-
-        return Ok(new { settings.DateFormat, settings.CsvDelimiter, settings.ImportMappings });
-    }
-
-    private static async Task<(Account?, IResult?)> GetValidAccount(Guid accountId, LedgerDbContext dbContext) {
+    private static async Task<Result<Account>> GetValidAccount(Guid accountId, LedgerDbContext dbContext) {
         // merchants cannot have imports
         var account = await dbContext.Accounts
             .Where(a => a.Id == accountId)
             .FirstOrDefaultAsync();
 
         if (account is null) {
-            return (null, Problem($"Could not find an account with id {accountId}", statusCode: StatusCodes.Status404NotFound));
+            return new AccountNotFound(accountId);
         }
 
         var isMerchant = account.AccountType == AccountType.Merchant;
 
         if (isMerchant) {
-            return (null, Problem(
-                "Merchants cannot have an import configuration",
-                statusCode: StatusCodes.Status400BadRequest
-            ));
+            return new InvalidImportAccountType(account.AccountType);
         }
 
-        return (account, null);
+        return account;
     }
 
     private static async Task<ImportSettings> EnsureSettingsExist(Account account, LedgerDbContext dbContext) {
@@ -91,11 +125,23 @@ public static class Endpoints {
         return settings;
     }
 
-    private static ImportSettings CreateDefaultSettings(Account account) => new() { AttachedAccount = account, AttachedAccountId = account.Id, ImportMappings = [], CsvDelimiter = ','};
+    private static ImportSettings CreateDefaultSettings(Account account) => new() {
+        AttachedAccount = account,
+        AttachedAccountId = account.Id,
+        ImportMappings = [],
+        CsvDelimiter = ','
+    };
 
     private record ImportSettingsRequest(
         char? CsvDelimiter,
         string? DateFormat,
         List<ImportMapping> ImportMappings
     );
+
+    private record InvalidImportAccountType(AccountType Type): Err() {
+        public override IResult ToHttpResult() => Problem(
+            $"{Type}s cannot have an import configuration",
+            statusCode: StatusCodes.Status400BadRequest
+        );
+    }
 }

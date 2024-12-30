@@ -6,60 +6,56 @@ using Common;
 using Microsoft.EntityFrameworkCore;
 
 public static class TransactionFunctions {
-    public static string HashTransactionRequest(TransactionRequest request) => request.GetHashCode().ToString();
-
-    public static async Task<(Transaction?, Err?)> CreateNewTransaction(
+    public static async Task<Result<Transaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
         IMapper mapper
-    ) {
-        var (transactionType, err) = ValidateTransaction(request);
+    ) => await ValidateTransaction(request)
+        .ThenAsync(
+            async transactionType => {
+                var transactionHash = request.CreateHash();
 
-        if (err is not null) {
-            return (null, err);
-        }
+                // ? In the future it might be a good idea to still check for a conflicting hash and add a (1) or something to it
+                if (!request.SkipHashCheck) {
+                    var existingHash = await transactions.FirstOrDefaultAsync(t => t.UniqueHash == transactionHash);
 
-        if (transactionType is null) {
-            throw new UnreachableException("Transaction type cannot be null if err is null");
-        }
+                    if (existingHash is not null) {
+                        return new ConflictingHash(transactionHash, existingHash);
+                    }
+                }
 
-        var transactionHash = HashTransactionRequest(request);
+                var transaction = new Transaction {
+                    Id = Guid.NewGuid(),
+                    UniqueHash = transactionHash,
+                    Type = transactionType,
+                    DateImported = request.ImportDate
+                };
+                mapper.Map(request, transaction);
 
-        // ? In the future it might be a good idea to still check for a conflicting hash and add a (1) or something to it
-        if (!request.SkipHashCheck) {
-            var existingHash = await transactions.FirstOrDefaultAsync(t => t.UniqueHash == transactionHash);
-
-            if (existingHash is not null) {
-                return (null, new ConflictingHash(transactionHash, existingHash));
+                return transaction.AsResult();
             }
-        }
+        );
 
-        var transaction = new Transaction { Id = Guid.NewGuid(), UniqueHash = transactionHash, Type = transactionType.Value, };
-        mapper.Map(request, transaction);
-
-        return (transaction, null);
-    }
-
-    public static (TransactionType?, InvalidRequest?) ValidateTransaction(TransactionRequest request) {
+    public static Result<TransactionType> ValidateTransaction(TransactionRequest request) {
         if (!Enum.TryParse<TransactionType>(request.Type, out var transactionType)) {
-            return (null, new InvalidRequest(
+            return new InvalidRequest(
                 "Type",
                 $"Transaction type {request.Type} is invalid"
-            ));
+            );
         }
 
         if (request.Amount < 0) {
-            return (null, new InvalidRequest(
+            return new InvalidRequest(
                 "Amount",
                 "Amount cannot be negative."
-            ));
+            );
         }
 
         if (request.Category == "(none)") {
-            return (null, new InvalidRequest(
+            return new InvalidRequest(
                 "Category",
                 "Category cannot be '(none)'."
-            ));
+            );
         }
 
         var problemDetail = (transactionType, request) switch {
@@ -75,16 +71,17 @@ public static class TransactionFunctions {
             _ => null
         };
 
-        return (
-            transactionType,
-            problemDetail is null
-                ? null
-                : new InvalidRequest(
-                    "Transaction",
-                    problemDetail
-                )
-        );
+        return problemDetail is null
+            ? transactionType
+            : new InvalidRequest("Transaction", problemDetail);
     }
 }
 
-public record ConflictingHash(string Hash, Transaction Transaction): Err();
+public record ConflictingHash(string Hash, Transaction Transaction): Err() {
+    public override IResult ToHttpResult() => Results.Problem(
+        statusCode: StatusCodes.Status409Conflict,
+        title: "Conflicting transaction has found",
+        detail: $"Transaction already exists: {Hash}",
+        extensions: new Dictionary<string, object?>() { { "hash", Hash }, { "existingTransaction", Transaction } }
+    );
+}

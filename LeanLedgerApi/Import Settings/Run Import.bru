@@ -1,0 +1,19 @@
+meta {
+  name: Run Import
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/imports/{{accountId}}
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  csvFile: @file(/home/garrick/Downloads/O16579_9 (27).csv)
+}
+
+vars:pre-request {
+  accountId: 0c80937d-8d20-44b7-a185-c7adea19d394
+}

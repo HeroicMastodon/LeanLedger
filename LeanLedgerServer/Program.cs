@@ -12,6 +12,7 @@ builder.Services.AddDbContext<LedgerDbContext>(
     options => options.UseSqlite(config.GetConnectionString("SQLite"))
 );
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddScoped<Importer>();
 
 var app = builder.Build();
 app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = [] });

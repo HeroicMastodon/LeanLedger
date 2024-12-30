@@ -6,8 +6,21 @@ meta {
 
 put {
   url: {{baseUrl}}/imports/settings/{{accountId}}
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "dateFormat": "y-m-d",
+    "csvDelimiter": ",",
+    "importMappings": [
+      {
+        "sourceColumnName": "col",
+        "destinationField": "Ignore"
+      }
+    ]
+  }
 }
 
 vars:pre-request {

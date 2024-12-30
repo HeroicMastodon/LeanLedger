@@ -20,6 +20,7 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 # Microsoft .NET properties
+csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_open_brace = none
 csharp_preferred_modifier_order = public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async, file, required:warning
 csharp_prefer_braces = true:warning
@@ -65,7 +66,7 @@ dotnet_naming_symbols.private_constants_symbols.applicable_accessibilities = pri
 dotnet_naming_symbols.private_constants_symbols.applicable_kinds = field
 dotnet_naming_symbols.private_constants_symbols.required_modifiers = const
 dotnet_naming_symbols.unity_serialized_field_symbols.applicable_accessibilities = *
-dotnet_naming_symbols.unity_serialized_field_symbols.applicable_kinds =
+dotnet_naming_symbols.unity_serialized_field_symbols.applicable_kinds = 
 dotnet_naming_symbols.unity_serialized_field_symbols.resharper_applicable_kinds = unity_serialised_field
 dotnet_naming_symbols.unity_serialized_field_symbols.resharper_required_modifiers = instance
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:warning
@@ -82,8 +83,11 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 # ReSharper properties
 resharper_csharp_blank_lines_inside_region = 0
 resharper_csharp_empty_block_style = together_same_line
+resharper_csharp_wrap_after_declaration_lpar = true
 resharper_csharp_wrap_after_invocation_lpar = true
 resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_wrap_before_binary_opsign = true
+resharper_csharp_wrap_before_declaration_rpar = true
 resharper_csharp_wrap_before_invocation_rpar = true
 resharper_csharp_wrap_extends_list_style = chop_if_long
 resharper_csharp_wrap_lines = false
@@ -91,11 +95,14 @@ resharper_csharp_wrap_parameters_style = chop_if_long
 resharper_keep_existing_declaration_block_arrangement = true
 resharper_keep_existing_embedded_block_arrangement = true
 resharper_keep_existing_enum_arrangement = true
-resharper_keep_existing_initializer_arrangement = false
+resharper_keep_existing_initializer_arrangement = true
 resharper_max_attribute_length_for_same_line = 0
 resharper_show_autodetect_configure_formatting_tip = false
 resharper_use_indent_from_vs = false
+resharper_wrap_before_primary_constructor_declaration_lpar = false
+resharper_wrap_before_primary_constructor_declaration_rpar = false
 resharper_wrap_chained_binary_expressions = chop_if_long
+resharper_wrap_chained_binary_patterns = chop_if_long
 resharper_wrap_chained_method_calls = chop_if_long
 
 # ReSharper inspection severities

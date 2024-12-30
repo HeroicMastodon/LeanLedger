@@ -15,14 +15,16 @@
         class?: string;
         confirmButtonColorType?: ColorType;
         cancelButtonColorType?: ColorType;
+        cancelText?: string;
         onclick?: () => MaybePromise<any>;
+        oncancel?: () => MaybePromise<any>;
     } = $props();
 
     async function onConfirm() {
         const shouldClose = await props.onConfirm();
 
         if (shouldClose) {
-            dialog?.close();
+            await close();
         }
     }
     async function onClick() {
@@ -31,6 +33,13 @@
         }
 
         dialog?.showModal();
+    }
+
+    async function close() {
+        if (props.oncancel) {
+            await props.oncancel();
+        }
+        dialog?.close();
     }
 </script>
 
@@ -47,9 +56,9 @@
         {/if}
         <div class="flex gap-4 justify-end">
             <button
-                onclick={() => dialog?.close()}
+                onclick={close}
                 class="btn variant-outline-{props.cancelButtonColorType}"
-            >Cancel
+            >{props.cancelText ?? "Cancel"}
             </button>
             <button
                 onclick={onConfirm}
