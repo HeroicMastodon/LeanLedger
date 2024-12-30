@@ -10,6 +10,8 @@
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import Alert from "$lib/components/Alert.svelte";
     import ImportSettingsButton from "$lib/accounts/ImportSettingsButton.svelte";
+    import DialogButton from "$lib/components/dialog/DialogButton.svelte";
+    import ImportButton from "$lib/accounts/ImportButton.svelte";
 
     let {data}: { data: PageData } = $props();
     let account: AccountData | null = $state(null);
@@ -18,13 +20,11 @@
     async function load() {
         const response = await apiClient.get<AccountData>(`accounts/${data.id}`);
         account = response.data;
-        console.dir(response.data)
     }
 
     async function saveChanges() {
         isSaving = true;
         const response = await apiClient.put(`accounts/${data.id}`, account)
-        console.dir(response)
         isSaving = false;
     }
 
@@ -53,6 +53,7 @@
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
             {#if account.accountType !== "Merchant"}
                 <ImportSettingsButton accountId={account.id} />
+                <ImportButton accountId={account.id}/>
             {/if}
             <DeleteConfirmationButton onDelete={deleteAccount} />
             <p>Balance:

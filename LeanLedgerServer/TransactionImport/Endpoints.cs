@@ -29,19 +29,22 @@ public static class Endpoints {
         IMapper mapper,
         [FromServices]
         Importer importer
-    ) => await GetValidAccount(accountId, dbContext)
-        .ThenAsync(
-            async account => {
-                var settings = await EnsureSettingsExist(account, dbContext);
-                var csv = await ReadCsvToList(csvFile);
+    ) {
 
-                return await importer.ImportCsv(account, settings, csv);
-            }
-        )
-        .Map(
-            ok: Ok,
-            error: err => err.ToHttpResult()
-        );
+        return await GetValidAccount(accountId, dbContext)
+            .ThenAsync(
+                async account => {
+                    var settings = await EnsureSettingsExist(account, dbContext);
+                    var csv = await ReadCsvToList(csvFile);
+
+                    return await importer.ImportCsv(account, settings, csv);
+                }
+            )
+            .Map(
+                ok: Ok,
+                error: err => err.ToHttpResult()
+            );
+    }
 
     private static async Task<IResult> GetImportSettings(
         Guid accountId,
