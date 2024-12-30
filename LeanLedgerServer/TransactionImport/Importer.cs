@@ -2,9 +2,11 @@ namespace LeanLedgerServer.TransactionImport;
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json.Serialization;
 using Accounts;
 using AutoMapper;
 using Common;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Transactions;
 using static Transactions.TransactionFunctions;
 
@@ -12,7 +14,7 @@ public class Importer(
     LedgerDbContext dbContext,
     IMapper mapper
 ) {
-    public async Task<Result<ImportOutput>> ImportCsv(
+    public async Task<List<ImportedTransaction>> ImportCsv(
         Account account,
         ImportSettings settings,
         List<Dictionary<string, string?>> csv
@@ -95,7 +97,6 @@ public class Importer(
                     dbContext.Transactions,
                     mapper
                 )
-                .MapError(err => new ImportError(index, $"Problem occurred while creating transaction: {err}"))
                 .ThenAsync(
                     async transaction => {
                         await dbContext.AddAsync(transaction);
@@ -108,20 +109,36 @@ public class Importer(
 
         await dbContext.SaveChangesAsync();
 
-        return transactions.Aggregate(
-            new ImportOutput(
-                Imported: [],
-                Errors: []
-            ),
-            (value, result) => {
-                result.When(
-                    ok: value.Imported.Add,
-                    error: err
-                        => value.Errors.Add(err as ImportError ?? new ImportError(null, err.ToString()))
-                );
-                return value;
-            }
-        );
+        return transactions.Enumerate()
+            .Select(
+                pair => pair.Value.Map(
+                    ok: t => new ImportedTransaction(
+                        ImportResult.Success,
+                        pair.Index,
+                        $"Successfully imported transaction {t.Description}",
+                        t.Id
+                    ),
+                    error: e => e switch {
+                        ConflictingHash err => new ImportedTransaction(
+                            ImportResult.Failed,
+                            pair.Index,
+                            $"Transaction conflicts with existing transaction {err.Transaction}",
+                            err.Transaction.Id
+                        ),
+                        ImportError err => new ImportedTransaction(
+                            ImportResult.Failed,
+                            pair.Index,
+                            err.Message
+                        ),
+                        _ => new ImportedTransaction(
+                            ImportResult.Failed,
+                            pair.Index,
+                            $"Something went wrong while creating the transaction: {e}"
+                        )
+                    }
+                )
+            )
+            .ToList();
     }
 
 
@@ -133,10 +150,19 @@ public class Importer(
     }
 }
 
-public record ImportOutput(
-    List<Transaction> Imported,
-    List<ImportError> Errors
+public record ImportedTransaction(
+    ImportResult Result,
+    int Index,
+    string Message,
+    Guid? TransactionId = null
 );
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ImportResult {
+    Success,
+    Warning,
+    Failed
+}
 
 public record ImportError(
     int? LineNumber,

@@ -53,7 +53,7 @@
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
             {#if account.accountType !== "Merchant"}
                 <ImportSettingsButton accountId={account.id} />
-                <ImportButton accountId={account.id}/>
+                <ImportButton onClose={load} accountId={account.id}/>
             {/if}
             <DeleteConfirmationButton onDelete={deleteAccount} />
             <p>Balance:
