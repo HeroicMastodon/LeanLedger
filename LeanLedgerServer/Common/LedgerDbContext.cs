@@ -72,5 +72,7 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
                 entity.HasQueryFilter(s => !s.IsDeleted);
             }
         );
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(LedgerDbContext).Assembly);
     }
 }

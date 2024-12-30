@@ -13,6 +13,7 @@ builder.Services.AddDbContext<LedgerDbContext>(
 );
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<Importer>();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = [] });
@@ -22,5 +23,6 @@ baseRoute.MapAccounts();
 baseRoute.MapTransactions();
 baseRoute.MapCategories();
 baseRoute.MapImport();
+app.MapControllers();
 
 app.Run();
