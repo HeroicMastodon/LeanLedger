@@ -31,7 +31,7 @@ public class Importer(
                 }
 
                 switch (field) {
-                    case TransactionField.Amount: {
+                    case TransactionImportField.Amount: {
                         if (!decimal.TryParse(columnValue, CultureInfo.InvariantCulture, out var amount)) {
                             transactions.Add(new ImportError(index, $"Invalid number in amount field; {columnName}: {columnValue}"));
                         }
@@ -39,7 +39,7 @@ public class Importer(
                         mappedTransaction.Amount = amount;
                         break;
                     }
-                    case TransactionField.NegatedAmount: {
+                    case TransactionImportField.NegatedAmount: {
                         if (!decimal.TryParse(columnValue, CultureInfo.InvariantCulture, out var amount)) {
                             transactions.Add(new ImportError(index, $"Invalid number in amount field; {columnName}: {columnValue}"));
                         }
@@ -47,20 +47,20 @@ public class Importer(
                         mappedTransaction.Amount = amount * -1;
                         break;
                     }
-                    case TransactionField.Date:
+                    case TransactionImportField.Date:
                         if (!DateOnly.TryParseExact(columnValue, settings.DateFormat ?? "yyyy/mm/dd", out var date)) {
                             transactions.Add(new ImportError(index, $"Could not parse date; {columnName}: {columnValue}"));
                         }
 
                         mappedTransaction.Date = date;
                         break;
-                    case TransactionField.Description:
+                    case TransactionImportField.Description:
                         mappedTransaction.Description = columnValue;
                         break;
-                    case TransactionField.Category:
+                    case TransactionImportField.Category:
                         mappedTransaction.Category = columnValue;
                         break;
-                    case TransactionField.Ignore:
+                    case TransactionImportField.Ignore:
                         break;
                     default:
                         throw new UnreachableException();
