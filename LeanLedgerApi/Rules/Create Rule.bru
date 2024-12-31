@@ -1,0 +1,21 @@
+meta {
+  name: Create Rule
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/rules
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "rule",
+    "isStrict": true,
+    "triggers": [],
+    "actions": [],
+    "ruleGroupName": null
+  }
+}

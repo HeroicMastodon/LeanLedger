@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using Transactions;
 
 public class Rule {
-    public Guid Id { get; init; }
+    public required Guid Id { get; init; }
     public string Name { get; set; }
     public bool IsStrict { get; set; }
     public List<RuleTrigger> Triggers { get; set; }
@@ -14,6 +14,7 @@ public class Rule {
     public bool IsDeleted { get; set; }
 
     public string? RuleGroupName { get; set; }
+    [JsonIgnore]
     public RuleGroup? RuleGroup { get; set; }
 
     public bool ShouldTriggerFor(Transaction transaction) => IsStrict
@@ -24,8 +25,8 @@ public class Rule {
 }
 
 public class RuleGroup {
-    public string Name { get; set; }
-    public List<Rule> Rules { get; set; }
+    public required string Name { get; set; }
+    public List<Rule> Rules { get; set; } = [];
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

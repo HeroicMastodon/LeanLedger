@@ -1,0 +1,15 @@
+meta {
+  name: Get Rule Group
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/rule-groups/{{name}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  name: rule group
+}

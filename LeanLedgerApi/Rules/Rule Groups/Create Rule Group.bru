@@ -1,0 +1,17 @@
+meta {
+  name: Create Rule Group
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/rule-groups
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "rule group"
+  }
+}

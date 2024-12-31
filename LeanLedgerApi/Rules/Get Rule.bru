@@ -1,0 +1,15 @@
+meta {
+  name: Get Rule
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/rules/{{id}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  id: 9e64ee51-24b4-4603-82df-c7fe25460f91
+}
