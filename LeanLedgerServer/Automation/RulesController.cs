@@ -13,4 +13,24 @@ public class RulesController(
     public async Task<IActionResult> ListRules() {
         return Ok();
     }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetRule(Guid id) {
+        return Ok();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateRule() {
+        return Ok();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateRule() {
+        return Ok();
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteRule() {
+        return Ok();
+    }
 }
