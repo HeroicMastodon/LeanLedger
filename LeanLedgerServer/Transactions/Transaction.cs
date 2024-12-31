@@ -5,7 +5,7 @@ using Accounts;
 
 public class Transaction {
     public Guid Id { get; init; }
-    public string Description { get; set; } = string.Empty;
+    public string? Description { get; set; } = string.Empty;
     public DateOnly Date { get; set; }
     public decimal Amount { get; set; }
 
@@ -47,7 +47,7 @@ public record AttachedAccount(
 
 public record TableTransaction(
     Guid Id,
-    string Description,
+    string? Description,
     decimal Amount,
     DateOnly Date,
     string? Category,

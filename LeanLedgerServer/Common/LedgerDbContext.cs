@@ -5,6 +5,7 @@ namespace LeanLedgerServer.Common;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Accounts;
+using Automation;
 using TransactionImport;
 using Transactions;
 
@@ -12,6 +13,8 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<ImportSettings> ImportSettings { get; set; }
+    public DbSet<Rule> Rules { get; set; }
+    public DbSet<RuleGroup> RuleGroups { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Account>(

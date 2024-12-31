@@ -92,6 +92,7 @@ public class Importer(
                 ImportDate: DateOnly.FromDateTime(DateTime.Now)
             );
 
+            // TODO: finish the CRUD for rules then test how they work
             var transaction = await CreateNewTransaction(
                     request,
                     dbContext.Transactions,
@@ -129,6 +130,11 @@ public class Importer(
                             ImportResult.Failed,
                             pair.Index,
                             err.Message
+                        ),
+                        BadRule err => new ImportedTransaction(
+                            ImportResult.Failed,
+                            pair.Index,
+                            err.Exception.Message
                         ),
                         _ => new ImportedTransaction(
                             ImportResult.Failed,
