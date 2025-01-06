@@ -13,10 +13,14 @@ public class RuleGroupsController(
     public async Task<IActionResult> ListRuleGroups() {
         var ruleGroups = await dbContext.RuleGroups.Include(rg => rg.Rules).ToListAsync();
         var ungroupedRules = await dbContext.Rules.Where(r => r.RuleGroupName == null).ToListAsync();
-        var nameToRules = ruleGroups.ToDictionary(rg => rg.Name, rg => rg.Rules);
-        nameToRules["(ungrouped)"] = ungroupedRules;
 
-        return Ok(nameToRules);
+        ruleGroups.Add(
+            new RuleGroup {
+                Name = "(ungrouped)",
+                Rules = ungroupedRules
+            }
+        );
+        return Ok(ruleGroups);
     }
 
     [HttpGet("{name}")]
