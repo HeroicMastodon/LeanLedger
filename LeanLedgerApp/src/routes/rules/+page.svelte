@@ -3,6 +3,9 @@
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import {actionToString, type RuleGroup, triggerToString} from "$lib/rules";
     import SimpleExpandingList from "$lib/components/SimpleExpandingList.svelte";
+    import {Dialog} from "$lib/dialog.svelte";
+    import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
+    import LabeledInput from "$lib/components/LabeledInput.svelte";
 
     let ruleGroups = $state(load())
 
@@ -11,16 +14,38 @@
         return res.data;
     }
 
-    // TODO: Implement the following dialogs
-    // ! Can use the DefaultDialog Component for these
-    let ruleDialog: HTMLDialogElement | undefined = $state();
-    let ruleGroupDialog: HTMLDialogElement | undefined = $state();
-    let deleteConfirmationDialog: HTMLDialogElement | undefined = $state();
+    let ruleDialog = new Dialog();
+
+    let ruleGroupDialog = new Dialog();
+    let ruleGroupUpdate = $state<{ previous: string | null; current: string; }>({
+        previous: null,
+        current: ""
+    })
+    const ruleGroupDialogHeader = $derived(ruleGroupUpdate.previous ? "Update" : "New");
+
+    function openRuleGroupDialog(previousValue: string | null) {
+        ruleGroupUpdate.previous = previousValue;
+        ruleGroupUpdate.current = previousValue ?? "";
+        ruleGroupDialog.open();
+    }
+
+    async function saveRuleGroup() {
+        const payload = {name: ruleGroupUpdate.current};
+        if (ruleGroupUpdate.previous) {
+            const res = await apiClient.put(`rule-groups/${ruleGroupUpdate.previous}`, payload);
+        } else {
+            const res = await apiClient.post(`rule-groups`, payload);
+        }
+
+        ruleGroups = load();
+    }
+
+    let deleteConfirmationDialog = new Dialog();
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Rules</h1>
-    <button class="btn variant-filled-secondary">New Group</button>
+    <button onclick={() => openRuleGroupDialog(null)} class="btn variant-filled-secondary">New Group</button>
 </div>
 
 {#await ruleGroups}
@@ -31,7 +56,11 @@
             <div class="flex justify-between mb-4">
                 <div class="flex gap-4">
                     <h2 class="h2">{group.name}</h2>
-                    <button class="btn variant-outline-tertiary">Edit</button>
+                    <button
+                        class="btn variant-outline-tertiary"
+                        onclick={() => openRuleGroupDialog(group.name)}
+                    >Edit
+                    </button>
                 </div>
                 <button class="btn variant-outline-secondary">New Rule</button>
             </div>
@@ -73,4 +102,24 @@
             </div>
         </div>
     {/each}
+    <DefaultDialog>
+        <h2 class="h2">Rules</h2>
+    </DefaultDialog>
+    <DefaultDialog bind:dialog={ruleGroupDialog.value}>
+        <div class="flex flex-col gap-8 items-center">
+            <h2 class="h2">{ruleGroupDialogHeader} Rule Group</h2>
+            <LabeledInput
+                type="text"
+                bind:value={ruleGroupUpdate.current}
+                label="Name"
+            />
+            <div class="flex flex-row gap-8">
+                <button onclick={() => ruleGroupDialog.close()} class="btn variant-outline-error">Cancel</button>
+                <button onclick={saveRuleGroup} class="btn variant-filled-success">Save</button>
+            </div>
+        </div>
+    </DefaultDialog>
+    <DefaultDialog>
+        <h2 class="h2">Are you sure you want to delete?</h2>
+    </DefaultDialog>
 {/await}

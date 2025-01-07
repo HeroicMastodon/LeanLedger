@@ -53,11 +53,14 @@ public class RuleGroupsController(
             return NotFound();
         }
 
-        group.Name = request.Name;
+        var newGroup = new RuleGroup {
+            Name = request.Name
+        };
         group.Rules.ForEach(r => r.RuleGroupName = request.Name);
 
-        dbContext.Update(group);
         dbContext.UpdateRange(group.Rules);
+        await dbContext.AddAsync(newGroup);
+        dbContext.Remove(group);
         await dbContext.SaveChangesAsync();
 
         return Ok(group);

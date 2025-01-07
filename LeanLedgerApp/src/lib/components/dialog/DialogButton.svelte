@@ -2,10 +2,10 @@
 
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import type {MaybePromise} from "$lib";
+    import {Dialog} from "$lib/dialog.svelte";
 
     type ColorType = 'primary' | 'error' | 'warning' | 'success';
 
-    let dialog: HTMLDialogElement | undefined = $state();
     let props: {
         text: string;
         children?: any;
@@ -19,28 +19,11 @@
         onclick?: () => MaybePromise<any>;
         oncancel?: () => MaybePromise<any>;
     } = $props();
+    let dialog = new Dialog();
 
-    async function onConfirm() {
-        const shouldClose = await props.onConfirm();
-
-        if (shouldClose) {
-            await close();
-        }
-    }
-    async function onClick() {
-        if (props.onclick) {
-            await props.onclick();
-        }
-
-        dialog?.showModal();
-    }
-
-    async function close() {
-        if (props.oncancel) {
-            await props.oncancel();
-        }
-        dialog?.close();
-    }
+    const onConfirm = async () => await dialog.close(props.onConfirm);
+    const onClick = async () => await dialog.open(props.onclick);
+    const close = async () => await dialog.close(props.oncancel);
 </script>
 
 <button
@@ -48,7 +31,7 @@
     class="btn {props.class ?? ''}"
 >{props.text}
 </button>
-<DefaultDialog bind:dialog={dialog}>
+<DefaultDialog bind:dialog={dialog.value}>
     <div class="flex flex-col gap-4">
         <h2 class="h2">{props.title}</h2>
         {#if props.children}
