@@ -17,13 +17,13 @@
     let ruleDialog = new Dialog();
 
     let ruleGroupDialog = new Dialog();
-    let ruleGroupUpdate = $state<{ previous: string | null; current: string; }>({
-        previous: null,
+    let ruleGroupUpdate = $state<{ previous?: string; current: string; }>({
+        previous: undefined,
         current: ""
     })
     const ruleGroupDialogHeader = $derived(ruleGroupUpdate.previous ? "Update" : "New");
 
-    function openRuleGroupDialog(previousValue: string | null) {
+    function openRuleGroupDialog(previousValue?: string) {
         ruleGroupUpdate.previous = previousValue;
         ruleGroupUpdate.current = previousValue ?? "";
         ruleGroupDialog.open();
@@ -45,7 +45,7 @@
 
 <div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Rules</h1>
-    <button onclick={() => openRuleGroupDialog(null)} class="btn variant-filled-secondary">New Group</button>
+    <button onclick={() => openRuleGroupDialog()} class="btn variant-filled-secondary">New Group</button>
 </div>
 
 {#await ruleGroups}
@@ -55,12 +55,14 @@
         <div class="card mb-8 p-4">
             <div class="flex justify-between mb-4">
                 <div class="flex gap-4">
-                    <h2 class="h2">{group.name}</h2>
-                    <button
-                        class="btn variant-outline-tertiary"
-                        onclick={() => openRuleGroupDialog(group.name)}
-                    >Edit
-                    </button>
+                    <h2 class="h2">{group.name || "(ungrouped)"}</h2>
+                    {#if group.name}
+                        <button
+                            class="btn variant-outline-tertiary"
+                            onclick={() => openRuleGroupDialog(group.name)}
+                        >Edit
+                        </button>
+                    {/if}
                 </div>
                 <button class="btn variant-outline-secondary">New Rule</button>
             </div>

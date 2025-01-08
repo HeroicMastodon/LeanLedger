@@ -39,7 +39,7 @@ export const RuleActionTypes = [
 ] as const;
 export type RuleActionType = typeof RuleActionTypes[number];
 export type RuleGroup = {
-    name: string;
+    name?: string;
     rules: Rule[];
 }
 export type Rule = {

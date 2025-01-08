@@ -11,15 +11,16 @@ public class RuleGroupsController(
 ): Controller {
     [HttpGet]
     public async Task<IActionResult> ListRuleGroups() {
-        var ruleGroups = await dbContext.RuleGroups.Include(rg => rg.Rules).ToListAsync();
-        var ungroupedRules = await dbContext.Rules.Where(r => r.RuleGroupName == null).ToListAsync();
+        var ruleGroups = await dbContext.RuleGroups
+            .Include(rg => rg.Rules)
+            .Select(rg => new RuleGroupView(rg.Name, rg.Rules))
+            .ToListAsync();
+        var ungroupedRules = await dbContext.Rules
+            .Where(r => r.RuleGroupName == null)
+            .ToListAsync();
 
-        ruleGroups.Add(
-            new RuleGroup {
-                Name = "(ungrouped)",
-                Rules = ungroupedRules
-            }
-        );
+        ruleGroups.Add(new RuleGroupView(null, ungroupedRules));
+
         return Ok(ruleGroups);
     }
 
@@ -90,3 +91,5 @@ public class RuleGroupsController(
 }
 
 public record RuleGroupRequest(string Name);
+
+public record RuleGroupView(string? Name, List<Rule> Rules);

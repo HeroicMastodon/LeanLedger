@@ -4,8 +4,6 @@ export class Dialog {
     value: HTMLDialogElement | undefined = $state();
 
     async open(onOpen?: () => MaybePromise<any>) {
-        console.log("open")
-        console.log(this.value);
         if (onOpen) {
             await onOpen();
         }
