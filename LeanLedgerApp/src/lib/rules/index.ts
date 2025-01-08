@@ -1,17 +1,17 @@
-import {splitPascal} from "$lib";
+import {type SelectOption, splitPascal} from "$lib";
 
 export type RuleTrigger = {
-    field: TransactionRuleField;
+    field: RuleTransactionField;
     not: boolean;
     condition: RuleCondition;
     value?: string;
 }
 export type RuleAction = {
     actionType: RuleActionType;
-    field?: TransactionRuleField;
+    field?: RuleTransactionField;
     value?: string;
 }
-export const TransactionRuleFields = [
+export const ruleTransactionFields = [
     "Description",
     "Date",
     "Amount",
@@ -20,8 +20,8 @@ export const TransactionRuleFields = [
     "Source",
     "Destination"
 ] as const;
-export type TransactionRuleField = typeof TransactionRuleFields[number];
-export const RuleConditions = [
+export type RuleTransactionField = typeof ruleTransactionFields[number];
+export const ruleConditions = [
     "StartsWith",
     "EndsWith",
     "Contains",
@@ -30,14 +30,14 @@ export const RuleConditions = [
     "LessThan",
     "Exists",
 ] as const;
-export type RuleCondition = typeof RuleConditions[number];
-export const RuleActionTypes = [
+export type RuleCondition = typeof ruleConditions[number];
+export const ruleActionTypes = [
     "Append",
     "Set",
     "Clear",
     "DeleteTransaction"
 ] as const;
-export type RuleActionType = typeof RuleActionTypes[number];
+export type RuleActionType = typeof ruleActionTypes[number];
 export type RuleGroup = {
     name?: string;
     rules: Rule[];
@@ -53,6 +53,7 @@ export type Rule = {
 export function triggerToString(trigger: RuleTrigger) {
     return `When ${splitPascal(trigger.field)} ${trigger.not ? "Not " : ""}${splitPascal(trigger.condition)} ${trigger.value || ""}`
 }
+
 export function actionToString(action: RuleAction) {
     let result = splitPascal(action.actionType);
 

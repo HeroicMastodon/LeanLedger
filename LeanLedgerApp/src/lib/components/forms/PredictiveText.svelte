@@ -10,7 +10,7 @@
         datalistId,
     }: {
         value?: string;
-        label: string;
+        label?: string;
         class?: string;
         options: string[];
         inputId: string;
@@ -18,12 +18,21 @@
     } = $props();
 </script>
 
-<label class="label {className ?? ''}">
-    <span>{label}</span>
-    <input bind:value list={datalistId} id={inputId} type="text" class="input">
+{#if label}
+    <label class="label {className ?? ''}">
+        <span>{label}</span>
+        <input bind:value list={datalistId} id={inputId} type="text" class="input">
+        <datalist id={datalistId}>
+            {#each options as option}
+                <option value={ option }>{option}</option>
+            {/each}
+        </datalist>
+    </label>
+{:else}
+    <input bind:value list={datalistId} id={inputId} type="text" class="input {className ?? ''}">
     <datalist id={datalistId}>
         {#each options as option}
             <option value={ option }>{option}</option>
         {/each}
     </datalist>
-</label>
+{/if}
