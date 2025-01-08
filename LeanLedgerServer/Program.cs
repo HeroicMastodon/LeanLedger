@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(
     new WebApplicationOptions {
         Args = args,
-        WebRootPath = "StaticFiles"
+        WebRootPath = "StaticFiles",
     }
 );
 var config = builder.Configuration;
@@ -28,11 +28,17 @@ builder.Services.AddControllers()
 ;
 
 var app = builder.Build();
-app.UseDefaultFiles(
-    new DefaultFilesOptions {
-        DefaultFileNames = []
+app.Use(
+    async (context, next) => {
+        if (!context.Request.Path.StartsWithSegments("/api") && !Path.HasExtension(context.Request.Path) && context.Request.Path != "/") {
+            context.Request.Path = "/index.html";
+        }
+
+        await next();
     }
 );
+
+app.UseDefaultFiles();
 app.UseStaticFiles();
 var baseRoute = app.MapGroup("api");
 baseRoute.MapAccounts();

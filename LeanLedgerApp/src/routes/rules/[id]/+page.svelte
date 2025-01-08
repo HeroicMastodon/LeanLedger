@@ -34,18 +34,21 @@
     }
 </script>
 
-<div class="mb-8 flex gap-4">
-    <h1 class="h1">Rule</h1>
+<div class="mb-8 flex justify-between">
+    <div class="flex gap-4">
+        <h1 class="h1">Rule</h1>
+        <button class="btn variant-filled-primary">Save</button>
+        <button class="btn variant-outline-secondary">Matching Transactions</button>
+        <button class="btn variant-outline-warning">Run Rule</button>
+    </div>
     <button class="btn variant-outline-error">Delete</button>
-    <button class="btn variant-outline-secondary">Matching Transactions</button>
-    <button class="btn variant-outline-warning">Run Rule</button>
 </div>
 
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
     {#if rule}
-        <div class="flex gap-8 items-end w-fit mb-4">
+        <div class="flex gap-8 items-end w-fit mb-8">
             <LabeledInput
                 label="Name"
                 bind:value={rule.name}
@@ -61,7 +64,7 @@
             <h2 class="h2"> Rule triggers when </h2>
             <button class="btn variant-outline-primary">New Trigger</button>
         </div>
-        <div class="table-container mb-4">
+        <div class="table-container mb-8">
             <table class="table">
                 <thead>
                 <tr>
