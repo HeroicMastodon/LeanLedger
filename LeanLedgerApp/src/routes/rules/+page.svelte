@@ -5,7 +5,7 @@
     import SimpleExpandingList from "$lib/components/SimpleExpandingList.svelte";
     import {Dialog} from "$lib/dialog.svelte";
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
-    import LabeledInput from "$lib/components/LabeledInput.svelte";
+    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
 
     let ruleGroups = $state(load())
 

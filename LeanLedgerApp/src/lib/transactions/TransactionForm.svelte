@@ -5,13 +5,14 @@
         loadCategoryOptions,
         TransactionTypeOptions
     } from "$lib/transactions/index.js";
-    import PredictiveText from "$lib/components/PredictiveText.svelte";
-    import LabeledSelect from "$lib/components/LabeledSelect.svelte";
-    import LabeledInput from "$lib/components/LabeledInput.svelte";
-    import MoneyInput from "$lib/components/MoneyInput.svelte";
-    import PredictiveSelect from "$lib/components/PredictiveSelect.svelte";
+    import PredictiveText from "$lib/components/forms/PredictiveText.svelte";
+    import LabeledSelect from "$lib/components/forms/LabeledSelect.svelte";
+    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
+    import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
+    import PredictiveSelect from "$lib/components/forms/PredictiveSelect.svelte";
     import type {SelectOption} from "$lib";
     import {onMount} from "svelte";
+    import Card from "$lib/components/Card.svelte";
 
     let {transaction = $bindable<EditableTransaction>()} = $props();
     let categories: string[] = $state([]);
@@ -23,7 +24,7 @@
 
 </script>
 
-<div class="card p-8 grid grid-cols-1 md:grid-cols-6 gap-4 max-w-3xl items-center">
+<Card class="grid grid-cols-1 md:grid-cols-6 gap-4 max-w-3xl items-center">
     <LabeledInput
         label="Description"
         type="text"
@@ -71,4 +72,4 @@
         optional
         bind:value={transaction.destinationAccountId}
     />
-</div>
+</Card>

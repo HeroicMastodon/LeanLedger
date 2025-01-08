@@ -1,9 +1,10 @@
 <script lang="ts">
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import {apiClient} from "$lib/apiClient";
-    import LabeledInput from "$lib/components/LabeledInput.svelte";
-    import LabeledSelect from "$lib/components/LabeledSelect.svelte";
+    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
+    import LabeledSelect from "$lib/components/forms/LabeledSelect.svelte";
     import type {SelectOption} from "$lib";
+    import Card from "$lib/components/Card.svelte";
 
     type ImportSettings = {
         dateFormat: string;
@@ -72,7 +73,7 @@
                 bind:value={settings.csvDelimiter}
             />
         </div>
-        <div class="card p-4 flex flex-col gap-4">
+        <Card class="flex flex-col gap-4">
             <div class="flex flex-row gap-4 justify-between">
                 <h3 class="h3">Mappings</h3>
                 <button
@@ -100,6 +101,6 @@
                     </button>
                 </div>
             {/each}
-        </div>
+        </Card>
     </div>
 </FormButton>
