@@ -6,10 +6,23 @@ export type RuleTrigger = {
     condition: RuleCondition;
     value?: string;
 }
+export function defaultRuleTrigger(): RuleTrigger {
+    return {
+        field: "Description",
+        not: false,
+        condition: "StartsWith",
+    }
+}
 export type RuleAction = {
     actionType: RuleActionType;
     field?: RuleTransactionField;
     value?: string;
+}
+export function defaultRuleAction(): RuleAction {
+    return {
+        actionType: "Set",
+        field: "Description",
+    }
 }
 export const ruleTransactionFields = [
     "Description",
@@ -48,6 +61,16 @@ export type Rule = {
     isStrict: boolean;
     triggers: RuleTrigger[];
     actions: RuleAction[];
+}
+
+export function defaultRule(): Rule {
+    return {
+        id: "",
+        name: "",
+        isStrict: true,
+        triggers: [],
+        actions: [],
+    }
 }
 
 export function triggerToString(trigger: RuleTrigger) {

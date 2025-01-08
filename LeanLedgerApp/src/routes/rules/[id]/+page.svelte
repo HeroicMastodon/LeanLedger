@@ -25,6 +25,11 @@
         rule = res.data;
     }
 
+    async function save() {
+        const res = await apiClient.put<Rule>(`Rules/${data.id}`, rule);
+        rule = res.data;
+    }
+
     function isTriggerValueDisabled(condition: RuleCondition) {
         return condition === "Exists";
     }
@@ -37,7 +42,7 @@
 <div class="mb-8 flex justify-between">
     <div class="flex gap-4">
         <h1 class="h1">Rule</h1>
-        <button class="btn variant-filled-primary">Save</button>
+        <button onclick={save} class="btn variant-filled-primary">Save</button>
         <button class="btn variant-outline-secondary">Matching Transactions</button>
         <button class="btn variant-outline-warning">Run Rule</button>
     </div>
@@ -140,7 +145,11 @@
                             </select>
                         </td>
                         <td>
-                            <select class="select w-fit" bind:value={action.field}>
+                            <select
+                                class="select w-fit"
+                                bind:value={action.field}
+                                disabled={isActionValueDisabled(action.actionType)}
+                            >
                                 {#each ruleTransactionFields as field}
                                     <option value={field}>{splitPascal(field)}</option>
                                 {/each}
