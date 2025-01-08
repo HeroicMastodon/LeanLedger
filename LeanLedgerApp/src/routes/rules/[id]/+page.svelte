@@ -28,13 +28,17 @@
     function isTriggerValueDisabled(condition: RuleCondition) {
         return condition === "Exists";
     }
+
     function isActionValueDisabled(actionType: RuleActionType) {
         return actionType === "DeleteTransaction";
     }
 </script>
 
-<div class="mb-8 flex">
+<div class="mb-8 flex gap-4">
     <h1 class="h1">Rule</h1>
+    <button class="btn variant-outline-error">Delete</button>
+    <button class="btn variant-outline-secondary">Matching Transactions</button>
+    <button class="btn variant-outline-warning">Run Rule</button>
 </div>
 
 {#await loading}
@@ -53,14 +57,17 @@
             </label>
         </div>
 
-        <div class="mb-4 flex">Triggers</div>
+        <div class="mb-4 flex gap-4">
+            <h2 class="h2"> Rule triggers when </h2>
+            <button class="btn variant-outline-primary">New Trigger</button>
+        </div>
         <div class="table-container mb-4">
             <table class="table">
                 <thead>
                 <tr>
                     <th>Field</th>
                     <th>Not</th>
-                    <th>Condition</th>
+                    <th>Not Condition</th>
                     <th>Value</th>
                 </tr>
                 </thead>
@@ -68,6 +75,7 @@
                 {#each rule.triggers as trigger, idx}
                     <tr>
                         <td>
+                            <button class="btn variant-outline-error mr-4">Delete</button>
                             <select class="select w-fit" bind:value={trigger.field}>
                                 {#each ruleTransactionFields as field}
                                     <option value={field}>{splitPascal(field)}</option>
@@ -104,7 +112,10 @@
             {/each}
         </datalist>
 
-        <div class="mb-4 flex">Actions</div>
+        <div class="mb-4 flex gap-4">
+            <h2 class="h2"> Then rule will </h2>
+            <button class="btn variant-outline-primary">New Action</button>
+        </div>
         <div class="table-container">
             <table class="table">
                 <thead>
@@ -118,6 +129,7 @@
                 {#each rule.actions as action}
                     <tr>
                         <td>
+                            <button class="btn variant-outline-error mr-4">Delete</button>
                             <select class="select w-fit" bind:value={action.actionType}>
                                 {#each ruleActionTypes as actionType}
                                     <option value={actionType}>{splitPascal(actionType)}</option>

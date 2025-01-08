@@ -46,6 +46,7 @@
 <div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Rules</h1>
     <button onclick={() => openRuleGroupDialog()} class="btn variant-filled-secondary">New Group</button>
+    <button class="btn variant-outline-warning">Run All Rules</button>
 </div>
 
 {#await ruleGroups}
@@ -63,6 +64,7 @@
                         >Edit
                         </button>
                     {/if}
+                    <button class="btn variant-outline-warning">Run Rules in Group</button>
                 </div>
                 <button class="btn variant-outline-secondary">New Rule</button>
             </div>

@@ -37,6 +37,17 @@ public class RuleGroupsController(
 
     [HttpPost]
     public async Task<IActionResult> CreateRuleGroup([FromBody] RuleGroupRequest request) {
+        if (string.IsNullOrWhiteSpace(request.Name)) {
+            return BadRequest("Name cannot be missing");
+        }
+
+        if (
+            request.Name.Equals("(ungrouped)", StringComparison.OrdinalIgnoreCase)
+            || request.Name.Equals("run", StringComparison.Ordinal)
+        ) {
+            return BadRequest("Name cannot be '(ungrouped)' or 'run'");
+        }
+
         var newGroup = new RuleGroup {
             Name = request.Name
         };
@@ -52,6 +63,17 @@ public class RuleGroupsController(
 
         if (group is null) {
             return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name)) {
+            return BadRequest("Name cannot be missing");
+        }
+
+        if (
+            request.Name.Equals("(ungrouped)", StringComparison.OrdinalIgnoreCase)
+            || request.Name.Equals("run", StringComparison.Ordinal)
+        ) {
+            return BadRequest("Name cannot be '(ungrouped)' or 'run'");
         }
 
         var newGroup = new RuleGroup {
