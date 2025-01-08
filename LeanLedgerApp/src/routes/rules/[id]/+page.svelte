@@ -1,5 +1,7 @@
 <script lang="ts">
     import {
+        defaultRuleAction,
+        defaultRuleTrigger,
         type Rule,
         type RuleActionType,
         ruleActionTypes,
@@ -30,11 +32,30 @@
         rule = res.data;
     }
 
+    function addTrigger() {
+        rule?.triggers.push(defaultRuleTrigger());
+    }
+
+    function removeTrigger(idx: number) {
+        rule?.triggers.splice(idx, 1);
+    }
+
+    function addAction() {
+        rule?.actions.push(defaultRuleAction());
+    }
+
+    function removeAction(idx: number) {
+        rule?.actions.splice(idx, 1);
+    }
+
     function isTriggerValueDisabled(condition: RuleCondition) {
         return condition === "Exists";
     }
 
     function isActionValueDisabled(actionType: RuleActionType) {
+        return actionType === "DeleteTransaction" || actionType === "Clear";
+    }
+    function isActionFieldDisabled(actionType: RuleActionType) {
         return actionType === "DeleteTransaction";
     }
 </script>
@@ -67,7 +88,11 @@
 
         <div class="mb-4 flex gap-4">
             <h2 class="h2"> Rule triggers when </h2>
-            <button class="btn variant-outline-primary">New Trigger</button>
+            <button
+                class="btn variant-outline-primary"
+                onclick={addTrigger}
+            >New Trigger
+            </button>
         </div>
         <div class="table-container mb-8">
             <table class="table">
@@ -83,7 +108,11 @@
                 {#each rule.triggers as trigger, idx}
                     <tr>
                         <td>
-                            <button class="btn variant-outline-error mr-4">Delete</button>
+                            <button
+                                class="btn variant-outline-error mr-4"
+                                onclick={() => removeTrigger(idx)}
+                            >Delete
+                            </button>
                             <select class="select w-fit" bind:value={trigger.field}>
                                 {#each ruleTransactionFields as field}
                                     <option value={field}>{splitPascal(field)}</option>
@@ -122,7 +151,11 @@
 
         <div class="mb-4 flex gap-4">
             <h2 class="h2"> Then rule will </h2>
-            <button class="btn variant-outline-primary">New Action</button>
+            <button
+                class="btn variant-outline-primary"
+                onclick={addAction}
+            >New Action
+            </button>
         </div>
         <div class="table-container">
             <table class="table">
@@ -134,10 +167,14 @@
                 </tr>
                 </thead>
                 <tbody>
-                {#each rule.actions as action}
+                {#each rule.actions as action, idx}
                     <tr>
                         <td>
-                            <button class="btn variant-outline-error mr-4">Delete</button>
+                            <button
+                                class="btn variant-outline-error mr-4"
+                                onclick={() => removeAction(idx)}
+                            >Delete
+                            </button>
                             <select class="select w-fit" bind:value={action.actionType}>
                                 {#each ruleActionTypes as actionType}
                                     <option value={actionType}>{splitPascal(actionType)}</option>
@@ -148,7 +185,7 @@
                             <select
                                 class="select w-fit"
                                 bind:value={action.field}
-                                disabled={isActionValueDisabled(action.actionType)}
+                                disabled={isActionFieldDisabled(action.actionType)}
                             >
                                 {#each ruleTransactionFields as field}
                                     <option value={field}>{splitPascal(field)}</option>
