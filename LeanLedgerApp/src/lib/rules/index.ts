@@ -6,6 +6,7 @@ export type RuleTrigger = {
     condition: RuleCondition;
     value?: string;
 }
+
 export function defaultRuleTrigger(): RuleTrigger {
     return {
         field: "Description",
@@ -13,17 +14,20 @@ export function defaultRuleTrigger(): RuleTrigger {
         condition: "StartsWith",
     }
 }
+
 export type RuleAction = {
     actionType: RuleActionType;
     field?: RuleTransactionField;
     value?: string;
 }
+
 export function defaultRuleAction(): RuleAction {
     return {
         actionType: "Set",
         field: "Description",
     }
 }
+
 export const ruleTransactionFields = [
     "Description",
     "Date",
@@ -85,4 +89,13 @@ export function actionToString(action: RuleAction) {
     }
 
     return result;
+}
+
+export function debounce(callback: Function, wait = 300) {
+    let timeout: ReturnType<typeof setTimeout>;
+
+    return (...args: any[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => callback(...args), wait);
+    };
 }

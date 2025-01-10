@@ -6,7 +6,7 @@
         type RuleActionType,
         ruleActionTypes,
         type RuleCondition,
-        ruleConditions,
+        ruleConditions, type RuleTransactionField,
         ruleTransactionFields
     } from "$lib/rules";
     import Alert from "$lib/components/Alert.svelte";
@@ -15,12 +15,11 @@
     import type {PageData} from "./$types";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import {splitPascal} from "$lib";
+    import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
 
     const {data}: { data: PageData; } = $props();
     let rule = $state<Rule | undefined>();
     let loading = $state(load());
-    let triggerValueOptions = $state<string[]>([]);
-    let actionValueOptions = $state<string[]>([]);
 
     async function load() {
         const res = await apiClient.get<Rule>(`Rules/${data.id}`);
@@ -52,13 +51,36 @@
         return condition === "Exists";
     }
 
+    let actionValueDatalist = $state<string[]>([]);
+
     function isActionValueDisabled(actionType: RuleActionType) {
         return actionType === "DeleteTransaction" || actionType === "Clear";
     }
+
     function isActionFieldDisabled(actionType: RuleActionType) {
         return actionType === "DeleteTransaction";
     }
+
+    let textValueDatalist = $state<string[]>([]);
+
+    async function loadTextCompletions(
+        field: RuleTransactionField,
+        value?: string,
+        condition?: RuleCondition,
+    ) {
+        const isAction = condition !== undefined;
+        if (!value || (isAction && field === "Description")) {
+            return;
+        }
+
+        const res = await apiClient.get<string[]>(`Completions/descriptions?value=${value}&condition=${condition}`);
+        textValueDatalist = res.data;
+    }
+
+    async function loadAccounts() {
+    }
 </script>
+
 
 <div class="mb-8 flex justify-between">
     <div class="flex gap-4">
@@ -130,12 +152,13 @@
                             </select>
                         </td>
                         <td>
-                            <input
-                                class="input"
-                                type="text"
-                                list="trigger-value"
-                                bind:value={trigger.value}
+                            <RuleValueInput
                                 disabled={isTriggerValueDisabled(trigger.condition)}
+                                bind:value={trigger.value}
+                                dataListId="text-value"
+                                field={trigger.field}
+                                accounts={[]}
+                                onLoadTextPredictions={(value: string) => loadTextCompletions(trigger.field, value)}
                             />
                         </td>
                     </tr>
@@ -143,8 +166,8 @@
                 </tbody>
             </table>
         </div>
-        <datalist id="trigger-value">
-            {#each triggerValueOptions as option}
+        <datalist id="text-value">
+            {#each textValueDatalist as option}
                 <option>{option}</option>
             {/each}
         </datalist>
@@ -193,12 +216,13 @@
                             </select>
                         </td>
                         <td>
-                            <input
-                                class="input"
-                                type="text"
-                                list="action-value"
-                                bind:value={action.value}
+                            <RuleValueInput
                                 disabled={isActionValueDisabled(action.actionType)}
+                                bind:value={action.value}
+                                dataListId="trigger-value"
+                                field={action.field ?? 'Description'}
+                                accounts={[]}
+                                onLoadTextPredictions={async () => console.log("hi there")}
                             />
                         </td>
                     </tr>
@@ -207,7 +231,7 @@
             </table>
         </div>
         <datalist id="action-value">
-            {#each actionValueOptions as option}
+            {#each actionValueDatalist as option}
                 <option>{option}</option>
             {/each}
         </datalist>

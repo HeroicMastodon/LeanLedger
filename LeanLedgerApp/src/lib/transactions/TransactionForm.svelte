@@ -3,7 +3,7 @@
         type EditableTransaction,
         loadAccountOptions,
         loadCategoryOptions,
-        TransactionTypeOptions
+        transactionTypeOptions
     } from "$lib/transactions/index.js";
     import PredictiveText from "$lib/components/forms/PredictiveText.svelte";
     import LabeledSelect from "$lib/components/forms/LabeledSelect.svelte";
@@ -45,7 +45,7 @@
     <LabeledSelect
         bind:value={transaction.type}
         label="Type"
-        options={TransactionTypeOptions}
+        options={transactionTypeOptions}
         class="md:col-span-2"
     />
     <PredictiveText
