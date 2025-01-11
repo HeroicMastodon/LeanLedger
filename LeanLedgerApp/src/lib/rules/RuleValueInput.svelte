@@ -17,21 +17,22 @@
 </script>
 
 {#if field === "Type"}
-    <select bind:value class="select">
+    <select disabled={disabled} bind:value class="select">
         {#each transactionTypeOptions as field}
             <option value={field.value}>{field.display}</option>
         {/each}
     </select>
 {:else if field === "Date"}
-    <input class="input" type="date" bind:value />
+    <input disabled={disabled} class="input" type="date" bind:value />
 {:else if field === "Amount" && value}
-    <MoneyInput bind:value />
+    <MoneyInput disabled={disabled} bind:value />
 {:else if field === "Source" || field === "Destination"}
     <PredictiveSelect
         popupTargetName={selectPopupName}
         options={accounts}
         optional
         bind:value
+        disabled={disabled}
     />
 {:else}
     <input

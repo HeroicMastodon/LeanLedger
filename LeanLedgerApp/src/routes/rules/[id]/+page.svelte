@@ -2,7 +2,7 @@
     import {
         defaultRuleAction,
         defaultRuleTrigger,
-        type Rule,
+        type Rule, type RuleAction,
         type RuleActionType,
         ruleActionTypes,
         type RuleCondition,
@@ -108,6 +108,48 @@
 
         actionOrTrigger.field = target;
     }
+
+    function validConditionsForField(field: RuleTransactionField): RuleCondition[] {
+        switch (field) {
+            case "Description":
+                return [
+                    "Exists",
+                    "IsExactly",
+                    "Contains",
+                    "EndsWith",
+                    "StartsWith",
+                ];
+            case "Category":
+                return [
+                    "IsExactly",
+                    "Contains",
+                    "EndsWith",
+                    "StartsWith",
+                ];
+            case "Date":
+            case "Amount":
+                return [
+                    "IsExactly",
+                    "GreaterThan",
+                    "LessThan",
+                ];
+            case "Type":
+                return [
+                    "IsExactly"
+                ];
+            case "Source":
+            case "Destination":
+                return [
+                    "IsExactly",
+                    "Exists"
+                ];
+            default: return[];
+        }
+    }
+
+    function validFieldsForAction(action: RuleAction): RuleTransactionField[] {
+        return [];
+    }
 </script>
 
 
@@ -151,7 +193,7 @@
                 <tr>
                     <th>Field</th>
                     <th>Not</th>
-                    <th>Not Condition</th>
+                    <th>Condition</th>
                     <th>Value</th>
                 </tr>
                 </thead>
@@ -179,7 +221,7 @@
                         </td>
                         <td>
                             <select class="select w-fit" bind:value={trigger.condition}>
-                                {#each ruleConditions as condition}
+                                {#each validConditionsForField(trigger.field) as condition}
                                     <option value={condition}>{splitPascal(condition)}</option>
                                 {/each}
                             </select>
