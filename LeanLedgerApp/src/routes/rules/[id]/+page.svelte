@@ -56,8 +56,6 @@
         return condition === "Exists";
     }
 
-    let actionValueDatalist = $state<string[]>([]);
-
     function isActionValueDisabled(actionType: RuleActionType) {
         return actionType === "DeleteTransaction" || actionType === "Clear";
     }
@@ -143,12 +141,31 @@
                     "IsExactly",
                     "Exists"
                 ];
-            default: return[];
+            default:
+                return [];
         }
     }
 
-    function validFieldsForAction(action: RuleAction): RuleTransactionField[] {
-        return [];
+    function validFieldsForAction(actionType: RuleActionType): readonly RuleTransactionField[] {
+        switch (actionType) {
+            case "Append":
+                return [
+                    "Category",
+                    "Description",
+                ];
+            case "Set":
+                return ruleTransactionFields;
+            case "Clear":
+                return [
+                    "Source",
+                    "Destination",
+                    "Category",
+                ];
+            case "DeleteTransaction":
+                return [];
+            default:
+                return ruleTransactionFields;
+        }
     }
 </script>
 
@@ -287,7 +304,7 @@
                                 onchange={e => onFieldSelectChange(e, action)}
                                 disabled={isActionFieldDisabled(action.actionType)}
                             >
-                                {#each ruleTransactionFields as field}
+                                {#each validFieldsForAction(action.actionType) as field}
                                     <option value={field}>{splitPascal(field)}</option>
                                 {/each}
                             </select>
