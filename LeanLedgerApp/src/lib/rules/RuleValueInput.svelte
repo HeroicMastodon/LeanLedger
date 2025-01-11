@@ -1,15 +1,18 @@
 <script lang="ts">
     import {debounce, type RuleTransactionField, ruleTransactionFields} from "$lib/rules/index";
-    import {type AttachedAccount, transactionTypeOptions} from "$lib/transactions";
+    import {transactionTypeOptions} from "$lib/transactions";
     import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
+    import type {SelectOption} from "$lib";
+    import PredictiveSelect from "$lib/components/forms/PredictiveSelect.svelte";
 
-    let {field, value = $bindable(), disabled = false, dataListId, accounts, onLoadTextPredictions}: {
+    let {field, value = $bindable(), disabled = false, dataListId, accounts, onLoadTextPredictions, selectPopupName}: {
         field: RuleTransactionField;
         value?: string;
         disabled?: boolean;
         dataListId: string;
-        accounts: AttachedAccount[];
+        accounts: SelectOption<string>[];
         onLoadTextPredictions: (value: string) => Promise<any>;
+        selectPopupName: string;
     } = $props();
 </script>
 
@@ -24,11 +27,12 @@
 {:else if field === "Amount" && value}
     <MoneyInput bind:value />
 {:else if field === "Source" || field === "Destination"}
-    <select class="select" bind:value>
-        {#each accounts as account}
-            <option value={account.id}>{account.name}</option>
-        {/each}
-    </select>
+    <PredictiveSelect
+        popupTargetName={selectPopupName}
+        options={accounts}
+        optional
+        bind:value
+    />
 {:else}
     <input
         class="input"

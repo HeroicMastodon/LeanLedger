@@ -6,24 +6,29 @@
         type RuleActionType,
         ruleActionTypes,
         type RuleCondition,
-        ruleConditions, type RuleTransactionField,
-        ruleTransactionFields
+        ruleConditions,
+        type RuleTransactionField,
+        ruleTransactionFields, type RuleTrigger
     } from "$lib/rules";
     import Alert from "$lib/components/Alert.svelte";
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import {apiClient} from "$lib/apiClient";
     import type {PageData} from "./$types";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
-    import {splitPascal} from "$lib";
+    import {type SelectOption, splitPascal} from "$lib";
     import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
+    import {loadAccountOptions} from "$lib/transactions";
 
     const {data}: { data: PageData; } = $props();
     let rule = $state<Rule | undefined>();
     let loading = $state(load());
+    let accounts = $state<SelectOption<string>[]>([]);
 
     async function load() {
-        const res = await apiClient.get<Rule>(`Rules/${data.id}`);
-        rule = res.data;
+        const ruleResponse = await apiClient.get<Rule>(`Rules/${data.id}`);
+        rule = ruleResponse.data;
+
+        accounts = await loadAccountOptions();
     }
 
     async function save() {
@@ -77,7 +82,25 @@
         textValueDatalist = res.data;
     }
 
-    async function loadAccounts() {
+    function onFieldSelectChange(
+        e: { currentTarget: HTMLSelectElement },
+        actionOrTrigger: { field?: RuleTransactionField; value?: string; }
+    ) {
+        const field = actionOrTrigger.field;
+        const target = e.currentTarget.value as RuleTransactionField;
+        if (
+            (field === "Source" || field === "Destination")
+            && (target !== "Source" && target !== "Destination")
+        ) {
+            actionOrTrigger.value = accounts.find(a => a.value == actionOrTrigger.value)?.display ?? "";
+        } else if (
+            (target === "Source" || target === "Destination")
+            && (field !== "Source" && field !== "Destination")
+        ) {
+            actionOrTrigger.value = accounts.find(a => a.display == actionOrTrigger.value)?.value;
+        }
+
+        actionOrTrigger.field = target;
     }
 </script>
 
@@ -135,7 +158,11 @@
                                 onclick={() => removeTrigger(idx)}
                             >Delete
                             </button>
-                            <select class="select w-fit" bind:value={trigger.field}>
+                            <select
+                                class="select w-fit"
+                                value={trigger.field}
+                                onchange={(e) => onFieldSelectChange(e, trigger)}
+                            >
                                 {#each ruleTransactionFields as field}
                                     <option value={field}>{splitPascal(field)}</option>
                                 {/each}
@@ -157,8 +184,9 @@
                                 bind:value={trigger.value}
                                 dataListId="text-value"
                                 field={trigger.field}
-                                accounts={[]}
+                                accounts={accounts}
                                 onLoadTextPredictions={(value: string) => loadTextCompletions(trigger.field, value)}
+                                selectPopupName="trigger-value-{idx}"
                             />
                         </td>
                     </tr>
@@ -207,7 +235,8 @@
                         <td>
                             <select
                                 class="select w-fit"
-                                bind:value={action.field}
+                                value={action.field}
+                                onchange={e => onFieldSelectChange(e, action)}
                                 disabled={isActionFieldDisabled(action.actionType)}
                             >
                                 {#each ruleTransactionFields as field}
@@ -221,8 +250,9 @@
                                 bind:value={action.value}
                                 dataListId="trigger-value"
                                 field={action.field ?? 'Description'}
-                                accounts={[]}
+                                accounts={accounts}
                                 onLoadTextPredictions={async () => console.log("hi there")}
+                                selectPopupName="action-value-{idx}"
                             />
                         </td>
                     </tr>

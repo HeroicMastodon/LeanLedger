@@ -13,7 +13,7 @@
         value: OptionType,
         options: SelectOption<OptionType>[];
         popupTargetName: string;
-        label: string;
+        label?: string;
         class?: string;
         optional?: boolean
     } = $props();
@@ -38,7 +38,9 @@
 </script>
 
 <label class="label {className ?? ''}">
-    <span>{label}</span>
+    {#if label}
+        <span>{label}</span>
+    {/if}
     <input use:popup={popupSettings} class="input" type="text" bind:value={textValue} />
 </label>
 <select
