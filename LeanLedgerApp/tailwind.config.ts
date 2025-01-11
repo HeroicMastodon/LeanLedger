@@ -26,4 +26,14 @@ export default {
 			},
 		}),
 	],
+    safelist: [
+        "variant-outline-error",
+        "variant-outline-primary",
+        "variant-outline-warning",
+        "variant-outline-success",
+        "variant-filled-error",
+        "variant-filled-primary",
+        "variant-filled-warning",
+        "variant-filled-success",
+    ],
 } satisfies Config;

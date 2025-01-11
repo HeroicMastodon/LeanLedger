@@ -2,13 +2,14 @@
     import {
         defaultRuleAction,
         defaultRuleTrigger,
-        type Rule, type RuleAction,
+        type Rule,
+        type RuleAction,
         type RuleActionType,
         ruleActionTypes,
         type RuleCondition,
-        ruleConditions,
         type RuleTransactionField,
-        ruleTransactionFields, type RuleTrigger
+        ruleTransactionFields,
+        type RuleTrigger
     } from "$lib/rules";
     import Alert from "$lib/components/Alert.svelte";
     import {ProgressBar} from "@skeletonlabs/skeleton";
@@ -18,6 +19,8 @@
     import {type SelectOption, splitPascal} from "$lib";
     import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
     import {loadAccountOptions} from "$lib/transactions";
+    import {goto} from "$app/navigation"
+    import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
 
     const {data}: { data: PageData; } = $props();
     let rule = $state<Rule | undefined>();
@@ -34,6 +37,17 @@
     async function save() {
         const res = await apiClient.put<Rule>(`Rules/${data.id}`, rule);
         rule = res.data;
+    }
+
+    async function deleteRule() {
+        try {
+            const resp = await apiClient.delete(`rules/${data.id}`);
+            await goto("rules");
+
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     function addTrigger() {
@@ -177,7 +191,7 @@
         <button class="btn variant-outline-secondary">Matching Transactions</button>
         <button class="btn variant-outline-warning">Run Rule</button>
     </div>
-    <button class="btn variant-outline-error">Delete</button>
+    <DeleteConfirmationButton onDelete={deleteRule} />
 </div>
 
 {#await loading}
