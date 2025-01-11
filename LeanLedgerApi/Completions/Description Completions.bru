@@ -5,11 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/completions/descriptions?value=test
+  url: {{baseUrl}}/completions/descriptions?value=DUES&condition=Contains&not=true
   body: none
   auth: none
 }
 
 params:query {
-  value: test
+  value: DUES
+  condition: Contains
+  not: true
 }

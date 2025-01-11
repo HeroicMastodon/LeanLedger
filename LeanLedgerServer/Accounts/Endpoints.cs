@@ -159,7 +159,6 @@ public static class Endpoints {
         return NoContent();
     }
 
-    // TODO: Move this to the completions controller and update the front end
     private static async Task<IResult> ListAccountOptions([FromServices] LedgerDbContext dbContext) {
         var accounts = await dbContext.Accounts
             .OrderBy(a => a.AccountType)
