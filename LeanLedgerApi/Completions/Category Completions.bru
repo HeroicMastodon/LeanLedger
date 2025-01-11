@@ -1,0 +1,17 @@
+meta {
+  name: Category Completions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/completions/categories?value=DUES&condition=Contains&not=true
+  body: none
+  auth: none
+}
+
+params:query {
+  value: DUES
+  condition: Contains
+  not: true
+}
