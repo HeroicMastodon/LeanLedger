@@ -30,7 +30,7 @@ public class CompletionsController(
 
         query = ApplyCondition(query, conditionString, value, not);
 
-        var result = query
+        var result = await query
             .Distinct()
             .Take(5)
             .ToListAsync();
@@ -54,7 +54,7 @@ public class CompletionsController(
         var query = dbContext.Transactions.Where(t => t.Category != null).Select(t => t.Category);
         query = ApplyCondition(query, conditionString, value, not);
 
-        var result = query
+        var result = await query
             .Distinct()
             .Take(5)
             .ToListAsync();
@@ -78,7 +78,7 @@ public class CompletionsController(
         IQueryable<string?> query = dbContext.Accounts.Select(a => a.Name);
         query = ApplyCondition(query, conditionString, value, not);
 
-        var result = query
+        var result = await query
             .Distinct()
             .Take(5)
             .ToListAsync();

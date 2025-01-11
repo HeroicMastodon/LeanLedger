@@ -73,21 +73,27 @@
         value?: string,
         condition?: RuleCondition,
     ) {
-        const isAction = condition !== undefined;
+        const isAction = condition === undefined;
         if (!value || (isAction && field === "Description")) {
             return;
         }
 
-        const res = await apiClient.get<string[]>(`Completions/descriptions?value=${value}&condition=${condition}`);
-        textValueDatalist = res.data;
+        if (field === "Description") {
+            const res = await apiClient.get<string[]>(`Completions/descriptions?value=${value}&condition=${condition}`);
+            textValueDatalist = res.data;
+        } else if (field === "Category") {
+            const res = await apiClient.get<string[]>(`Completions/categories?value=${value}&condition=${condition}`);
+            textValueDatalist = res.data;
+        }
     }
 
     function onFieldSelectChange(
         e: { currentTarget: HTMLSelectElement },
-        actionOrTrigger: { field?: RuleTransactionField; value?: string; }
+        actionOrTrigger: RuleAction | RuleTrigger
     ) {
         const field = actionOrTrigger.field;
         const target = e.currentTarget.value as RuleTransactionField;
+
         if (
             (field === "Source" || field === "Destination")
             && (target !== "Source" && target !== "Destination")
@@ -185,7 +191,7 @@
                                 dataListId="text-value"
                                 field={trigger.field}
                                 accounts={accounts}
-                                onLoadTextPredictions={(value: string) => loadTextCompletions(trigger.field, value)}
+                                onLoadTextPredictions={value => loadTextCompletions(trigger.field, value, trigger.condition)}
                                 selectPopupName="trigger-value-{idx}"
                             />
                         </td>
@@ -248,10 +254,10 @@
                             <RuleValueInput
                                 disabled={isActionValueDisabled(action.actionType)}
                                 bind:value={action.value}
-                                dataListId="trigger-value"
+                                dataListId="text-value"
                                 field={action.field ?? 'Description'}
                                 accounts={accounts}
-                                onLoadTextPredictions={async () => console.log("hi there")}
+                                onLoadTextPredictions={value => loadTextCompletions(action.field ?? "Category", value, "Contains")}
                                 selectPopupName="action-value-{idx}"
                             />
                         </td>
@@ -260,11 +266,6 @@
                 </tbody>
             </table>
         </div>
-        <datalist id="action-value">
-            {#each actionValueDatalist as option}
-                <option>{option}</option>
-            {/each}
-        </datalist>
     {:else}
         <Alert class="variant-filled-error"><p>The Api was invoked successfully but no rule was returned</p></Alert>
     {/if}
