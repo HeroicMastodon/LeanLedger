@@ -21,11 +21,13 @@
 
     const themes = ['carbon-fox', 'wintry'] as const;
     let selectedTheme = $state('carbon-fox');
+
+    let today = new Date();
 </script>
 {#snippet navItem(href: string, title: string)}
     <li>
         <a href="{href}"
-           class:bg-primary-active-token={$page.url.pathname.startsWith(href)}
+           class:bg-primary-active-token={$page.url.pathname.substring(1).startsWith(href.split("/")[1])}
            data-sveltekit-preload-data="hover"
         >
             <span class="flex-auto">{title}</span>
@@ -82,6 +84,7 @@
                         {@render navItem("/transactions", "Transactions")}
                         {@render navItem("/categories", "Categories")}
                         {@render navItem("/rules", "Rules")}
+                        {@render navItem(`/budgets/${today.getFullYear()}/${today.getMonth() + 1}`, "Budgets")}
                     </ul>
                 </nav>
             </section>
