@@ -86,6 +86,15 @@ public class CompletionsController(
         return Ok(result);
     }
 
+
+    [HttpGet("rule-groups")]
+    public async Task<IActionResult> RuleGroups()
+        => Ok(
+            await dbContext.RuleGroups
+                .Select(rg => rg.Name)
+                .ToListAsync()
+        );
+
     private static IQueryable<string?> ApplyCondition(
         IQueryable<string?> query,
         string? conditionString,

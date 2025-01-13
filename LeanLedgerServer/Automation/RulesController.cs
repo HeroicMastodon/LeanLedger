@@ -35,9 +35,10 @@ public class RulesController(
 
     [HttpPost]
     public async Task<IActionResult> CreateRule([FromBody] RuleRequest request) {
-        if (request.RuleGroupName is not null && !await dbContext.RuleGroups.AnyAsync(rg => rg.Name == request.RuleGroupName)) {
+        var newRuleGroupName = string.IsNullOrWhiteSpace(request.RuleGroupName) ? null : request.RuleGroupName;
+        if (newRuleGroupName is not null && !await dbContext.RuleGroups.AnyAsync(rg => rg.Name == newRuleGroupName)) {
             return Problem(
-                $"No rule group called {request.RuleGroupName} exists",
+                $"No rule group called {newRuleGroupName} exists",
                 statusCode: StatusCodes.Status400BadRequest
             );
         }
@@ -46,6 +47,7 @@ public class RulesController(
             Id = Guid.NewGuid()
         };
         mapper.Map(request, newRule);
+        newRule.RuleGroupName = newRuleGroupName;
         await dbContext.AddAsync(newRule);
         await dbContext.SaveChangesAsync();
 
@@ -54,9 +56,10 @@ public class RulesController(
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateRule(Guid id, [FromBody] RuleRequest request) {
-        if (request.RuleGroupName is not null && !await dbContext.RuleGroups.AnyAsync(rg => rg.Name == request.RuleGroupName)) {
+        var newRuleGroupName = string.IsNullOrWhiteSpace(request.RuleGroupName) ? null : request.RuleGroupName;
+        if (newRuleGroupName is not null && !await dbContext.RuleGroups.AnyAsync(rg => rg.Name == newRuleGroupName)) {
             return Problem(
-                $"No rule group called {request.RuleGroupName} exists",
+                $"No rule group called {newRuleGroupName} exists",
                 statusCode: StatusCodes.Status400BadRequest
             );
         }
@@ -68,6 +71,7 @@ public class RulesController(
         }
 
         mapper.Map(request, rule);
+        rule.RuleGroupName = newRuleGroupName;
         dbContext.Update(rule);
         await dbContext.SaveChangesAsync();
 

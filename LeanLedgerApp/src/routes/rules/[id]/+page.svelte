@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        defaultRule,
         defaultRuleAction,
         defaultRuleTrigger,
         type Rule,
@@ -16,7 +17,7 @@
     import {apiClient} from "$lib/apiClient";
     import type {PageData} from "./$types";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
-    import {type SelectOption, splitPascal} from "$lib";
+    import {type SelectOption, splitPascal, } from "$lib";
     import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
     import {loadAccountOptions, type Transaction} from "$lib/transactions";
     import {goto} from "$app/navigation"
@@ -24,17 +25,22 @@
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
     import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
+    import PredictiveSelect from "$lib/components/forms/PredictiveSelect.svelte";
+    import {firstOfThisYear, todaysDateString} from "$lib/dateTools";
 
     const {data}: { data: PageData; } = $props();
-    let rule = $state<Rule | undefined>();
+    let rule = $state<Rule>(defaultRule());
     let loading = $state(load());
     let accounts = $state<SelectOption<string>[]>([]);
+    let ruleGroups = $state<SelectOption<string>[]>([]);
 
     async function load() {
         const ruleResponse = await apiClient.get<Rule>(`Rules/${data.id}`);
         rule = ruleResponse.data;
 
         accounts = await loadAccountOptions();
+        const ruleGroupRes = await apiClient.get<string[]>("completions/rule-groups");
+        ruleGroups = ruleGroupRes.data.map(name => ({value: name, display: name}));
     }
 
     async function save() {
@@ -186,8 +192,8 @@
     }
 
     let matchingTransactions: Promise<Transaction[]> = $state(Promise.resolve([]))
-    let startDate = $state(new Date().toLocaleDateString());
-    let endDate = $state(new Date().toLocaleDateString());
+    let startDate = $state(firstOfThisYear());
+    let endDate = $state(todaysDateString());
 
     function findMatchingTransactions() {
         matchingTransactions = apiClient
@@ -198,9 +204,10 @@
     }
 
     let transactionCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
+
     function runRule(startDate: string, endDate: string) {
         transactionCount = apiClient
-            .post<{count: number}>(`rules/${data.id}/run`, {startDate, endDate})
+            .post<{ count: number }>(`rules/${data.id}/run`, {startDate, endDate})
             .then(res => {
                 return res.data.count;
             });
@@ -253,151 +260,154 @@
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
-    {#if rule}
-        <div class="flex gap-8 items-end w-fit mb-8">
-            <LabeledInput
-                label="Name"
-                bind:value={rule.name}
-                type="text"
-            />
-            <label class="md:col-span-1 flex space-x-2 items-center">
-                <input type="checkbox" class="checkbox mt-2 mb-2" bind:checked={rule.isStrict} />
-                <span>Is Strict?</span>
-            </label>
-        </div>
+    <div class="flex gap-8 items-end w-fit mb-8">
+        <LabeledInput
+            label="Name"
+            bind:value={rule.name}
+            type="text"
+        />
+        <PredictiveSelect
+            label="Rule Group"
+            optional
+            popupTargetName="rule-group-items"
+            bind:value={rule.ruleGroupName}
+            options={ruleGroups}
+        />
+        <label class="md:col-span-1 flex space-x-2 items-center">
+            <input type="checkbox" class="checkbox mt-2 mb-2" bind:checked={rule.isStrict} />
+            <span>Is Strict?</span>
+        </label>
+    </div>
 
-        <div class="mb-4 flex gap-4">
-            <h2 class="h2"> Rule triggers when </h2>
-            <button
-                class="btn variant-outline-primary"
-                onclick={addTrigger}
-            >New Trigger
-            </button>
-        </div>
-        <div class="table-container mb-8">
-            <table class="table">
-                <thead>
+    <div class="mb-4 flex gap-4">
+        <h2 class="h2"> Rule triggers when </h2>
+        <button
+            class="btn variant-outline-primary"
+            onclick={addTrigger}
+        >New Trigger
+        </button>
+    </div>
+    <div class="table-container mb-8">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Field</th>
+                <th>Not</th>
+                <th>Condition</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            {#each rule.triggers as trigger, idx}
                 <tr>
-                    <th>Field</th>
-                    <th>Not</th>
-                    <th>Condition</th>
-                    <th>Value</th>
+                    <td>
+                        <button
+                            class="btn variant-outline-error mr-4"
+                            onclick={() => removeTrigger(idx)}
+                        >Delete
+                        </button>
+                        <select
+                            class="select w-fit"
+                            value={trigger.field}
+                            onchange={(e) => onFieldSelectChange(e, trigger)}
+                        >
+                            {#each ruleTransactionFields as field}
+                                <option value={field}>{splitPascal(field)}</option>
+                            {/each}
+                        </select>
+                    </td>
+                    <td>
+                        <input class="checkbox" type="checkbox" bind:checked={trigger.not} />
+                    </td>
+                    <td>
+                        <select class="select w-fit" bind:value={trigger.condition}>
+                            {#each validConditionsForField(trigger.field) as condition}
+                                <option value={condition}>{splitPascal(condition)}</option>
+                            {/each}
+                        </select>
+                    </td>
+                    <td>
+                        <RuleValueInput
+                            disabled={isTriggerValueDisabled(trigger.condition)}
+                            bind:value={trigger.value}
+                            dataListId="text-value"
+                            field={trigger.field}
+                            accounts={accounts}
+                            onLoadTextPredictions={value => loadTextCompletions(trigger.field, value, trigger.condition)}
+                            selectPopupName="trigger-value-{idx}"
+                        />
+                    </td>
                 </tr>
-                </thead>
-                <tbody>
-                {#each rule.triggers as trigger, idx}
-                    <tr>
-                        <td>
-                            <button
-                                class="btn variant-outline-error mr-4"
-                                onclick={() => removeTrigger(idx)}
-                            >Delete
-                            </button>
-                            <select
-                                class="select w-fit"
-                                value={trigger.field}
-                                onchange={(e) => onFieldSelectChange(e, trigger)}
-                            >
-                                {#each ruleTransactionFields as field}
-                                    <option value={field}>{splitPascal(field)}</option>
-                                {/each}
-                            </select>
-                        </td>
-                        <td>
-                            <input class="checkbox" type="checkbox" bind:checked={trigger.not} />
-                        </td>
-                        <td>
-                            <select class="select w-fit" bind:value={trigger.condition}>
-                                {#each validConditionsForField(trigger.field) as condition}
-                                    <option value={condition}>{splitPascal(condition)}</option>
-                                {/each}
-                            </select>
-                        </td>
-                        <td>
-                            <RuleValueInput
-                                disabled={isTriggerValueDisabled(trigger.condition)}
-                                bind:value={trigger.value}
-                                dataListId="text-value"
-                                field={trigger.field}
-                                accounts={accounts}
-                                onLoadTextPredictions={value => loadTextCompletions(trigger.field, value, trigger.condition)}
-                                selectPopupName="trigger-value-{idx}"
-                            />
-                        </td>
-                    </tr>
-                {/each}
-                </tbody>
-            </table>
-        </div>
-        <datalist id="text-value">
-            {#each textValueDatalist as option}
-                <option>{option}</option>
             {/each}
-        </datalist>
+            </tbody>
+        </table>
+    </div>
+    <datalist id="text-value">
+        {#each textValueDatalist as option}
+            <option>{option}</option>
+        {/each}
+    </datalist>
 
-        <div class="mb-4 flex gap-4">
-            <h2 class="h2"> Then rule will </h2>
-            <button
-                class="btn variant-outline-primary"
-                onclick={addAction}
-            >New Action
-            </button>
-        </div>
-        <div class="table-container">
-            <table class="table">
-                <thead>
+    <div class="mb-4 flex gap-4">
+        <h2 class="h2"> Then rule will </h2>
+        <button
+            class="btn variant-outline-primary"
+            onclick={addAction}
+        >New Action
+        </button>
+    </div>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Action</th>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            {#each rule.actions as action, idx}
                 <tr>
-                    <th>Action</th>
-                    <th>Field</th>
-                    <th>Value</th>
+                    <td>
+                        <button
+                            class="btn variant-outline-error mr-4"
+                            onclick={() => removeAction(idx)}
+                        >Delete
+                        </button>
+                        <select class="select w-fit" bind:value={action.actionType}>
+                            {#each ruleActionTypes as actionType}
+                                <option value={actionType}>{splitPascal(actionType)}</option>
+                            {/each}
+                        </select>
+                    </td>
+                    <td>
+                        <select
+                            class="select w-fit"
+                            value={action.field}
+                            onchange={e => onFieldSelectChange(e, action)}
+                            disabled={isActionFieldDisabled(action.actionType)}
+                        >
+                            {#each validFieldsForAction(action.actionType) as field}
+                                <option value={field}>{splitPascal(field)}</option>
+                            {/each}
+                        </select>
+                    </td>
+                    <td>
+                        <RuleValueInput
+                            disabled={isActionValueDisabled(action.actionType)}
+                            bind:value={action.value}
+                            dataListId="text-value"
+                            field={action.field ?? 'Description'}
+                            accounts={accounts}
+                            onLoadTextPredictions={value => loadTextCompletions(action.field ?? "Category", value, "Contains")}
+                            selectPopupName="action-value-{idx}"
+                        />
+                    </td>
                 </tr>
-                </thead>
-                <tbody>
-                {#each rule.actions as action, idx}
-                    <tr>
-                        <td>
-                            <button
-                                class="btn variant-outline-error mr-4"
-                                onclick={() => removeAction(idx)}
-                            >Delete
-                            </button>
-                            <select class="select w-fit" bind:value={action.actionType}>
-                                {#each ruleActionTypes as actionType}
-                                    <option value={actionType}>{splitPascal(actionType)}</option>
-                                {/each}
-                            </select>
-                        </td>
-                        <td>
-                            <select
-                                class="select w-fit"
-                                value={action.field}
-                                onchange={e => onFieldSelectChange(e, action)}
-                                disabled={isActionFieldDisabled(action.actionType)}
-                            >
-                                {#each validFieldsForAction(action.actionType) as field}
-                                    <option value={field}>{splitPascal(field)}</option>
-                                {/each}
-                            </select>
-                        </td>
-                        <td>
-                            <RuleValueInput
-                                disabled={isActionValueDisabled(action.actionType)}
-                                bind:value={action.value}
-                                dataListId="text-value"
-                                field={action.field ?? 'Description'}
-                                accounts={accounts}
-                                onLoadTextPredictions={value => loadTextCompletions(action.field ?? "Category", value, "Contains")}
-                                selectPopupName="action-value-{idx}"
-                            />
-                        </td>
-                    </tr>
-                {/each}
-                </tbody>
-            </table>
-        </div>
-    {:else}
-        <Alert class="variant-filled-error"><p>The Api was invoked successfully but no rule was returned</p></Alert>
-    {/if}
+            {/each}
+            </tbody>
+        </table>
+    </div>
 {:catch err}
     <Alert class="variant-filled-error">
         <p>Could not load rule:</p>

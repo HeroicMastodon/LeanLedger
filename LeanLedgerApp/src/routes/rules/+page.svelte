@@ -32,7 +32,8 @@
     }
 
     async function saveRuleGroup() {
-        const payload = {name: ruleGroupUpdate.current};
+        console.log($state.snapshot(ruleGroupUpdate))
+        const payload = {name: ruleGroupUpdate.current.trim()};
         if (ruleGroupUpdate.previous) {
             const res = await apiClient.put(`rule-groups/${ruleGroupUpdate.previous}`, payload);
         } else {

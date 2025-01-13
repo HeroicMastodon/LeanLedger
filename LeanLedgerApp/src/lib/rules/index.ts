@@ -65,6 +65,7 @@ export type Rule = {
     isStrict: boolean;
     triggers: RuleTrigger[];
     actions: RuleAction[];
+    ruleGroupName?: string;
 }
 
 export function defaultRule(): Rule {

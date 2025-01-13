@@ -4,7 +4,7 @@ import FormButton from "$lib/components/dialog/FormButton.svelte";
 import Alert from "$lib/components/Alert.svelte";
 import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
 import {ProgressBar} from "@skeletonlabs/skeleton";
-import {defaultDate} from "$lib";
+import {todaysDateString, firstOfThisYear} from "$lib/dateTools";
 
 let {run, countPromise, text}: {
     run: (start: string, end: string) => void;
@@ -12,8 +12,8 @@ let {run, countPromise, text}: {
     countPromise: Promise<number | undefined>
 } = $props();
 
-let startDate = $state(defaultDate());
-let endDate = $state(defaultDate());
+let startDate = $state(firstOfThisYear());
+let endDate = $state(todaysDateString());
 </script>
 
 <FormButton
