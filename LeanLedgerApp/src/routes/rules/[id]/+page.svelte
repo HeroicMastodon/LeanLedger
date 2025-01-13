@@ -190,13 +190,17 @@
 
     function findMatchingTransactions() {
         matchingTransactions = apiClient
-            .get<Transaction[]>(`rules/${data.id}/matching?start=${startDate}&end=${endDate}&limit=100`)
-            .then(res => res.data)
-            .catch(reason => {
-                console.error(reason);
-                return [];
-            });
+            .get<Transaction[]>(`rules/${data.id}/matching?start=${startDate}&end=${endDate}&limit=5`)
+            .then(res => res.data);
 
+        return false;
+    }
+
+    let transactionCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
+    function runRule() {
+        transactionCount = apiClient
+            .post<{count: number}>(`rules/${data.id}/run`, {startDate, endDate})
+            .then(res => res.data.count);
         return false;
     }
 </script>
@@ -231,9 +235,38 @@
                 <div class="max-h-80 overflow-y-auto">
                     <TransactionTable transactions={transactions} />
                 </div>
+            {:catch err}
+                <Alert class="variant-filled-error"><p>{err}</p></Alert>
             {/await}
         </FormButton>
-        <button class="btn variant-outline-warning">Run Rule</button>
+        <FormButton
+            class="variant-outline-warning"
+            text="Run Rule"
+            confirmText="Run"
+            onConfirm={runRule}
+        >
+            <div class="flex gap-8">
+                <LabeledInput
+                    type="date"
+                    bind:value={startDate}
+                    label="start"
+                />
+                <LabeledInput
+                    type="date"
+                    bind:value={endDate}
+                    label="end"
+                />
+                {#await transactionCount}
+                    <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
+                {:then count}
+                    {#if count !== undefined}
+                        <Alert class="variant-filled-success"><p>{count} transactions were edited by the rule</p></Alert>
+                    {/if}
+                {:catch err}
+                    <Alert class="variant-filled-error"><p>{err}</p></Alert>
+                {/await}
+            </div>
+        </FormButton>
     </div>
     <DeleteConfirmationButton onDelete={deleteRule} />
 </div>
