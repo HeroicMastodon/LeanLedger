@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Accounts;
 using Automation;
+using Budgets;
 using TransactionImport;
 using Transactions;
 
@@ -15,6 +16,7 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
     public DbSet<ImportSettings> ImportSettings { get; set; }
     public DbSet<Rule> Rules { get; set; }
     public DbSet<RuleGroup> RuleGroups { get; set; }
+    public DbSet<Budget> Budgets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Account>(
