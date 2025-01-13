@@ -112,22 +112,30 @@ public class RuleGroupsController(
         return NoContent();
     }
 
-    [HttpPost("{name}/run")]
-    public async Task<IActionResult> RuleRuleGroup(
-        string name,
+    [HttpPost("run")]
+    public async Task<IActionResult> RunRuleGroup(
         [FromBody]
-        RunRuleRequest request
+        RunRuleGroupRequest request
     ) {
-        var ruleGroup = await dbContext.RuleGroups.Include(rg => rg.Rules).FirstOrDefaultAsync(rg => rg.Name == name);
+        List<Rule> rules;
 
-        if (ruleGroup is null) {
-            return NotFound();
+        if (request.RuleGroupName is not null) {
+            var ruleGroup = await dbContext.RuleGroups
+                .Include(rg => rg.Rules)
+                .FirstOrDefaultAsync(rg => rg.Name == request.RuleGroupName);
+
+            if (ruleGroup is null) {
+                return NotFound();
+            }
+
+            rules = ruleGroup.Rules;
+        } else {
+            rules = await dbContext.Rules
+                .Where(r => r.RuleGroupName == null)
+                .ToListAsync();
         }
 
-        var changedCount = 0;
-        foreach (var rule in ruleGroup.Rules) {
-            changedCount += await ruleService.Run(rule, request.StartDate, request.EndDate);
-        }
+        var changedCount = await RunRules(rules, request.StartDate, request.EndDate);
 
         return Ok(
             new {
@@ -135,8 +143,28 @@ public class RuleGroupsController(
             }
         );
     }
+
+    private async Task<int> RunRules(
+        List<Rule> rules,
+        string startDate,
+        string endDate
+    ) {
+        var changedCount = 0;
+
+        foreach (var rule in rules) {
+            changedCount += await ruleService.Run(rule, startDate, endDate);
+        }
+
+        return changedCount;
+    }
 }
 
 public record RuleGroupRequest(string Name);
 
 public record RuleGroupView(string? Name, List<Rule> Rules);
+
+public record RunRuleGroupRequest(
+    string? RuleGroupName,
+    string StartDate,
+    string EndDate
+);

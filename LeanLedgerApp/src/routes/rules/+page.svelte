@@ -1,13 +1,15 @@
 <script lang="ts">
     import {apiClient} from "$lib/apiClient";
     import {ProgressBar} from "@skeletonlabs/skeleton";
-    import {actionToString, type RuleGroup, triggerToString} from "$lib/rules";
+    import {actionToString, defaultRule, type Rule, type RuleGroup, triggerToString} from "$lib/rules";
     import SimpleExpandingList from "$lib/components/SimpleExpandingList.svelte";
     import {Dialog} from "$lib/dialog.svelte";
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
+    import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
+    import {goto} from "$app/navigation";
 
     let ruleGroups = $state(load())
 
@@ -15,8 +17,6 @@
         let res = await apiClient.get<RuleGroup[]>("rule-groups");
         return res.data;
     }
-
-    let ruleDialog = new Dialog();
 
     let ruleGroupDialog = new Dialog();
     let ruleGroupUpdate = $state<{ previous?: string; current: string; }>({
@@ -43,18 +43,37 @@
     }
 
     let changedCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
+
     function runAllRules(startDate: string, endDate: string) {
         changedCount = apiClient
-            .post<{count: number}>("rules/run-all", {startDate, endDate})
-            .then(res => res.data.count);
-    }
-    function runRuleGroup(name: string, startDate: string, endDate: string) {
-        changedCount = apiClient
-            .post<{count: number}>(`rule-groups/${name}/run`, {startDate, endDate})
+            .post<{ count: number }>("rules/run-all", {startDate, endDate})
             .then(res => res.data.count);
     }
 
-    let deleteConfirmationDialog = new Dialog();
+    function runRuleGroup(name: string | undefined, startDate: string, endDate: string) {
+        changedCount = apiClient
+            .post<{ count: number }>(`rule-groups/run`, {startDate, endDate, ruleGroupName: name})
+            .then(res => res.data.count);
+    }
+
+    async function deleteRuleGroup(name: string) {
+        await apiClient.delete(`rule-groups/${name}`);
+        ruleGroups = load();
+        return true;
+    }
+
+    let newRuleName = $state("");
+
+    async function createNewRule(ruleGroupName?: string) {
+        const res = await apiClient.post<Rule>(`rules`, {
+            ...defaultRule(),
+            ruleGroupName,
+            name: newRuleName
+        })
+
+        await goto(`/rules/${res.data.id}`);
+        return true;
+    }
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
@@ -81,14 +100,28 @@
                             onclick={() => openRuleGroupDialog(group.name)}
                         >Edit
                         </button>
-                        <RunRuleButton
-                            text="Run Rule Group"
-                            countPromise={changedCount}
-                            run={(start, end) => runRuleGroup(group.name ?? "", start, end)}
+                        <DeleteConfirmationButton
+                            onDelete={() => deleteRuleGroup(group.name ?? "")}
                         />
                     {/if}
+                    <RunRuleButton
+                        text="Run Rule Group"
+                        countPromise={changedCount}
+                        run={(start, end) => runRuleGroup(group.name, start, end)}
+                    />
                 </div>
-                <button class="btn variant-outline-secondary">New Rule</button>
+                <FormButton
+                    class="variant-outline-secondary"
+                    text="New Rule"
+                    confirmText="Save"
+                    onConfirm={() => createNewRule(group.name)}
+                >
+                    <LabeledInput
+                        label="Name"
+                        type="text"
+                        bind:value={newRuleName}
+                    />
+                </FormButton>
             </div>
             <div class="table-container">
                 <table class="table table-fixed">
@@ -128,10 +161,7 @@
             </div>
         </div>
     {/each}
-    <DefaultDialog>
-        <h2 class="h2">Rules</h2>
-    </DefaultDialog>
-    <DefaultDialog bind:dialog={ruleGroupDialog.value}>
+    <DefaultDialog bind:dialog={ruleGroupDialog.value} onenter={saveRuleGroup}>
         <div class="flex flex-col gap-8 items-center">
             <h2 class="h2">{ruleGroupDialogHeader} Rule Group</h2>
             <LabeledInput
@@ -144,8 +174,5 @@
                 <button onclick={saveRuleGroup} class="btn variant-filled-success">Save</button>
             </div>
         </div>
-    </DefaultDialog>
-    <DefaultDialog>
-        <h2 class="h2">Are you sure you want to delete?</h2>
     </DefaultDialog>
 {/await}

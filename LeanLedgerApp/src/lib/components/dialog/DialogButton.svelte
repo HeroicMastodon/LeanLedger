@@ -31,8 +31,8 @@
     class="btn {props.class ?? ''}"
 >{props.text}
 </button>
-<DefaultDialog bind:dialog={dialog.value}>
-    <div class="flex flex-col gap-4">
+<DefaultDialog bind:dialog={dialog.value} onenter={props.onConfirm}>
+    <div class="flex flex-col gap-4" >
         <h2 class="h2">{props.title}</h2>
         {#if props.children}
             {@render props.children()}
@@ -46,6 +46,7 @@
             <button
                 onclick={onConfirm}
                 class="btn variant-filled-{props.confirmButtonColorType}"
+                type="submit"
             >
                 {props.confirmText}
             </button>

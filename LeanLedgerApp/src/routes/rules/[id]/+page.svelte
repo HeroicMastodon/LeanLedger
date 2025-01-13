@@ -45,7 +45,7 @@
     async function deleteRule() {
         try {
             const resp = await apiClient.delete(`rules/${data.id}`);
-            await goto("rules");
+            await goto("/rules");
 
             return true;
         } catch (e) {
