@@ -3,6 +3,7 @@ namespace LeanLedgerServer.Automation;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Common;
 using Transactions;
 
 public class Rule {

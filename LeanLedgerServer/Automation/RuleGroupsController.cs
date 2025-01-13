@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 [ApiController]
 [Route("api/rule-groups")]
 public class RuleGroupsController(
-    LedgerDbContext dbContext
+    LedgerDbContext dbContext,
+    RuleService ruleService
 ): Controller {
     [HttpGet]
     public async Task<IActionResult> ListRuleGroups() {
@@ -109,6 +110,30 @@ public class RuleGroupsController(
         await dbContext.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    [HttpPost("{name}/run")]
+    public async Task<IActionResult> RuleRuleGroup(
+        string name,
+        [FromBody]
+        RunRuleRequest request
+    ) {
+        var ruleGroup = await dbContext.RuleGroups.Include(rg => rg.Rules).FirstOrDefaultAsync(rg => rg.Name == name);
+
+        if (ruleGroup is null) {
+            return NotFound();
+        }
+
+        var changedCount = 0;
+        foreach (var rule in ruleGroup.Rules) {
+            changedCount += await ruleService.Run(rule, request.StartDate, request.EndDate);
+        }
+
+        return Ok(
+            new {
+                Count = changedCount
+            }
+        );
     }
 }
 

@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using LeanLedgerServer.Accounts;
+using LeanLedgerServer.Automation;
 using LeanLedgerServer.Categories;
 using LeanLedgerServer.Common;
 using LeanLedgerServer.TransactionImport;
@@ -19,6 +20,7 @@ builder.Services.AddDbContext<LedgerDbContext>(
 );
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<Importer>();
+builder.Services.AddScoped<RuleService>();
 builder.Services.AddControllers()
     .AddJsonOptions(
         options => {
