@@ -2,6 +2,7 @@ namespace LeanLedgerServer.Transactions;
 
 using System.Diagnostics;
 using AutoMapper;
+using Automation;
 using Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +10,8 @@ public static class TransactionFunctions {
     public static async Task<Result<Transaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
-        IMapper mapper
+        IMapper mapper,
+        List<Rule>? rules = null
     ) => await ValidateTransaction(request)
         .ThenAsync(
             async transactionType => {
@@ -31,6 +33,16 @@ public static class TransactionFunctions {
                     DateImported = request.ImportDate
                 };
                 mapper.Map(request, transaction);
+
+                if (rules is not null) {
+                    try {
+                        foreach (var rule in rules.Where(r => r.ShouldTriggerFor(transaction))) {
+                            rule.ApplyActionsTo(transaction);
+                        }
+                    } catch (Exception e) {
+                        return new BadRule(e);
+                    }
+                }
 
                 return transaction.AsResult();
             }
@@ -82,6 +94,20 @@ public record ConflictingHash(string Hash, Transaction Transaction): Err() {
         statusCode: StatusCodes.Status409Conflict,
         title: "Conflicting transaction has found",
         detail: $"Transaction already exists: {Hash}",
-        extensions: new Dictionary<string, object?>() { { "hash", Hash }, { "existingTransaction", Transaction } }
+        extensions: new Dictionary<string, object?>() {
+            {
+                "hash", Hash
+            }, {
+                "existingTransaction", Transaction
+            }
+        }
+    );
+}
+
+public record BadRule(Exception Exception): Err() {
+    public override IResult ToHttpResult() => Results.Problem(
+        statusCode: StatusCodes.Status400BadRequest,
+        title: "Could not apply rules to transaction",
+        detail: Exception.Message
     );
 }

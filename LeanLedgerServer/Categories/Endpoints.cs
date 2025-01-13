@@ -21,12 +21,16 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext dbContext
     ) {
-        var categoryToCompare = category == NULL_CATEGORY_NAME ? "" : category;
-        var transactions = await dbContext.Transactions
+        var query = dbContext.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
-            .Where(t => t.Category == categoryToCompare)
-            .ToListAsync();
+            .AsQueryable();
+
+        query = category == NULL_CATEGORY_NAME
+            ? query.Where(t => t.Category == null || t.Category == "")
+            : query.Where(t => t.Category == category);
+
+        var transactions = await query.ToListAsync();
 
         return Ok(
             new {

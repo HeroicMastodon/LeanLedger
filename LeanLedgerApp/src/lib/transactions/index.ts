@@ -22,7 +22,7 @@ export type AttachedAccount = {
 
 export type TransactionType = 'Income' | 'Expense' | 'Transfer';
 
-export const TransactionTypeOptions: SelectOption<TransactionType>[] = [
+export const transactionTypeOptions: SelectOption<TransactionType>[] = [
     {
         display: "Deposit",
         value: "Income",

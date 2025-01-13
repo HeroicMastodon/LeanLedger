@@ -1,0 +1,20 @@
+meta {
+  name: Get Matching Transactions
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/rules/{{id}}/matching?start=2024-01-01&end=2024-12-31
+  body: none
+  auth: none
+}
+
+params:query {
+  start: 2024-01-01
+  end: 2024-12-31
+}
+
+vars:pre-request {
+  id: 80116166-5fde-4ad3-97eb-4feda4c85cc3
+}

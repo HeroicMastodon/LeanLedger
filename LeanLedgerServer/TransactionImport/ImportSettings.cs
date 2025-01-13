@@ -17,11 +17,11 @@ public class ImportSettings {
 
 public record ImportMapping(
     string SourceColumnName,
-    TransactionField DestinationField
+    TransactionImportField DestinationField
 );
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum TransactionField {
+public enum TransactionImportField {
     Ignore,
     Amount,
     NegatedAmount,

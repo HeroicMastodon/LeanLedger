@@ -1,0 +1,21 @@
+meta {
+  name: Update Rule Group
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/rule-groups/{{name}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "rule group"
+  }
+}
+
+vars:pre-request {
+  name: rule group
+}

@@ -81,6 +81,7 @@
                         {@render navItem("/accounts", "Accounts")}
                         {@render navItem("/transactions", "Transactions")}
                         {@render navItem("/categories", "Categories")}
+                        {@render navItem("/rules", "Rules")}
                     </ul>
                 </nav>
             </section>

@@ -1,0 +1,38 @@
+meta {
+  name: Update Rule
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/rules/{{id}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "new rule",
+    "isStrict": true,
+    "triggers": [
+      {
+        "field": "Description",
+        "not": false,
+        "condition": "StartsWith",
+       "value": "hi"
+      }
+    ],
+    "actions": [
+      {
+        "actionType": "Append",
+        "field": "Description",
+        "value": "there"
+      }
+    ],
+    "ruleGroupName":"rule group"
+  }
+}
+
+vars:pre-request {
+  id: 80116166-5fde-4ad3-97eb-4feda4c85cc3
+}

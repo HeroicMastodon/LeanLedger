@@ -1,0 +1,17 @@
+meta {
+  name: Description Completions
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/completions/descriptions?value=DUES&condition=Contains&not=true
+  body: none
+  auth: none
+}
+
+params:query {
+  value: DUES
+  condition: Contains
+  not: true
+}

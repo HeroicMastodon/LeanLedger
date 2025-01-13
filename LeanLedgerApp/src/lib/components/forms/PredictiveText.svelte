@@ -10,7 +10,7 @@
         datalistId,
     }: {
         value?: string;
-        label: string;
+        label?: string;
         class?: string;
         options: string[];
         inputId: string;
@@ -19,7 +19,9 @@
 </script>
 
 <label class="label {className ?? ''}">
-    <span>{label}</span>
+    {#if label}
+        <span>{label}</span>
+    {/if}
     <input bind:value list={datalistId} id={inputId} type="text" class="input">
     <datalist id={datalistId}>
         {#each options as option}

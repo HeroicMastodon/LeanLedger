@@ -1,0 +1,22 @@
+meta {
+  name: Run Rule
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/rules/{{id}}/run
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "startDate": "2024-01-01",
+    "endDate": "2024-12-31"
+  }
+}
+
+vars:pre-request {
+  id: 80116166-5fde-4ad3-97eb-4feda4c85cc3
+}

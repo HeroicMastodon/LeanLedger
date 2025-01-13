@@ -4,14 +4,15 @@
     import {faDollar} from "@fortawesome/free-solid-svg-icons";
     import {Fa} from "svelte-fa";
     import {type AccountData} from "$lib/accounts";
-    import MoneyInput from "$lib/components/MoneyInput.svelte";
-    import LabeledInput from "$lib/components/LabeledInput.svelte";
-    import LabeledSelect from "$lib/components/LabeledSelect.svelte";
+    import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
+    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
+    import LabeledSelect from "$lib/components/forms/LabeledSelect.svelte";
+    import Card from "$lib/components/Card.svelte";
 
     let {account = $bindable()}: { account: AccountData } = $props();
 </script>
 
-<div class="card p-4 grid grid-cols-1 md:grid-cols-6 gap-4 max-w-3xl items-center">
+<Card class="grid grid-cols-1 md:grid-cols-6 gap-4 max-w-3xl items-center">
     <LabeledInput
         class="md:col-span-3"
         label="Name"
@@ -50,4 +51,4 @@
         <span>Notes</span>
         <textarea class="textarea" bind:value={account.notes}></textarea>
     </label>
-</div>
+</Card>

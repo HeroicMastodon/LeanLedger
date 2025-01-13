@@ -57,6 +57,50 @@ namespace LeanLedgerServer.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("LeanLedgerServer.Automation.Rule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Actions")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsStrict")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RuleGroupName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Triggers")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RuleGroupName");
+
+                    b.ToTable("Rules");
+                });
+
+            modelBuilder.Entity("LeanLedgerServer.Automation.RuleGroup", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("RuleGroups");
+                });
+
             modelBuilder.Entity("LeanLedgerServer.TransactionImport.ImportSettings", b =>
                 {
                     b.Property<Guid>("Id")
@@ -106,7 +150,6 @@ namespace LeanLedgerServer.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("DestinationAccountId")
@@ -133,6 +176,15 @@ namespace LeanLedgerServer.Migrations
                     b.HasIndex("SourceAccountId");
 
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("LeanLedgerServer.Automation.Rule", b =>
+                {
+                    b.HasOne("LeanLedgerServer.Automation.RuleGroup", "RuleGroup")
+                        .WithMany("Rules")
+                        .HasForeignKey("RuleGroupName");
+
+                    b.Navigation("RuleGroup");
                 });
 
             modelBuilder.Entity("LeanLedgerServer.TransactionImport.ImportSettings", b =>
@@ -166,6 +218,11 @@ namespace LeanLedgerServer.Migrations
                     b.Navigation("Deposits");
 
                     b.Navigation("Withdrawls");
+                });
+
+            modelBuilder.Entity("LeanLedgerServer.Automation.RuleGroup", b =>
+                {
+                    b.Navigation("Rules");
                 });
 #pragma warning restore 612, 618
         }

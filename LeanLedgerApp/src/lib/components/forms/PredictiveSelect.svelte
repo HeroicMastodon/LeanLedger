@@ -9,13 +9,15 @@
         label,
         class: className,
         optional = false,
+        disabled,
     }: {
         value: OptionType,
         options: SelectOption<OptionType>[];
         popupTargetName: string;
-        label: string;
+        label?: string;
         class?: string;
-        optional?: boolean
+        optional?: boolean;
+        disabled?: boolean;
     } = $props();
 
     const popupSettings: PopupSettings = {
@@ -38,8 +40,10 @@
 </script>
 
 <label class="label {className ?? ''}">
-    <span>{label}</span>
-    <input use:popup={popupSettings} class="input" type="text" bind:value={textValue} />
+    {#if label}
+        <span>{label}</span>
+    {/if}
+    <input disabled={disabled} use:popup={popupSettings} class="input" type="text" bind:value={textValue} />
 </label>
 <select
     data-popup={popupTargetName}

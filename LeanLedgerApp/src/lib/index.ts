@@ -27,3 +27,4 @@ export type SelectOption<T> = {
 }
 
 export type MaybePromise<T> = Promise<T> | T;
+
