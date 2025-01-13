@@ -23,7 +23,11 @@
 
     const onConfirm = async () => await dialog.close(props.onConfirm);
     const onClick = async () => await dialog.open(props.onclick);
-    const close = async () => await dialog.close(props.oncancel);
+    async function cancel() {
+        await props.oncancel?.();
+        return true;
+    }
+    const close = async () => await dialog.close(cancel);
 </script>
 
 <button

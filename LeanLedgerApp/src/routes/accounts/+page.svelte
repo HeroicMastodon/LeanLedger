@@ -43,10 +43,10 @@
                             </td>
                             <td>
                                 <Money amount={account.balance} />
-                            <td
-                                class="text-success-500"
-                                class:text-error-400={account.balanceChange < 0}
-                            >${account.balanceChange}</td>
+                            </td>
+                            <td>
+                                <Money amount={account.balanceChange} />
+                            </td>
                             <td>
                                 <input type="checkbox" class="checkbox" checked={account.active} disabled />
                             </td>
