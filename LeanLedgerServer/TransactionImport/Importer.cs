@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Accounts;
 using AutoMapper;
 using Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Transactions;
 using static Transactions.TransactionFunctions;
@@ -21,6 +22,7 @@ public class Importer(
     ) {
         // This will execute in parallel and may cause some data race conditions
         // Likely we need to refactor to a more simple for each loop
+        var rules = await dbContext.Rules.ToListAsync();
         var transactions = new List<Result<Transaction>>();
         foreach (var (value, index) in csv.Enumerate()) {
             var mappedTransaction = new MappedTransaction();
@@ -92,11 +94,11 @@ public class Importer(
                 ImportDate: DateOnly.FromDateTime(DateTime.Now)
             );
 
-            // TODO: finish the CRUD for rules then test how they work
             var transaction = await CreateNewTransaction(
                     request,
                     dbContext.Transactions,
-                    mapper
+                    mapper,
+                    rules
                 )
                 .ThenAsync(
                     async transaction => {

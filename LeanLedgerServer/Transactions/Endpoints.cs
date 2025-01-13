@@ -41,19 +41,23 @@ public static class Endpoints {
         LedgerDbContext db,
         [FromServices]
         IMapper mapper
-    ) => await CreateNewTransaction(newTransaction, db.Transactions, mapper)
-        .ThenAsync(
-            async transaction => {
-                db.Transactions.Add(transaction!);
-                await db.SaveChangesAsync();
+    ) {
+        var rules = await db.Rules.ToListAsync();
 
-                return Created($"/api/transactions/{transaction!.Id}", transaction);
-            }
-        )
-        .Map(
-            ok: result => result,
-            error: err => err.ToHttpResult()
-        );
+        return await CreateNewTransaction(newTransaction, db.Transactions, mapper, rules)
+            .ThenAsync(
+                async transaction => {
+                    db.Transactions.Add(transaction!);
+                    await db.SaveChangesAsync();
+
+                    return Created($"/api/transactions/{transaction!.Id}", transaction);
+                }
+            )
+            .Map(
+                ok: result => result,
+                error: err => err.ToHttpResult()
+            );
+    }
 
     private static async Task<IResult> UpdateTransaction(
         Guid id,

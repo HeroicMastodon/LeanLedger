@@ -7,6 +7,7 @@ using Common;
 using Microsoft.EntityFrameworkCore;
 
 public static class TransactionFunctions {
+    // TODO: we will likely want to figure out how to express that a transaction has been affected by a rule
     public static async Task<Result<Transaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
