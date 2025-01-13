@@ -15,7 +15,6 @@
     import Alert from "$lib/components/Alert.svelte";
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import {apiClient} from "$lib/apiClient";
-    import type {PageData} from "./$types";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import {type SelectOption, splitPascal, } from "$lib";
     import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
@@ -27,15 +26,16 @@
     import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
     import PredictiveSelect from "$lib/components/forms/PredictiveSelect.svelte";
     import {firstOfThisYear, todaysDateString} from "$lib/dateTools";
+    import {page} from "$app/stores";
 
-    const {data}: { data: PageData; } = $props();
+    let id = $page.params.id;
     let rule = $state<Rule>(defaultRule());
     let loading = $state(load());
     let accounts = $state<SelectOption<string>[]>([]);
     let ruleGroups = $state<SelectOption<string>[]>([]);
 
     async function load() {
-        const ruleResponse = await apiClient.get<Rule>(`Rules/${data.id}`);
+        const ruleResponse = await apiClient.get<Rule>(`Rules/${id}`);
         rule = ruleResponse.data;
 
         accounts = await loadAccountOptions();
@@ -44,13 +44,13 @@
     }
 
     async function save() {
-        const res = await apiClient.put<Rule>(`Rules/${data.id}`, rule);
+        const res = await apiClient.put<Rule>(`Rules/${id}`, rule);
         rule = res.data;
     }
 
     async function deleteRule() {
         try {
-            const resp = await apiClient.delete(`rules/${data.id}`);
+            const resp = await apiClient.delete(`rules/${id}`);
             await goto("/rules");
 
             return true;
@@ -197,7 +197,7 @@
 
     function findMatchingTransactions() {
         matchingTransactions = apiClient
-            .get<Transaction[]>(`rules/${data.id}/matching?start=${startDate}&end=${endDate}&limit=5`)
+            .get<Transaction[]>(`rules/${id}/matching?start=${startDate}&end=${endDate}&limit=5`)
             .then(res => res.data);
 
         return false;
@@ -207,7 +207,7 @@
 
     function runRule(startDate: string, endDate: string) {
         transactionCount = apiClient
-            .post<{ count: number }>(`rules/${data.id}/run`, {startDate, endDate})
+            .post<{ count: number }>(`rules/${id}/run`, {startDate, endDate})
             .then(res => {
                 return res.data.count;
             });
