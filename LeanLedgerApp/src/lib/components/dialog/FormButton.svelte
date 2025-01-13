@@ -7,8 +7,8 @@
     let {children, onConfirm, error = $bindable(), text, confirmText, onClick, class:className = "variant-filled-primary"}: {
         onConfirm: () => MaybePromise<boolean>;
         children: any,
-        error?: string;
         text: string;
+        error?: string;
         confirmText?: string;
         onClick?: () => MaybePromise<any>,
         class?: string;

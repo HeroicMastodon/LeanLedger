@@ -18,9 +18,11 @@
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import {type SelectOption, splitPascal} from "$lib";
     import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
-    import {loadAccountOptions} from "$lib/transactions";
+    import {loadAccountOptions, type Transaction} from "$lib/transactions";
     import {goto} from "$app/navigation"
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import TransactionTable from "$lib/transactions/TransactionTable.svelte";
 
     const {data}: { data: PageData; } = $props();
     let rule = $state<Rule | undefined>();
@@ -181,6 +183,22 @@
                 return ruleTransactionFields;
         }
     }
+
+    let matchingTransactions: Promise<Transaction[]> = $state(Promise.resolve([]))
+    let startDate = $state(new Date().toLocaleDateString());
+    let endDate = $state(new Date().toLocaleDateString());
+
+    function findMatchingTransactions() {
+        matchingTransactions = apiClient
+            .get<Transaction[]>(`rules/${data.id}/matching?start=${startDate}&end=${endDate}&limit=100`)
+            .then(res => res.data)
+            .catch(reason => {
+                console.error(reason);
+                return [];
+            });
+
+        return false;
+    }
 </script>
 
 
@@ -188,7 +206,33 @@
     <div class="flex gap-4">
         <h1 class="h1">Rule</h1>
         <button onclick={save} class="btn variant-filled-primary">Save</button>
-        <button class="btn variant-outline-secondary">Matching Transactions</button>
+        <FormButton
+            class="variant-outline-secondary"
+            text="Find Matching Transactions"
+            confirmText="Find"
+            onConfirm={findMatchingTransactions}
+        >
+            <div class="flex gap-8">
+                <LabeledInput
+                    type="date"
+                    bind:value={startDate}
+                    label="start"
+                />
+                <LabeledInput
+                    type="date"
+                    bind:value={endDate}
+                    label="end"
+                />
+            </div>
+            {#await matchingTransactions}
+                <TransactionTable transactions={[]} />
+                <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
+            {:then transactions}
+                <div class="max-h-80 overflow-y-auto">
+                    <TransactionTable transactions={transactions} />
+                </div>
+            {/await}
+        </FormButton>
         <button class="btn variant-outline-warning">Run Rule</button>
     </div>
     <DeleteConfirmationButton onDelete={deleteRule} />

@@ -5,14 +5,14 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/rules/{{id}}/matching?start=2024-01-01&end=2024-12-01
+  url: {{baseUrl}}/rules/{{id}}/matching?start=2024-01-01&end=2024-12-31
   body: none
   auth: none
 }
 
 params:query {
   start: 2024-01-01
-  end: 2024-12-01
+  end: 2024-12-31
 }
 
 vars:pre-request {

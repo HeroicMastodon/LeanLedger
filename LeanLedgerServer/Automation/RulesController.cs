@@ -1,10 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace LeanLedgerServer.Automation;
 
 using System.Diagnostics;
 using AutoMapper;
 using Common;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
@@ -107,7 +106,7 @@ public class RulesController(
 
         var results = await FindMatchingTransactionsForRule(rule, startDate, endDate, limit);
 
-        return Ok(results);
+        return Ok(results.Select(TableTransaction.FromTransaction));
     }
 
     private async Task<List<Transaction>> FindMatchingTransactionsForRule(
@@ -119,6 +118,7 @@ public class RulesController(
         var queryString = "select * from transactions";
         List<SqliteParameter?> values = [];
         foreach (var ((field, not, condition, value), index) in rule.Triggers.Enumerate()) {
+            var prefix = index == 0 ? "where" : "and";
             var fieldName = field switch {
                 TransactionRuleField.Description => "Description",
                 TransactionRuleField.Date => "Date",
@@ -140,7 +140,6 @@ public class RulesController(
                 RuleCondition.Exists => $"is {NotToString(!not)} null",
                 _ => throw new UnreachableException()
             };
-            var prefix = index == 0 ? "where" : "and";
 
             queryString += $" {prefix} {fieldName} {comparison}";
             values.Add(new SqliteParameter(valueName, value));
@@ -150,8 +149,7 @@ public class RulesController(
         var valuesArray = values.Select(object? (v) => v).ToArray();
         var query = dbContext
             .Transactions
-            .FromSqlRaw(queryString, valuesArray)
-            .Where(t => t.Date >= startDate && t.Date <= endDate);
+            .FromSqlRaw(queryString, valuesArray);
 
         if (limit is not null) {
             query = query.Take(limit.Value);
