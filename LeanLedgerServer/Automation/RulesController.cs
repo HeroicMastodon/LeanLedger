@@ -1,6 +1,7 @@
 namespace LeanLedgerServer.Automation;
 
 using System.Diagnostics;
+using System.Globalization;
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
@@ -115,19 +116,57 @@ public class RulesController(
         [FromBody]
         RunRuleRequest request
     ) {
-        var (startDate, endDate) = (DateOnly.Parse(request.StartDate), DateOnly.Parse(request.EndDate));
         var rule = await dbContext.Rules.FindAsync(id);
 
         if (rule is null) {
             return NotFound();
         }
 
-        var transactions = await FindMatchingTransactionsForRule(rule, startDate, endDate);
+        var changedCount = await RunSingleRule(rule, request.StartDate, request.EndDate);
+
+        return Ok(
+            new {
+                Count = changedCount
+            }
+        );
+    }
+
+    [HttpPost("run-all")]
+    public async Task<IActionResult> RunAllRules([FromBody] RunRuleRequest request) {
+        var rules = await dbContext.Rules.ToListAsync();
+        var changedCount = 0;
+
+        foreach (var rule in rules) {
+            changedCount += await RunSingleRule(
+                rule,
+                request.StartDate,
+                request.EndDate
+            );
+        }
+
+        return Ok(new {Count = changedCount});
+    }
+
+    private async Task<int> RunSingleRule(
+        Rule rule,
+        string start,
+        string end
+    ) {
+        var (startDate, endDate) = (
+            DateOnly.Parse(start, CultureInfo.InvariantCulture),
+            DateOnly.Parse(end, CultureInfo.InvariantCulture)
+        );
+
+        var transactions = await FindMatchingTransactionsForRule(
+            rule,
+            startDate,
+            endDate
+        );
         transactions.ForEach(rule.ApplyActionsTo);
         dbContext.UpdateRange(transactions);
         await dbContext.SaveChangesAsync();
 
-        return Ok(new {transactions.Count});
+        return transactions.Count;
     }
 
     private async Task<List<Transaction>> FindMatchingTransactionsForRule(
@@ -170,7 +209,8 @@ public class RulesController(
         var valuesArray = values.Select(object? (v) => v).ToArray();
         var query = dbContext
             .Transactions
-            .FromSqlRaw(queryString, valuesArray);
+            .FromSqlRaw(queryString, valuesArray)
+            .Where(t => t.Date >= startDate && t.Date <= endDate);
 
         if (limit is not null) {
             query = query.Take(limit.Value);
