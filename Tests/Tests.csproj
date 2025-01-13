@@ -18,10 +18,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Automation\RuleAction\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\LeanLedgerServer\LeanLedgerServer.csproj" />
     </ItemGroup>
 

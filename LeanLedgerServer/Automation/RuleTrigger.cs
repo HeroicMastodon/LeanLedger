@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using Transactions;
 
 public record RuleTrigger(
-    TransactionRuleField Field,
+    RuleTransactionField Field,
     bool Not,
     RuleCondition Condition,
     string? Value

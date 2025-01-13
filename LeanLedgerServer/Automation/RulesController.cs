@@ -109,6 +109,27 @@ public class RulesController(
         return Ok(results.Select(TableTransaction.FromTransaction));
     }
 
+    [HttpPost("{id:guid}/run")]
+    public async Task<IActionResult> RunRule(
+        Guid id,
+        [FromBody]
+        RunRuleRequest request
+    ) {
+        var (startDate, endDate) = (DateOnly.Parse(request.StartDate), DateOnly.Parse(request.EndDate));
+        var rule = await dbContext.Rules.FindAsync(id);
+
+        if (rule is null) {
+            return NotFound();
+        }
+
+        var transactions = await FindMatchingTransactionsForRule(rule, startDate, endDate);
+        transactions.ForEach(rule.ApplyActionsTo);
+        dbContext.UpdateRange(transactions);
+        await dbContext.SaveChangesAsync();
+
+        return Ok(new {transactions.Count});
+    }
+
     private async Task<List<Transaction>> FindMatchingTransactionsForRule(
         Rule rule,
         DateOnly startDate,
@@ -120,13 +141,13 @@ public class RulesController(
         foreach (var ((field, not, condition, value), index) in rule.Triggers.Enumerate()) {
             var prefix = index == 0 ? "where" : "and";
             var fieldName = field switch {
-                TransactionRuleField.Description => "Description",
-                TransactionRuleField.Date => "Date",
-                TransactionRuleField.Amount => "Amount",
-                TransactionRuleField.Type => "Type",
-                TransactionRuleField.Category => "Category",
-                TransactionRuleField.Source => "SourceAccountId",
-                TransactionRuleField.Destination => "DestinationAccountId",
+                RuleTransactionField.Description => "Description",
+                RuleTransactionField.Date => "Date",
+                RuleTransactionField.Amount => "Amount",
+                RuleTransactionField.Type => "Type",
+                RuleTransactionField.Category => "Category",
+                RuleTransactionField.Source => "SourceAccountId",
+                RuleTransactionField.Destination => "DestinationAccountId",
                 _ => throw new UnreachableException()
             };
             var valueName = $"@value{index}";
@@ -171,6 +192,8 @@ public record RuleRequest(
     List<RuleAction> Actions,
     string? RuleGroupName
 );
+
+public record RunRuleRequest(string StartDate, string EndDate);
 
 public class RuleProfile: Profile {
     public RuleProfile() {

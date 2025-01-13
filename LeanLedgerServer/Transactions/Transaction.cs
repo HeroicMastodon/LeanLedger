@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Accounts;
 
 public class Transaction {
-    public Guid Id { get; init; }
+    public required Guid Id { get; init; }
     public string? Description { get; set; } = string.Empty;
     public DateOnly Date { get; set; }
     public decimal Amount { get; set; }

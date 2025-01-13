@@ -30,7 +30,7 @@ public class RuleGroup {
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum TransactionRuleField {
+public enum RuleTransactionField {
     Description,
     Date,
     Amount,
@@ -41,50 +41,50 @@ public enum TransactionRuleField {
 }
 
 public static class TransactionRuleFieldFunctions {
-    public static string? GetValueFrom(this TransactionRuleField field, Transaction transaction, string? dateFormat = null) => field switch {
-        TransactionRuleField.Description => transaction.Description,
-        TransactionRuleField.Date => transaction.Date.ToString(dateFormat ?? "yyyy-MM-dd", CultureInfo.InvariantCulture),
-        TransactionRuleField.Amount => transaction.Amount.ToString(CultureInfo.InvariantCulture),
-        TransactionRuleField.Type => transaction.Type.ToString(),
-        TransactionRuleField.Category => transaction.Category,
-        TransactionRuleField.Source => transaction.SourceAccountId.ToString(),
-        TransactionRuleField.Destination => transaction.DestinationAccountId.ToString(),
+    public static string? GetValueFrom(this RuleTransactionField field, Transaction transaction, string? dateFormat = null) => field switch {
+        RuleTransactionField.Description => transaction.Description,
+        RuleTransactionField.Date => transaction.Date.ToString(dateFormat ?? "yyyy-MM-dd", CultureInfo.InvariantCulture),
+        RuleTransactionField.Amount => transaction.Amount.ToString(CultureInfo.InvariantCulture),
+        RuleTransactionField.Type => transaction.Type.ToString(),
+        RuleTransactionField.Category => transaction.Category,
+        RuleTransactionField.Source => transaction.SourceAccountId.ToString(),
+        RuleTransactionField.Destination => transaction.DestinationAccountId.ToString(),
         _ => throw new UnreachableException()
     };
 
-    public static void ApplyValueTo(this TransactionRuleField field, Transaction transaction, string? value) {
+    public static void ApplyValueTo(this RuleTransactionField field, Transaction transaction, string? value) {
         switch (field) {
-            case TransactionRuleField.Description:
+            case RuleTransactionField.Description:
                 transaction.Description = value;
                 break;
-            case TransactionRuleField.Date:
+            case RuleTransactionField.Date:
                 if (value is null) {
                     throw new InvalidOperationException();
                 }
 
                 transaction.Date = DateOnly.Parse(value, CultureInfo.InvariantCulture);
                 break;
-            case TransactionRuleField.Amount:
+            case RuleTransactionField.Amount:
                 if (value is null) {
                     throw new InvalidOperationException();
                 }
 
                 transaction.Amount = decimal.Parse(value, CultureInfo.InvariantCulture);
                 break;
-            case TransactionRuleField.Type:
+            case RuleTransactionField.Type:
                 if (value is null) {
                     throw new InvalidOperationException();
                 }
 
                 transaction.Type = Enum.Parse<TransactionType>(value ?? "");
                 break;
-            case TransactionRuleField.Category:
+            case RuleTransactionField.Category:
                 transaction.Category = value;
                 break;
-            case TransactionRuleField.Source:
+            case RuleTransactionField.Source:
                 transaction.SourceAccountId = value is not null ? Guid.Parse(value) : null;
                 break;
-            case TransactionRuleField.Destination:
+            case RuleTransactionField.Destination:
                 transaction.DestinationAccountId = value is not null ? Guid.Parse(value) : null;
                 break;
             default:

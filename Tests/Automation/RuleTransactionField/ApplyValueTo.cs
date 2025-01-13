@@ -14,7 +14,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Description.ApplyValueTo(transaction, value);
+        RuleTransactionField.Description.ApplyValueTo(transaction, value);
 
         Assert.That(transaction.Description, Is.EqualTo(value));
     }
@@ -28,7 +28,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Category.ApplyValueTo(transaction, value);
+        RuleTransactionField.Category.ApplyValueTo(transaction, value);
 
         Assert.That(transaction.Category, Is.EqualTo(value));
     }
@@ -42,7 +42,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Amount.ApplyValueTo(transaction, value.ToString(CultureInfo.InvariantCulture));
+        RuleTransactionField.Amount.ApplyValueTo(transaction, value.ToString(CultureInfo.InvariantCulture));
 
         Assert.That(transaction.Amount, Is.EqualTo(value));
     }
@@ -56,7 +56,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Type.ApplyValueTo(transaction, value.ToString());
+        RuleTransactionField.Type.ApplyValueTo(transaction, value.ToString());
 
         Assert.That(transaction.Type, Is.EqualTo(value));
     }
@@ -71,7 +71,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Date.ApplyValueTo(transaction, value);
+        RuleTransactionField.Date.ApplyValueTo(transaction, value);
 
         Assert.That(transaction.Date, Is.EqualTo(DateOnly.Parse(value)));
     }
@@ -85,7 +85,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Source.ApplyValueTo(transaction, value);
+        RuleTransactionField.Source.ApplyValueTo(transaction, value);
 
         Assert.That(transaction.SourceAccountId, Is.EqualTo(Guid.Parse(value)));
     }
@@ -99,7 +99,7 @@ public class ApplyValueTo {
             Id = Guid.NewGuid(),
             UniqueHash = "",
         };
-        TransactionRuleField.Destination.ApplyValueTo(transaction, value);
+        RuleTransactionField.Destination.ApplyValueTo(transaction, value);
 
         Assert.That(transaction.DestinationAccountId, Is.EqualTo(Guid.Parse(value)));
     }

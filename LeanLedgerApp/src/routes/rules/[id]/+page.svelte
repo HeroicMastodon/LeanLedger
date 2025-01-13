@@ -199,8 +199,12 @@
     let transactionCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
     function runRule() {
         transactionCount = apiClient
-            .post<{count: number}>(`rules/${data.id}/run`, {startDate, endDate})
-            .then(res => res.data.count);
+            .post<{count: number}>(`rules/${data.id}/run`, {startDate: startDate, endDate: endDate})
+            .then(res => {
+                console.log({res})
+                console.log("why isn't this working")
+                return res.data.count;
+            });
         return false;
     }
 </script>
@@ -256,16 +260,14 @@
                     bind:value={endDate}
                     label="end"
                 />
-                {#await transactionCount}
-                    <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
-                {:then count}
-                    {#if count !== undefined}
-                        <Alert class="variant-filled-success"><p>{count} transactions were edited by the rule</p></Alert>
-                    {/if}
-                {:catch err}
-                    <Alert class="variant-filled-error"><p>{err}</p></Alert>
-                {/await}
             </div>
+            {#await transactionCount}
+                <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
+            {:then count}
+                <Alert show={count !== undefined} class="variant-filled-success"><p>{count} transactions were edited by the rule</p></Alert>
+            {:catch err}
+                <Alert show class="variant-filled-error"><p>{err}</p></Alert>
+            {/await}
         </FormButton>
     </div>
     <DeleteConfirmationButton onDelete={deleteRule} />

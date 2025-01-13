@@ -6,7 +6,7 @@ using Transactions;
 
 public record RuleAction(
     RuleActionType ActionType,
-    TransactionRuleField? Field,
+    RuleTransactionField? Field,
     string? Value
 ) {
     public void ApplyTo(Transaction transaction) {
@@ -31,15 +31,15 @@ public record RuleAction(
     private void Append(Transaction transaction) {
         if (Field is null) { throw new InvalidOperationException(); }
 
-        var value = Field.Value.GetValueFrom(transaction);
+        var transactionValue = Field.Value.GetValueFrom(transaction);
 
-        if (value is null) {
+        if (transactionValue is null) {
             Field.Value.ApplyValueTo(transaction, Value);
             return;
         }
 
-        value = value.Concat(value).ToString();
-        Field.Value.ApplyValueTo(transaction, Value);
+        transactionValue = transactionValue + Value;
+        Field.Value.ApplyValueTo(transaction, transactionValue);
     }
 
     private void Set(Transaction transaction) {
