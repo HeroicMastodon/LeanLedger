@@ -27,3 +27,11 @@ export type SelectOption<T> = {
 }
 
 export type MaybePromise<T> = Promise<T> | T;
+
+export function defaultDate() {
+    return new Date().toLocaleDateString('en-CA', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+    })
+}

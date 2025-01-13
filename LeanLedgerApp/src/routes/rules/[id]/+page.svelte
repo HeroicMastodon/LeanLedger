@@ -23,6 +23,7 @@
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
+    import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
 
     const {data}: { data: PageData; } = $props();
     let rule = $state<Rule | undefined>();
@@ -197,15 +198,12 @@
     }
 
     let transactionCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
-    function runRule() {
+    function runRule(startDate: string, endDate: string) {
         transactionCount = apiClient
-            .post<{count: number}>(`rules/${data.id}/run`, {startDate: startDate, endDate: endDate})
+            .post<{count: number}>(`rules/${data.id}/run`, {startDate, endDate})
             .then(res => {
-                console.log({res})
-                console.log("why isn't this working")
                 return res.data.count;
             });
-        return false;
     }
 </script>
 
@@ -243,32 +241,11 @@
                 <Alert class="variant-filled-error"><p>{err}</p></Alert>
             {/await}
         </FormButton>
-        <FormButton
-            class="variant-outline-warning"
+        <RunRuleButton
             text="Run Rule"
-            confirmText="Run"
-            onConfirm={runRule}
-        >
-            <div class="flex gap-8">
-                <LabeledInput
-                    type="date"
-                    bind:value={startDate}
-                    label="start"
-                />
-                <LabeledInput
-                    type="date"
-                    bind:value={endDate}
-                    label="end"
-                />
-            </div>
-            {#await transactionCount}
-                <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
-            {:then count}
-                <Alert show={count !== undefined} class="variant-filled-success"><p>{count} transactions were edited by the rule</p></Alert>
-            {:catch err}
-                <Alert show class="variant-filled-error"><p>{err}</p></Alert>
-            {/await}
-        </FormButton>
+            countPromise={transactionCount}
+            run={runRule}
+        />
     </div>
     <DeleteConfirmationButton onDelete={deleteRule} />
 </div>

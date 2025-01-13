@@ -6,6 +6,8 @@
     import {Dialog} from "$lib/dialog.svelte";
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
 
     let ruleGroups = $state(load())
 
@@ -40,13 +42,29 @@
         ruleGroups = load();
     }
 
+    let changedCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
+    function runAllRules(startDate: string, endDate: string) {
+        changedCount = apiClient
+            .post<{count: number}>("rules/run-all", {startDate, endDate})
+            .then(res => res.data.count);
+    }
+    function runRuleGroup(name: string, startDate: string, endDate: string) {
+        changedCount = apiClient
+            .post<{count: number}>(`rule-groups/${name}/run`, {startDate, endDate})
+            .then(res => res.data.count);
+    }
+
     let deleteConfirmationDialog = new Dialog();
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Rules</h1>
     <button onclick={() => openRuleGroupDialog()} class="btn variant-filled-secondary">New Group</button>
-    <button class="btn variant-outline-warning">Run All Rules</button>
+    <RunRuleButton
+        text="Run all rules"
+        countPromise={changedCount}
+        run={runAllRules}
+    />
 </div>
 
 {#await ruleGroups}
@@ -63,8 +81,12 @@
                             onclick={() => openRuleGroupDialog(group.name)}
                         >Edit
                         </button>
+                        <RunRuleButton
+                            text="Run Rule Group"
+                            countPromise={changedCount}
+                            run={(start, end) => runRuleGroup(group.name ?? "", start, end)}
+                        />
                     {/if}
-                    <button class="btn variant-outline-warning">Run Rules in Group</button>
                 </div>
                 <button class="btn variant-outline-secondary">New Rule</button>
             </div>
