@@ -1,6 +1,7 @@
 namespace LeanLedgerServer.Common;
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 public abstract record Result<T> {
     public T Unwrap => this switch {
@@ -77,14 +78,14 @@ public abstract record Result<T> {
         _ => throw new UnreachableException()
     };
 
-    public bool IsOk(out T? value) {
+    public bool IsOk([MaybeNullWhen(false)] out T value) {
         value = UnwrapOr(default);
         return IsOk();
     }
 
-    public bool IsOk(out T? value, out Result<T> result) {
+    public bool IsOk([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Err error) {
         value = UnwrapOr(default);
-        result = this;
+        error = GetError();
         return IsOk();
     }
 
@@ -138,7 +139,7 @@ public static class ResultExtensions {
     public static async Task WhenAsync<T>(this Task<Result<T>> task, Func<T, Task> ok, Func<Err, Task> error)
         => await (await task).WhenAsync(ok, error);
 
-    public static Task<Result<T>> MapError<T>(this Task<Result<T>>task , Func<Err, Result<T>> mapper) => task.Map(
+    public static Task<Result<T>> MapError<T>(this Task<Result<T>> task, Func<Err, Result<T>> mapper) => task.Map(
         ok: r => r,
         error: mapper
     );
