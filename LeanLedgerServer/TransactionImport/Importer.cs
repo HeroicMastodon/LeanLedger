@@ -33,7 +33,7 @@ public class Importer(
                 }
 
                 switch (field) {
-                    case TransactionImportField.Amount: {
+                    case ImportTransactionField.Amount: {
                         if (!decimal.TryParse(columnValue, CultureInfo.InvariantCulture, out var amount)) {
                             transactions.Add(new ImportError(index, $"Invalid number in amount field; {columnName}: {columnValue}"));
                         }
@@ -41,7 +41,7 @@ public class Importer(
                         mappedTransaction.Amount = amount;
                         break;
                     }
-                    case TransactionImportField.NegatedAmount: {
+                    case ImportTransactionField.NegatedAmount: {
                         if (!decimal.TryParse(columnValue, CultureInfo.InvariantCulture, out var amount)) {
                             transactions.Add(new ImportError(index, $"Invalid number in amount field; {columnName}: {columnValue}"));
                         }
@@ -49,20 +49,20 @@ public class Importer(
                         mappedTransaction.Amount = amount * -1;
                         break;
                     }
-                    case TransactionImportField.Date:
+                    case ImportTransactionField.Date:
                         if (!DateOnly.TryParseExact(columnValue, settings.DateFormat ?? "yyyy/mm/dd", out var date)) {
                             transactions.Add(new ImportError(index, $"Could not parse date; {columnName}: {columnValue}"));
                         }
 
                         mappedTransaction.Date = date;
                         break;
-                    case TransactionImportField.Description:
+                    case ImportTransactionField.Description:
                         mappedTransaction.Description = columnValue;
                         break;
-                    case TransactionImportField.Category:
+                    case ImportTransactionField.Category:
                         mappedTransaction.Category = columnValue;
                         break;
-                    case TransactionImportField.Ignore:
+                    case ImportTransactionField.Ignore:
                         break;
                     default:
                         throw new UnreachableException();
