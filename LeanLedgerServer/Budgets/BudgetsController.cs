@@ -33,26 +33,17 @@ public class BudgetsController(
                 Id = Guid.NewGuid(),
                 ExpectedIncome = mostRecent?.ExpectedIncome ?? 0,
                 Month = month,
-                Year = year
+                Year = year,
+                Categories = mostRecent?.Categories ?? []
             };
+
             await dbContext.AddAsync(budget);
             await dbContext.SaveChangesAsync();
         }
 
-        var actualIncome = await dbContext.Transactions
-            .Include(t => t.DestinationAccount)
-            .Where(t => t.DestinationAccount != null && t.DestinationAccount.IncludeInNetWorth)
-            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
-            .Where(t => t.Type == TransactionType.Income)
-            .SumAsync(t => t.Amount);
+        var view = await GetViewForBudget(budget);
 
-        return Ok(new {
-            budget.Id,
-            budget.Month,
-            budget.Year,
-            budget.ExpectedIncome,
-            actualIncome
-        });
+        return Ok(view);
     }
 
     [HttpPut("{id:guid}")]
@@ -66,13 +57,57 @@ public class BudgetsController(
         mapper.Map(request, budget);
         dbContext.Update(budget);
         await dbContext.SaveChangesAsync();
+        var view = await GetViewForBudget(budget);
 
-        return Ok(budget);
+        return Ok(view);
+    }
+
+    private async Task<dynamic> GetViewForBudget(Budget budget) {
+        var actualIncome = await dbContext.Transactions
+            .Include(t => t.DestinationAccount)
+            .Where(t => t.DestinationAccount != null && t.DestinationAccount.IncludeInNetWorth)
+            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+            .Where(t => t.Type == TransactionType.Income)
+            .SumAsync(t => t.Amount);
+
+        var categoryNames = budget.Categories.Select(c => c.Category);
+        var categorySums = await dbContext.Transactions
+            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+            .Where(t => t.Type == TransactionType.Expense)
+            .Where(t => t.Category != null)
+            .Where(t => categoryNames.Contains(t.Category))
+            .GroupBy(t => t.Category)
+            .Select(
+                group => new {
+                    Category = group.Key,
+                    Sum = group.Sum(g => g.Amount)
+                }
+            )
+            .ToDictionaryAsync(c => c.Category, c => c.Sum);
+        var categories = budget.Categories.Select(
+            c => new {
+                c.Category,
+                c.Limit,
+                Actual = categorySums.TryGetValue(c.Category, out var sum)
+                    ? sum
+                    : 0
+            }
+        );
+
+        return new {
+            budget.Id,
+            budget.Month,
+            budget.Year,
+            budget.ExpectedIncome,
+            categories,
+            actualIncome
+        };
     }
 }
 
 public record BudgetRequest(
-    decimal ExpectedIncome
+    decimal ExpectedIncome,
+    List<BudgetCategory> Categories
 );
 
 public class BudgetProfile: Profile {
