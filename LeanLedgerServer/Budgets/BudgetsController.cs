@@ -5,6 +5,7 @@ using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Transactions;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -22,25 +23,36 @@ public class BudgetsController(
             b => b.Year == year && b.Month == month
         );
 
-        if (budget is not null) {
-            return Ok(budget);
+        if (budget is null) {
+            var mostRecent = await dbContext.Budgets
+                .OrderByDescending(b => b.Year)
+                .ThenByDescending(b => b.Month)
+                .FirstOrDefaultAsync();
+
+            budget = new Budget() {
+                Id = Guid.NewGuid(),
+                ExpectedIncome = mostRecent?.ExpectedIncome ?? 0,
+                Month = month,
+                Year = year
+            };
+            await dbContext.AddAsync(budget);
+            await dbContext.SaveChangesAsync();
         }
 
-        var mostRecent = await dbContext.Budgets
-            .OrderByDescending(b => b.Year)
-            .ThenByDescending(b => b.Month)
-            .FirstOrDefaultAsync();
+        var actualIncome = await dbContext.Transactions
+            .Include(t => t.DestinationAccount)
+            .Where(t => t.DestinationAccount != null && t.DestinationAccount.IncludeInNetWorth)
+            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+            .Where(t => t.Type == TransactionType.Income)
+            .SumAsync(t => t.Amount);
 
-        budget = new Budget() {
-            Id = Guid.NewGuid(),
-            ExpectedIncome = mostRecent?.ExpectedIncome ?? 0,
-            Month = month,
-            Year = year
-        };
-        await dbContext.AddAsync(budget);
-        await dbContext.SaveChangesAsync();
-
-        return Ok(budget);
+        return Ok(new {
+            budget.Id,
+            budget.Month,
+            budget.Year,
+            budget.ExpectedIncome,
+            actualIncome
+        });
     }
 
     [HttpPut("{id:guid}")]
