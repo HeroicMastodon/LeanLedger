@@ -39,6 +39,7 @@ public static class Endpoints {
                     BalanceChange = a.Deposits.Sum(t => t.Amount) - a.Withdrawls.Sum(t => t.Amount),
                 }
             )
+            .AsSplitQuery()
             .ToListAsync();
         var grouped = accounts
             .GroupBy(a => a.AccountType)
@@ -59,6 +60,7 @@ public static class Endpoints {
             .ThenInclude(t => t.DestinationAccount)
             .Include(a => a.Deposits)
             .ThenInclude(t => t.SourceAccount)
+            .AsSplitQuery()
             .SingleOrDefaultAsync(a => a.Id == id);
 
         if (account is null) {
@@ -81,6 +83,7 @@ public static class Endpoints {
                     .ToImmutableArray()
                     .AddRange(account.Deposits)
                     .Select(TableTransaction.FromTransaction)
+                    .OrderByDescending(t => t.Date)
             }
         );
     }
