@@ -5,12 +5,10 @@ export function splitPascal(words: string) {
     return words.replace(/([a-z])([A-Z])/g, '$1 $2')
 }
 
+const formatCurrency = new Intl.NumberFormat("en-us", {style: "currency", currency: "USD"}).format;
 export function formatMoney(amount: number, type?: TransactionType) {
-    if (type) {
-        return type !== "Expense" ? `$${amount}` : `-$${amount}`;
-    }
 
-    return amount >= 0 ? `$${amount}` : `-$${amount * -1}`;
+    return type !== "Expense" ? formatCurrency(amount) : formatCurrency(-amount);
 }
 
 export function dateFromString(date: string) {
@@ -28,3 +26,7 @@ export type SelectOption<T> = {
 
 export type MaybePromise<T> = Promise<T> | T;
 
+
+export function sumUp<T>(arr: T[], getter: (val: T) => number): number {
+    return arr.reduce((agg, curr) => agg + getter(curr), 0);
+}

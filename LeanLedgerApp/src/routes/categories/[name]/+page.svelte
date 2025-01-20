@@ -3,21 +3,21 @@
     import {apiClient} from "$lib/apiClient";
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import type {Transaction} from "$lib/transactions";
-    import type {PageData} from "./$types";
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
+    import {page} from "$app/stores";
 
     type Category = { amount: number; name: string; transactions: Transaction[] }
 
-    const {data}: { data: PageData } = $props();
     let category: Category = $state({amount: 0, name: "", transactions: []});
+    let name = $page.params.name;
 
     async function load() {
-        const resp = await apiClient.get<Category>(`categories/${data.name}`);
+        const resp = await apiClient.get<Category>(`categories/${name}`);
         category = resp.data;
     }
 </script>
 
-<h1 class="h1 mb-8"> {data.name} - Total: <Money amount={category.amount}/></h1>
+<h1 class="h1 mb-8"> {name} - Total: <Money amount={category.amount}/></h1>
 <TransactionTable
     transactions={category.transactions}
 />

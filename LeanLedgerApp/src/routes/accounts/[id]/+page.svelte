@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type {PageData} from "./$types";
     import {apiClient} from "$lib/apiClient";
     import {type AccountData} from "$lib/accounts";
     import {ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
@@ -12,24 +11,25 @@
     import ImportSettingsButton from "$lib/accounts/ImportSettingsButton.svelte";
     import DialogButton from "$lib/components/dialog/DialogButton.svelte";
     import ImportButton from "$lib/accounts/ImportButton.svelte";
+    import {page} from "$app/stores";
 
-    let {data}: { data: PageData } = $props();
+    let id = $page.params.id;
     let account: AccountData | null = $state(null);
     let isSaving = $state(false);
 
     async function load() {
-        const response = await apiClient.get<AccountData>(`accounts/${data.id}`);
+        const response = await apiClient.get<AccountData>(`accounts/${id}`);
         account = response.data;
     }
 
     async function saveChanges() {
         isSaving = true;
-        const response = await apiClient.put(`accounts/${data.id}`, account)
+        const response = await apiClient.put(`accounts/${id}`, account)
         isSaving = false;
     }
 
     async function deleteAccount() {
-        const response = await apiClient.delete(`accounts/${data.id}`);
+        const response = await apiClient.delete(`accounts/${id}`);
         await goto("/accounts")
 
         return false;

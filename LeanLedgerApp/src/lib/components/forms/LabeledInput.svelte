@@ -2,7 +2,7 @@
     type InputType = "text" | "number" | "date";
 
     let {type, value = $bindable(), class: className, label, placeholder}: {
-        label: string;
+        label?: string;
         type: InputType;
         value: string | number;
         class?: string;
@@ -11,6 +11,8 @@
 </script>
 
 <label class="label {className ?? ''}">
-    <span>{label}</span>
+    {#if label}
+        <span>{label}</span>
+    {/if}
     <input type={type} class="input" bind:value={value} placeholder={placeholder} />
 </label>

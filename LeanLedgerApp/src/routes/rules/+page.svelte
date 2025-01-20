@@ -10,10 +10,17 @@
     import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import {goto} from "$app/navigation";
+    import type {SelectOption} from "$lib";
+    import {loadAccountOptions} from "$lib/transactions";
 
-    let ruleGroups = $state(load())
+    let accounts = $state<SelectOption<string>[]>([]);
+    let ruleGroups = $state(load());
+    function accountNameFromId(id?: string) {
+        return accounts.find(a => a.value === id)?.display;
+    }
 
     async function load() {
+        accounts = await loadAccountOptions();
         let res = await apiClient.get<RuleGroup[]>("rule-groups");
         return res.data;
     }
@@ -144,7 +151,7 @@
                             <td>
                                 <SimpleExpandingList
                                     items={rule.triggers}
-                                    stringify={triggerToString}
+                                    stringify={(trigger) => triggerToString(trigger, accountNameFromId(trigger.value))}
                                     label="Triggers"
                                 />
                             </td>

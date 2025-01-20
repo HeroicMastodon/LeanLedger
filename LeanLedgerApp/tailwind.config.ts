@@ -35,5 +35,11 @@ export default {
         "variant-filled-primary",
         "variant-filled-warning",
         "variant-filled-success",
+        "bg-error-500",
+        "bg-error-500/30",
+        "bg-success-500",
+        "bg-success-500/30",
+        "bg-warning-500",
+        "bg-warning-500/30"
     ],
 } satisfies Config;

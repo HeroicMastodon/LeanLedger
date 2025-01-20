@@ -78,8 +78,8 @@ export function defaultRule(): Rule {
     }
 }
 
-export function triggerToString(trigger: RuleTrigger) {
-    return `When ${splitPascal(trigger.field)} ${trigger.not ? "Not " : ""}${splitPascal(trigger.condition)} ${trigger.value || ""}`
+export function triggerToString(trigger: RuleTrigger, accountName?: string) {
+    return `When ${splitPascal(trigger.field)} ${trigger.not ? "Not " : ""}${splitPascal(trigger.condition)} ${accountName || trigger.value || ""}`
 }
 
 export function actionToString(action: RuleAction) {

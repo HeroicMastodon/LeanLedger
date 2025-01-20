@@ -2,7 +2,13 @@
     import {Fa} from "svelte-fa";
     import {faDollar} from "@fortawesome/free-solid-svg-icons";
 
-    let {value = $bindable(), class: className, label, disabled}: { value?: number | string; class?: string; label?: string; disabled?: boolean; } = $props();
+    let {value = $bindable(), class: className, label, disabled, readonly}: {
+        value?: number | string;
+        class?: string;
+        label?: string;
+        disabled?: boolean;
+        readonly?: boolean;
+    } = $props();
 </script>
 <div class="label {className ?? ''}">
     {#if label}
@@ -12,6 +18,6 @@
         <div class="input-group-shim">
             <Fa icon={faDollar}></Fa>
         </div>
-        <input disabled={disabled} type="number" bind:value={value} />
+        <input readonly={readonly} disabled={disabled} type="number" bind:value={value} />
     </div>
 </div>

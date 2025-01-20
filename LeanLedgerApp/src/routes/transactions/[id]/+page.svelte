@@ -4,21 +4,21 @@
     } from "$lib/transactions";
     import {onMount} from "svelte";
     import {apiClient} from "$lib/apiClient";
-    import type {PageData} from "./$types";
     import {ProgressRadial} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation"
     import TransactionForm from "$lib/transactions/TransactionForm.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
+    import {page} from "$app/stores";
 
-    const {data}: { data: PageData; } = $props();
+    let id: string = $page.params.id;
     let transaction: EditableTransaction = $state(defaultTransaction());
     onMount(async () => {
-        const res = await apiClient.get<EditableTransaction>(`transactions/${data.id}`)
+        const res = await apiClient.get<EditableTransaction>(`transactions/${id}`)
         transaction = res.data;
     });
 
     async function deleteTransaction() {
-        const resp = await apiClient.delete(`transactions/${data.id}`);
+        const resp = await apiClient.delete(`transactions/${id}`);
         if (resp.status == 204) {
             await goto("/transactions");
         }
@@ -30,7 +30,7 @@
 
     async function saveTransaction() {
         isSaving = true;
-        const resp = await apiClient.put(`transactions/${data.id}`, transaction);
+        const resp = await apiClient.put(`transactions/${id}`, transaction);
         isSaving = false;
     }
 </script>
