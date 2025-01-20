@@ -1,16 +1,12 @@
 <script lang="ts">
     import {page} from "$app/stores";
-    import {monthFromNumber, lastMonth as getLastMonth, nextMonth as getNextMonth} from "$lib/dateTools";
+    import {lastMonth as getLastMonth, monthFromNumber, nextMonth as getNextMonth} from "$lib/dateTools";
     import {Fa} from "svelte-fa";
     import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
     import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
     import {apiClient} from "$lib/apiClient";
-    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import {ProgressBar} from "@skeletonlabs/skeleton";
-    import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
-    import Money from "$lib/components/Money.svelte";
     import {formatMoney, sumUp} from "$lib";
-    import PredictiveText from "$lib/components/forms/PredictiveText.svelte";
     import {loadCategoryOptions} from "$lib/transactions";
     import BudgetItem from "$lib/budgets/BudgetItem.svelte";
     import Card from "$lib/components/Card.svelte";
@@ -81,12 +77,10 @@
         categoryOptions = await loadCategoryOptions();
     }
 
-    async function save() {
+    const save = debounce(async function () {
         const res = await apiClient.put<Budget>(`budgets/${budget.id}`, budget);
         budget = res.data;
-    }
-
-    const debouncedSave = debounce(save);
+    });
 
     function categoryColor(expected: number, actual: number) {
         if (!expected) return "success";
@@ -107,12 +101,12 @@
         budget.categoryGroups[groupIndex].categories.push({
             category: "New Category", limit: 0, actual: 0
         })
-        debouncedSave();
+        save();
     }
 
     async function removeCategory(groupIndex: number, categoryIndex: number) {
         budget.categoryGroups[groupIndex].categories.splice(categoryIndex, 1)
-        debouncedSave();
+        save();
     }
 
     async function addCategoryGroup() {
@@ -122,12 +116,12 @@
             actual: 0,
             limit: 0
         })
-        debouncedSave();
+        save();
     }
 
     function removeCategoryGroup(index: number) {
         budget.categoryGroups.splice(index, 1);
-        debouncedSave();
+        save();
     }
 </script>
 
@@ -155,7 +149,7 @@
             actual={budget.actualIncome}
             bind:expected={budget.expectedIncome}
             barColor={incomeColor}
-            onSave={debouncedSave}
+            onSave={save}
         />
     </Card>
     <Card class="mb-8">
@@ -182,7 +176,7 @@
                     expectedIsEditable={false}
                     actual={group.actual}
                     barColor={categoryColor(group.limit, group.actual)}
-                    onSave={debouncedSave}
+                    onSave={save}
                 >
                     <button
                         class="btn btn-icon text-secondary-500"
@@ -199,7 +193,7 @@
                         bind:expected={category.limit}
                         actual={category.actual}
                         barColor={categoryColor(category.limit, category.actual)}
-                        onSave={debouncedSave}
+                        onSave={save}
                     />
                 {/each}
             </div>
