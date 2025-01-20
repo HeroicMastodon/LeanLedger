@@ -1,10 +1,10 @@
 namespace LeanLedgerServer.Budgets;
 
+using System.Collections.Immutable;
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Transactions;
 
 [ApiController]
@@ -34,7 +34,7 @@ public class BudgetsController(
                 ExpectedIncome = mostRecent?.ExpectedIncome ?? 0,
                 Month = month,
                 Year = year,
-                Categories = mostRecent?.Categories ?? []
+                CategoriesGroups = mostRecent?.CategoriesGroups ?? [],
             };
 
             await dbContext.AddAsync(budget);
@@ -70,7 +70,7 @@ public class BudgetsController(
             .Where(t => t.Type == TransactionType.Income)
             .SumAsync(t => t.Amount);
 
-        var categoryNames = budget.Categories.Select(c => c.Category);
+        var categoryNames = budget.CategoriesGroups.SelectMany(g => g.Categories.Select(c => c.Category));
         var categorySums = await dbContext.Transactions
             .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
             .Where(t => t.Type == TransactionType.Expense)
@@ -84,13 +84,20 @@ public class BudgetsController(
                 }
             )
             .ToDictionaryAsync(c => c.Category, c => c.Sum);
-        var categories = budget.Categories.Select(
-            c => new {
-                c.Category,
-                c.Limit,
-                Actual = categorySums.TryGetValue(c.Category, out var sum)
-                    ? sum
-                    : 0
+        var categoryGroups = budget.CategoriesGroups.Select(
+            group => {
+                var categories = group.Categories.Select(c => new {
+                    c.Limit,
+                    c.Category,
+                    Actual = categorySums.TryGetValue(c.Category, out var sum) ? sum : 0
+                }).ToImmutableArray();
+
+                return new {
+                    group.Name,
+                    Categories = categories,
+                    Limit = group.Categories.Sum(c => c.Limit),
+                    Actual = categories.Sum(c => c.Actual)
+                };
             }
         );
 
@@ -99,7 +106,7 @@ public class BudgetsController(
             budget.Month,
             budget.Year,
             budget.ExpectedIncome,
-            categories,
+            categoryGroups,
             actualIncome
         };
     }
@@ -107,7 +114,7 @@ public class BudgetsController(
 
 public record BudgetRequest(
     decimal ExpectedIncome,
-    List<BudgetCategory> Categories
+    ImmutableList<BudgetCategoryGroup> Categories
 );
 
 public class BudgetProfile: Profile {

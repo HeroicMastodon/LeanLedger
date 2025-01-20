@@ -26,3 +26,7 @@ export type SelectOption<T> = {
 
 export type MaybePromise<T> = Promise<T> | T;
 
+
+export function sumUp<T>(arr: T[], getter: (val: T) => number): number {
+    return arr.reduce((agg, curr) => agg + getter(curr), 0);
+}

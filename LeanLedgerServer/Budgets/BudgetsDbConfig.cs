@@ -9,14 +9,14 @@ public class BudgetsDbConfig: IEntityTypeConfiguration<Budget> {
         builder.HasKey(b => b.Id);
 
         var jsonSerializerSettings = new JsonSerializerOptions();
-        builder.Property(b => b.Categories)
+        builder.Property(b => b.CategoriesGroups)
             .HasConversion(
                 a => JsonSerializer.Serialize(a, jsonSerializerSettings),
-                json => JsonSerializer.Deserialize<List<BudgetCategory>>(
+                json => JsonSerializer.Deserialize<List<BudgetCategoryGroup>>(
                             json,
                             jsonSerializerSettings
                         )
-                        ?? new List<BudgetCategory>()
+                        ?? new List<BudgetCategoryGroup>()
             );
     }
 }

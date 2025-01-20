@@ -107,7 +107,7 @@ namespace LeanLedgerServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Categories")
+                    b.Property<string>("CategoriesGroups")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
