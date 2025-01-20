@@ -12,6 +12,7 @@
     import Card from "$lib/components/Card.svelte";
     import {debounce} from "$lib/rules";
     import {faPlusCircle} from "@fortawesome/free-solid-svg-icons/faPlusCircle";
+    import {faArrowUpRightFromSquare} from "@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare";
 
     const month = $derived(monthFromNumber($page.params.month, $page.params.year))
     const lastMonth = $derived(getLastMonth(month));
@@ -194,7 +195,11 @@
                         actual={category.actual}
                         barColor={categoryColor(category.limit, category.actual)}
                         onSave={save}
-                    />
+                    >
+                        <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
+                            <Fa icon={faArrowUpRightFromSquare} />
+                        </a>
+                    </BudgetItem>
                 {/each}
             </div>
         </div>
