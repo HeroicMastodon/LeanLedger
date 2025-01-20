@@ -1,5 +1,6 @@
 import type {SelectOption} from "$lib";
 import {apiClient} from "$lib/apiClient";
+import {todaysDateString} from "$lib/dateTools";
 
 export type Transaction = {
     id: string;
@@ -43,7 +44,7 @@ export function defaultTransaction(): EditableTransaction {
         description: "",
         amount: 0,
         category: "",
-        date: "2024-01-01",
+        date: todaysDateString(),
         type: "Income"
     }
 }

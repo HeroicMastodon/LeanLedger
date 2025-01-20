@@ -19,7 +19,7 @@ namespace LeanLedgerServer.Migrations
                     Month = table.Column<int>(type: "INTEGER", nullable: false),
                     Year = table.Column<int>(type: "INTEGER", nullable: false),
                     ExpectedIncome = table.Column<decimal>(type: "TEXT", nullable: false),
-                    CategoriesGroups = table.Column<string>(type: "TEXT", nullable: false)
+                    CategoryGroups = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

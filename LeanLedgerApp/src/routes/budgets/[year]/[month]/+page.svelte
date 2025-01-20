@@ -14,6 +14,8 @@
     import {loadCategoryOptions} from "$lib/transactions";
     import BudgetItem from "$lib/budgets/BudgetItem.svelte";
     import Card from "$lib/components/Card.svelte";
+    import {debounce} from "$lib/rules";
+    import {faPlusCircle} from "@fortawesome/free-solid-svg-icons/faPlusCircle";
 
     const month = $derived(monthFromNumber($page.params.month, $page.params.year))
     const lastMonth = $derived(getLastMonth(month));
@@ -47,8 +49,10 @@
         actualIncome: 0,
         categoryGroups: []
     });
+    const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
+    const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
     const leftToAllocate = $derived(
-        budget.expectedIncome - sumUp(budget.categoryGroups, c => c.limit)
+        budget.expectedIncome - totalExpected
     );
 
     const incomeColor = $derived.by(() => {
@@ -82,9 +86,11 @@
         budget = res.data;
     }
 
-    function categoryColor(category: BudgetCategory) {
-        if (!category.limit) return "success";
-        const ratio = category.actual / category.limit;
+    const debouncedSave = debounce(save);
+
+    function categoryColor(expected: number, actual: number) {
+        if (!expected) return "success";
+        const ratio = actual / expected;
 
         if (ratio > 1) {
             return "error";
@@ -101,119 +107,102 @@
         budget.categoryGroups[groupIndex].categories.push({
             category: "New Category", limit: 0, actual: 0
         })
+        debouncedSave();
     }
 
-    function removeCategory(groupIndex: number, categoryIndex: number) {
+    async function removeCategory(groupIndex: number, categoryIndex: number) {
         budget.categoryGroups[groupIndex].categories.splice(categoryIndex, 1)
+        debouncedSave();
     }
 
-    function addCategoryGroup() {
+    async function addCategoryGroup() {
         budget.categoryGroups.push({
             categories: [],
             name: "New Group",
             actual: 0,
             limit: 0
         })
+        debouncedSave();
     }
 
     function removeCategoryGroup(index: number) {
         budget.categoryGroups.splice(index, 1);
+        debouncedSave();
     }
 </script>
 
-<div class="flex items-center gap-4 mb-8">
+<div class="flex items-center mb-8">
     <a href="/budgets/{lastMonth.year}/{lastMonth.number}"
-       class="btn btn-icon variant-outline-tertiary text-tertiary-500"
+       class="btn btn-icon text-tertiary-500"
     >
         <Fa icon={faArrowLeft} />
     </a>
     <a href="/budgets/{nextMonth.year}/{nextMonth.number}"
-       class="btn btn-icon variant-outline-tertiary text-tertiary-500"
+       class="btn btn-icon text-tertiary-500"
     >
         <Fa icon={faArrowRight} />
     </a>
     <h1 class="h1">Budget for {month.name} {month.year}</h1>
-    <button
-        onclick={save}
-        class="btn variant-filled-primary"
-    >Save
-    </button>
 </div>
 
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
-    <Card>
+    <Card class="mb-8">
         <BudgetItem
             name="Income"
             nameIsEditable={false}
             actual={budget.actualIncome}
             bind:expected={budget.expectedIncome}
             barColor={incomeColor}
-            onSave={save}
+            onSave={debouncedSave}
         />
     </Card>
+    <Card class="mb-8">
+        <BudgetItem
+            readonly
+            name="Expenses"
+            expected={totalExpected}
+            actual={totalActual}
+            barColor={categoryColor(totalExpected, totalActual)}
+        >
+            <div class="w-4"></div>
+            <div>Left to allocate: {formatMoney(leftToAllocate)}</div>
+            <div class="w-4"></div>
+            <button onclick={addCategoryGroup} class="btn variant-outline-secondary">New Group</button>
+        </BudgetItem>
+    </Card>
 
-<!--    <h2 class="h2 mb-8">Total Expenditures</h2>-->
-<!--    <div class="flex flex-row gap-4 items-center mb-8">-->
-<!--        <div>-->
-<!--            Total Expected: {formatMoney(sumUp(budget.categories, c => c.limit))}-->
-<!--        </div>-->
-<!--        <div>-->
-<!--            Left To Allocate:-->
-<!--            <Money amount={budget.expectedIncome - sumUp(budget.categories, c => c.limit)} />-->
-<!--        </div>-->
-<!--        <div>-->
-<!--            &lt;!&ndash;            TODO: figure out how to color this properly-->
-<!--            TODO: make some useful derived properties here-->
-<!--            &ndash;&gt;-->
-<!--            Total Spent:-->
-<!--            <Money amount={sumUp(budget.categories, c => c.actual)} />-->
-<!--        </div>-->
-<!--        <div>-->
-<!--            Left Over:-->
-<!--            <Money amount={budget.expectedIncome - sumUp(budget.categories, c => c.actual)} />-->
-<!--        </div>-->
-<!--    </div>-->
-
-
-<!--    <div class="flex flex-row gap-4 items-center mb-8">-->
-<!--        <h3 class="h3">Categories</h3>-->
-<!--        <button onclick={addCategory} class="btn variant-outline-primary">Add</button>-->
-<!--    </div>-->
-<!--    {#each budget.categories as category, idx}-->
-<!--        <div class="flex gap-4 items-end ml-8 mb-4">-->
-<!--            <PredictiveText-->
-<!--                label="Name"-->
-<!--                inputId="category-{idx}"-->
-<!--                datalistId="category-list-{idx}"-->
-<!--                bind:value={category.category}-->
-<!--                options={categoryOptions}-->
-<!--            />-->
-<!--            <MoneyInput-->
-<!--                label="Limit"-->
-<!--                bind:value={category.limit}-->
-<!--            />-->
-<!--            <MoneyInput-->
-<!--                readonly-->
-<!--                label="Actual"-->
-<!--                value={category.actual}-->
-<!--            />-->
-<!--            <MoneyInput-->
-<!--                readonly-->
-<!--                label="Remaining"-->
-<!--                value={category.limit - category.actual}-->
-<!--            />-->
-<!--        </div>-->
-<!--        <div class="flex flex-col gap-4 ml-8 mb-4">-->
-<!--            <ProgressBar-->
-<!--                meter="bg-{categoryColor(category)}-500"-->
-<!--                track="bg-{categoryColor(category)}-500/30"-->
-<!--                min={0}-->
-<!--                max={category.limit}-->
-<!--                value={category.actual}-->
-<!--                height="h-4"-->
-<!--            />-->
-<!--        </div>-->
-<!--    {/each}-->
+    {#each budget.categoryGroups as group, groupIdx}
+        <div class="card overflow-hidden mb-8">
+            <div class="p-4 bg-surface-700">
+                <BudgetItem
+                    bind:name={group.name}
+                    expected={group.limit}
+                    expectedIsEditable={false}
+                    actual={group.actual}
+                    barColor={categoryColor(group.limit, group.actual)}
+                    onSave={debouncedSave}
+                >
+                    <button
+                        class="btn btn-icon text-secondary-500"
+                        onclick={() => addCategory(groupIdx)}
+                    >
+                        <Fa icon={faPlusCircle} />
+                    </button>
+                </BudgetItem>
+            </div>
+            <div class="p-4 pl-12">
+                {#each group.categories as category}
+                    <BudgetItem
+                        bind:name={category.category}
+                        bind:expected={category.limit}
+                        actual={category.actual}
+                        barColor={categoryColor(category.limit, category.actual)}
+                        onSave={debouncedSave}
+                    />
+                {/each}
+            </div>
+        </div>
+    {/each}
 {/await}

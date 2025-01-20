@@ -8,7 +8,7 @@ public class Budget {
     public required int Year { get; init; }
     public required decimal ExpectedIncome { get; init; }
 
-    public List<BudgetCategoryGroup> CategoriesGroups { get; set; } = [];
+    public List<BudgetCategoryGroup> CategoryGroups { get; set; } = [];
 }
 
 public record BudgetCategory(string Category, decimal Limit);

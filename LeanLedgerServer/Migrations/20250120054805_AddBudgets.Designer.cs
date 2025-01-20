@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LeanLedgerServer.Migrations
 {
     [DbContext(typeof(LedgerDbContext))]
-    [Migration("20250120044428_AddBudgets")]
+    [Migration("20250120054805_AddBudgets")]
     partial class AddBudgets
     {
         /// <inheritdoc />
@@ -110,7 +110,7 @@ namespace LeanLedgerServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CategoriesGroups")
+                    b.Property<string>("CategoryGroups")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

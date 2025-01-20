@@ -34,7 +34,7 @@ public class BudgetsController(
                 ExpectedIncome = mostRecent?.ExpectedIncome ?? 0,
                 Month = month,
                 Year = year,
-                CategoriesGroups = mostRecent?.CategoriesGroups ?? [],
+                CategoryGroups = mostRecent?.CategoryGroups ?? [],
             };
 
             await dbContext.AddAsync(budget);
@@ -70,7 +70,7 @@ public class BudgetsController(
             .Where(t => t.Type == TransactionType.Income)
             .SumAsync(t => t.Amount);
 
-        var categoryNames = budget.CategoriesGroups.SelectMany(g => g.Categories.Select(c => c.Category));
+        var categoryNames = budget.CategoryGroups.SelectMany(g => g.Categories.Select(c => c.Category));
         var categorySums = await dbContext.Transactions
             .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
             .Where(t => t.Type == TransactionType.Expense)
@@ -84,7 +84,7 @@ public class BudgetsController(
                 }
             )
             .ToDictionaryAsync(c => c.Category, c => c.Sum);
-        var categoryGroups = budget.CategoriesGroups.Select(
+        var categoryGroups = budget.CategoryGroups.Select(
             group => {
                 var categories = group.Categories.Select(c => new {
                     c.Limit,
@@ -114,7 +114,7 @@ public class BudgetsController(
 
 public record BudgetRequest(
     decimal ExpectedIncome,
-    ImmutableList<BudgetCategoryGroup> Categories
+    List<BudgetCategoryGroup> CategoryGroups
 );
 
 public class BudgetProfile: Profile {
