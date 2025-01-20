@@ -13,6 +13,8 @@
     import {debounce} from "$lib/rules";
     import {faPlusCircle} from "@fortawesome/free-solid-svg-icons/faPlusCircle";
     import {faArrowUpRightFromSquare} from "@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare";
+    import {afterNavigate} from "$app/navigation";
+    import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
 
     const month = $derived(monthFromNumber($page.params.month, $page.params.year))
     const lastMonth = $derived(getLastMonth(month));
@@ -46,6 +48,11 @@
         actualIncome: 0,
         categoryGroups: []
     });
+
+    afterNavigate(() => {
+        loading = load();
+    })
+
     const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
     const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
     const leftToAllocate = $derived(
@@ -151,6 +158,7 @@
             bind:expected={budget.expectedIncome}
             barColor={incomeColor}
             onSave={save}
+            id="Income"
         />
     </Card>
     <Card class="mb-8">
@@ -160,6 +168,7 @@
             expected={totalExpected}
             actual={totalActual}
             barColor={categoryColor(totalExpected, totalActual)}
+            id="Expenses"
         >
             <div class="w-4"></div>
             <div>Left to allocate: {formatMoney(leftToAllocate)}</div>
@@ -178,6 +187,7 @@
                     actual={group.actual}
                     barColor={categoryColor(group.limit, group.actual)}
                     onSave={save}
+                    id={groupIdx.toString()}
                 >
                     <button
                         class="btn btn-icon text-secondary-500"
@@ -185,21 +195,29 @@
                     >
                         <Fa icon={faPlusCircle} />
                     </button>
+                    <button onclick={() => removeCategoryGroup(groupIdx)} class="btn btn-icon text-error-500">
+                        <Fa icon={faTrashCan} />
+                    </button>
                 </BudgetItem>
             </div>
             <div class="p-4 pl-12">
-                {#each group.categories as category}
-                    <BudgetItem
+                {#each group.categories as category, categoryIdx}
+                    <div class="mb-4"><BudgetItem
                         bind:name={category.category}
                         bind:expected={category.limit}
                         actual={category.actual}
                         barColor={categoryColor(category.limit, category.actual)}
                         onSave={save}
+                        id="{groupIdx}-{categoryIdx}"
+                        options={categoryOptions}
                     >
                         <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
                             <Fa icon={faArrowUpRightFromSquare} />
                         </a>
-                    </BudgetItem>
+                        <button onclick={() => removeCategory(groupIdx, categoryIdx)} class="btn btn-icon text-error-500">
+                            <Fa icon={faTrashCan} />
+                        </button>
+                    </BudgetItem></div>
                 {/each}
             </div>
         </div>

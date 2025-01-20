@@ -7,6 +7,7 @@
     import {Fa} from "svelte-fa";
     import {faEdit} from "@fortawesome/free-solid-svg-icons/faEdit";
     import {faSave} from "@fortawesome/free-solid-svg-icons/faSave";
+    import PredictiveText from "$lib/components/forms/PredictiveText.svelte";
 
     let {
         expected = $bindable(),
@@ -18,6 +19,8 @@
         onSave,
         children,
         readonly,
+        options,
+        id,
     }: {
         expected: number;
         expectedIsEditable?: boolean;
@@ -28,6 +31,8 @@
         onSave?: () => MaybePromise<any>;
         children?: any;
         readonly?: boolean;
+        options?: string[];
+        id: string;
     } = $props();
 
     let mode = $state<"view" | "edit">("view");
@@ -57,11 +62,21 @@
         {@render children?.()}
     {:else}
         {#if nameIsEditable}
-            <LabeledInput
-                type="text"
-                bind:value={name}
-                label="Name"
-            />
+            {#if options}
+                <PredictiveText
+                    bind:value={name}
+                    label="Name"
+                    datalistId="budget-item-options-{id}"
+                    inputId="budget-item-input-{id}"
+                    options={options}
+                />
+            {:else}
+                <LabeledInput
+                    type="text"
+                    bind:value={name}
+                    label="Name"
+                />
+            {/if}
         {:else}
             <h2 class="h2">{name}</h2>
         {/if}
