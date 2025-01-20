@@ -12,6 +12,8 @@
     import {formatMoney, sumUp} from "$lib";
     import PredictiveText from "$lib/components/forms/PredictiveText.svelte";
     import {loadCategoryOptions} from "$lib/transactions";
+    import BudgetItem from "$lib/budgets/BudgetItem.svelte";
+    import Card from "$lib/components/Card.svelte";
 
     const month = $derived(monthFromNumber($page.params.month, $page.params.year))
     const lastMonth = $derived(getLastMonth(month));
@@ -117,16 +119,6 @@
     function removeCategoryGroup(index: number) {
         budget.categoryGroups.splice(index, 1);
     }
-
-    // TODO: create an inline edit for categories and make the view mode more compact
-
-    let mode = $state<"edit" | "view">("view");
-    function edit() {
-        mode = "edit"
-    }
-    function saveThing() {
-        mode = "view"
-    }
 </script>
 
 <div class="flex items-center gap-4 mb-8">
@@ -151,37 +143,16 @@
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
-    <div class="flex flex-row gap-4 items-start">
-        <h2 class="h2 mb-4">Income</h2>
-        {#if mode === "view"}
-            <button onclick={edit} class="btn variant-outline-secondary">Edit</button>
-        {:else}
-            <button onclick={saveThing} class="btn variant-outline-success">Save</button>
-        {/if}
-    </div>
-    <ProgressBar
-        meter="bg-{incomeColor}-500"
-        track="bg-{incomeColor}-500/30"
-        min={0}
-        max={budget.expectedIncome}
-        value={budget.actualIncome}
-        height="h-4"
-    />
-    {#if mode === "view"}
-        <p class="p">{formatMoney(budget.actualIncome)} of {formatMoney(budget.expectedIncome)}</p>
-    {:else}
-        <div class="flex gap-4 items-center mb-4">
-            <MoneyInput
-                label="Expected"
-                bind:value={budget.expectedIncome}
-            />
-            <MoneyInput
-                readonly
-                label="Actual"
-                value={budget.actualIncome}
-            />
-        </div>
-    {/if}
+    <Card>
+        <BudgetItem
+            name="Income"
+            nameIsEditable={false}
+            actual={budget.actualIncome}
+            bind:expected={budget.expectedIncome}
+            barColor={incomeColor}
+            onSave={save}
+        />
+    </Card>
 
 <!--    <h2 class="h2 mb-8">Total Expenditures</h2>-->
 <!--    <div class="flex flex-row gap-4 items-center mb-8">-->
