@@ -40,10 +40,10 @@ public static class Endpoints {
                 }
             )
             .AsSplitQuery()
-            .ToListAsync();
+            .ToArrayAsync();
         var grouped = accounts
             .GroupBy(a => a.AccountType)
-            .ToDictionary(group => group.Key, group => group);
+            .ToDictionary(group => group.Key, group => group.OrderBy(a => a.Name).ToArray());
         return Ok(grouped);
     }
 
