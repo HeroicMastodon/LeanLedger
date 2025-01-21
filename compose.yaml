@@ -1,0 +1,21 @@
+﻿version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./docker-data:/app/Data  # Host directory mapped to container's SQLite folder
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+#    depends_on:
+#      - sqlite
+
+#  sqlite:
+#    image: nouchka/sqlite3
+#    volumes:
+#      - ./server/Data:/data  # Ensure SQLite database persists on the host

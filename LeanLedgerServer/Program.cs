@@ -30,6 +30,13 @@ builder.Services.AddControllers()
 ;
 
 var app = builder.Build();
+
+if (app.Environment.IsProduction()) {
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<LedgerDbContext>();
+    dbContext.Database.Migrate(); // This applies pending migrations
+}
+
 app.Use(
     async (context, next) => {
         if (!context.Request.Path.StartsWithSegments("/api") && !Path.HasExtension(context.Request.Path) && context.Request.Path != "/") {
