@@ -33,6 +33,7 @@
         year: number;
         expectedIncome: number;
         actualIncome: number;
+        remainingExpenseTotal: number;
         categoryGroups: BudgetCategoryGroup[];
     };
     let loading = $state(load());
@@ -42,6 +43,7 @@
         year: 0,
         expectedIncome: 0,
         actualIncome: 0,
+        remainingExpenseTotal: 0,
         categoryGroups: []
     });
 
@@ -146,18 +148,27 @@
     </Card>
     <Card class="mb-8">
         <BudgetItem
+            class="mb-4"
             readonly
-            name="Expenses"
+            name="Planned Expenses"
             expected={totalExpected}
             actual={totalActual}
             barColor={categoryColor(totalExpected, totalActual)}
-            id="Expenses"
+            id="Planned Expenses"
         >
             <div class="w-4"></div>
             <div>Left to allocate: {formatMoney(leftToAllocate)}</div>
             <div class="w-4"></div>
             <button onclick={addCategoryGroup} class="btn variant-outline-secondary">New Group</button>
         </BudgetItem>
+        <BudgetItem
+            readonly
+            name="Unallocated Expenses"
+            expected={leftToAllocate}
+            actual={budget.remainingExpenseTotal}
+            barColor={categoryColor(leftToAllocate, budget.remainingExpenseTotal)}
+            id="Unallocated Expenses"
+        ></BudgetItem>
     </Card>
 
     {#each budget.categoryGroups as group, groupIdx}
@@ -185,7 +196,8 @@
             </div>
             <div class="p-4 pl-12">
                 {#each group.categories as category, categoryIdx}
-                    <div class="mb-4"><BudgetItem
+                    <BudgetItem
+                        class="mb-4"
                         bind:name={category.category}
                         bind:expected={category.limit}
                         actual={category.actual}
@@ -197,10 +209,12 @@
                         <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
                             <Fa icon={faArrowUpRightFromSquare} />
                         </a>
-                        <button onclick={() => removeCategory(groupIdx, categoryIdx)} class="btn btn-icon text-error-500">
+                        <button onclick={() => removeCategory(groupIdx, categoryIdx)}
+                                class="btn btn-icon text-error-500"
+                        >
                             <Fa icon={faTrashCan} />
                         </button>
-                    </BudgetItem></div>
+                    </BudgetItem>
                 {/each}
             </div>
         </div>

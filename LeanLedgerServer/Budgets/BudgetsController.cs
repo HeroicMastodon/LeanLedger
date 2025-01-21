@@ -71,10 +71,12 @@ public class BudgetsController(
             .SumAsync(t => t.Amount);
 
         var categoryNames = budget.CategoryGroups.SelectMany(g => g.Categories.Select(c => c.Category));
-        var categorySums = await dbContext.Transactions
+        var categoryQuery = dbContext.Transactions
             .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
             .Where(t => t.Type == TransactionType.Expense)
-            .Where(t => t.Category != null)
+            .Where(t => t.Category != null);
+
+        var categorySums = await  categoryQuery
             .Where(t => categoryNames.Contains(t.Category))
             .GroupBy(t => t.Category)
             .Select(
@@ -101,13 +103,18 @@ public class BudgetsController(
             }
         );
 
+        var remainingExpenseTotal = await categoryQuery
+            .Where(t => !categoryNames.Contains(t.Category))
+            .SumAsync(t => t.Amount);
+
         return new {
             budget.Id,
             budget.Month,
             budget.Year,
             budget.ExpectedIncome,
             categoryGroups,
-            actualIncome
+            actualIncome,
+            remainingExpenseTotal,
         };
     }
 }
