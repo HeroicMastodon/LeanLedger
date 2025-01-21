@@ -44,7 +44,7 @@
 
         return !path.startsWith("/rules");
     })
-    const selectedMonthParams = $derived(`?year=${monthManager.selectedMonth.year}&month=${monthManager.selectedMonth.number}`)
+    const selectedMonthParams = $derived(`?${monthManager.params}`)
 </script>
 {#snippet navItem(href: string, title: string)}
     <li>

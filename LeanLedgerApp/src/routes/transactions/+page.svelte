@@ -7,11 +7,12 @@
     import type {AxiosError} from "axios";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import Alert from "$lib/components/Alert.svelte";
+    import {monthManager} from "$lib/selectedMonth.svelte";
 
     let transactions: Transaction[] = $state([]);
 
     async function load() {
-        const response = await apiClient.get<Transaction[]>("transactions");
+        const response = await apiClient.get<Transaction[]>(`transactions?${monthManager.params}`);
         transactions = response.data;
     }
 

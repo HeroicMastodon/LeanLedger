@@ -24,7 +24,6 @@
     confirmButtonColorType="success"
     cancelButtonColorType="error"
     onclick={onClick}
-    onenter={onConfirm}
 >
     {@render children()}
     <Alert show={!!error} class="variant-filled-error">
