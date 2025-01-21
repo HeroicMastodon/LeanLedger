@@ -13,5 +13,4 @@ let {onDelete}: {onDelete: () => MaybePromise<boolean>;} = $props();
     class="variant-outline-error"
     confirmButtonColorType="error"
     cancelButtonColorType="success"
-    onenter={onDelete}
 />

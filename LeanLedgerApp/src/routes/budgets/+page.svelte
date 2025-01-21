@@ -1,6 +1,5 @@
 <script lang="ts">
     import {page} from "$app/stores";
-    import {lastMonth as getLastMonth, monthFromNumber, nextMonth as getNextMonth} from "$lib/dateTools";
     import {Fa} from "svelte-fa";
     import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
     import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
@@ -15,10 +14,7 @@
     import {faArrowUpRightFromSquare} from "@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare";
     import {afterNavigate} from "$app/navigation";
     import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
-
-    const month = $derived(monthFromNumber($page.params.month, $page.params.year))
-    const lastMonth = $derived(getLastMonth(month));
-    const nextMonth = $derived(getNextMonth(month));
+    import {monthManager} from "$lib/selectedMonth.svelte";
 
     type BudgetCategory = {
         category: string;
@@ -49,9 +45,10 @@
         categoryGroups: []
     });
 
-    afterNavigate(() => {
+    $effect(() => {
         loading = load();
     })
+
 
     const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
     const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
@@ -79,7 +76,7 @@
     let categoryOptions = $state<string[]>([]);
 
     async function load() {
-        const res = await apiClient.get<Budget>(`budgets/${$page.params.year}/${$page.params.month}`);
+        const res = await apiClient.get<Budget>(`budgets/${monthManager.selectedMonth.year}/${monthManager.selectedMonth.number}`);
         budget = res.data;
 
         categoryOptions = await loadCategoryOptions();
@@ -134,17 +131,17 @@
 </script>
 
 <div class="flex items-center mb-8">
-    <a href="/budgets/{lastMonth.year}/{lastMonth.number}"
+    <a href="/budgets?month={monthManager.lastMonth.number}&year={monthManager.lastMonth.year}"
        class="btn btn-icon text-tertiary-500"
     >
         <Fa icon={faArrowLeft} />
     </a>
-    <a href="/budgets/{nextMonth.year}/{nextMonth.number}"
+    <a href="/budgets?year={monthManager.nextMonth.year}&month={monthManager.nextMonth.number}"
        class="btn btn-icon text-tertiary-500"
     >
         <Fa icon={faArrowRight} />
     </a>
-    <h1 class="h1">Budget for {month.name} {month.year}</h1>
+    <h1 class="h1">Budget for {monthManager.selectedMonth.name} {monthManager.selectedMonth.year}</h1>
 </div>
 
 {#await loading}
