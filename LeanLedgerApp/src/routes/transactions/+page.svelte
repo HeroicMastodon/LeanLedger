@@ -8,6 +8,9 @@
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import Alert from "$lib/components/Alert.svelte";
     import {monthManager} from "$lib/selectedMonth.svelte";
+    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
+    import {Fa} from "svelte-fa";
+    import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
 
     let transactions: Transaction[] = $state([]);
 
@@ -34,19 +37,34 @@
 
         return true;
     }
+
+    let search = $state("");
+    const searchLower = $derived(search.toLowerCase());
+    const filteredTransactions = $derived(transactions.filter(t =>
+        t.description.toLowerCase().includes(searchLower)
+        || t.sourceAccount?.name.toLowerCase().includes(searchLower)
+        || t.destinationAccount?.name.toLowerCase().includes(searchLower)
+        || t.category?.toLowerCase().includes(searchLower)
+        || (!t.category && "none".includes(searchLower))
+    ));
 </script>
 <div class="mb-8 flex justify-start items-center gap-8">
     <h1 class="h1">Transactions</h1>
     <FormButton
-            text="New Transaction"
-            bind:error
-            onConfirm={saveTransaction}
-            confirmText="Create"
+        text="New Transaction"
+        bind:error
+        onConfirm={saveTransaction}
+        confirmText="Create"
     >
         <TransactionForm bind:transaction />
     </FormButton>
+    <LabeledInput
+        type="text"
+        bind:value={search}
+        placeholder="Search..."
+    />
 </div>
-<TransactionTable transactions={transactions} />
+<TransactionTable transactions={filteredTransactions} />
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:catch err}
