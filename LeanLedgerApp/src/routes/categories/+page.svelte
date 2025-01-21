@@ -19,7 +19,7 @@
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
     <div class="table-container max-w-lg">
-        <table class="table">
+        <table class="table table-compact table-hover">
             <thead>
             <tr>
                 <th>Name</th>

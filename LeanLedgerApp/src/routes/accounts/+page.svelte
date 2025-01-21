@@ -25,7 +25,7 @@
         {/snippet}
         {#snippet content()}
             <div class="table-container">
-                <table class="table table-hover md:table-fixed">
+                <table class="table table-compact table-hover md:table-fixed">
                     <thead>
                     <tr>
                         <th>Name</th>

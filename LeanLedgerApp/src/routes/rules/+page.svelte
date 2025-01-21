@@ -132,7 +132,7 @@
                 </FormButton>
             </div>
             <div class="table-container">
-                <table class="table table-fixed">
+                <table class="table table-compact table-hover table-fixed">
                     <thead>
                     <tr>
                         <th> Name</th>

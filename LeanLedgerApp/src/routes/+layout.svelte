@@ -42,7 +42,7 @@
     const isControlledByGlobalMonth = $derived.by(() => {
         const path = $page.url.pathname.toLowerCase();
 
-        return !(path.startsWith("/transaction") || path.startsWith("/rules"));
+        return !path.startsWith("/rules");
     })
     const selectedMonthParams = $derived(`?year=${monthManager.selectedMonth.year}&month=${monthManager.selectedMonth.number}`)
 </script>
@@ -118,7 +118,7 @@
                                 <nav class="list-nav">
                                     <ul>
                                         {@render navItem(`/accounts${selectedMonthParams}`, "Accounts")}
-                                        {@render navItem("/transactions", "Transactions")}
+                                        {@render navItem(`/transactions${selectedMonthParams}`, "Transactions")}
                                         {@render navItem(`/categories${selectedMonthParams}`, "Categories")}
                                         {@render navItem("/rules", "Rules")}
                                         {@render navItem(`/budgets${selectedMonthParams}`, "Budgets")}
