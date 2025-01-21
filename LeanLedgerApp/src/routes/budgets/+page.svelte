@@ -130,20 +130,6 @@
     }
 </script>
 
-<div class="flex items-center mb-8">
-    <a href="/budgets?month={monthManager.lastMonth.number}&year={monthManager.lastMonth.year}"
-       class="btn btn-icon text-tertiary-500"
-    >
-        <Fa icon={faArrowLeft} />
-    </a>
-    <a href="/budgets?year={monthManager.nextMonth.year}&month={monthManager.nextMonth.number}"
-       class="btn btn-icon text-tertiary-500"
-    >
-        <Fa icon={faArrowRight} />
-    </a>
-    <h1 class="h1">Budget for {monthManager.selectedMonth.name} {monthManager.selectedMonth.year}</h1>
-</div>
-
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
