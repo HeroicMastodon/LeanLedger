@@ -2,13 +2,14 @@
     import Money from "$lib/components/Money.svelte";
     import {apiClient} from "$lib/apiClient";
     import {ProgressBar} from "@skeletonlabs/skeleton";
+    import {monthManager} from "$lib/selectedMonth.svelte";
 
     type Category = { amount: number; name: number; }
 
     let categories: Category[] = $state([]);
 
     async function load() {
-        const resp = await apiClient.get<Category[]>("categories");
+        const resp = await apiClient.get<Category[]>(`categories?${monthManager.params}`);
         categories = resp.data;
     }
 </script>
@@ -31,7 +32,7 @@
                 <tr>
                     <td>
                         <a
-                            href="/categories/{name}"
+                            href="/categories/{name}/?{monthManager.params}"
                             class="text-primary-400"
                         >
                             {name}

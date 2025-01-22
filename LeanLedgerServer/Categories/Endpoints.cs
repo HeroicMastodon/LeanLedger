@@ -4,6 +4,7 @@ using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
+using static Common.QueryByMonthFunctions;
 using static Results;
 
 public static class Endpoints {
@@ -18,6 +19,8 @@ public static class Endpoints {
 
     private static async Task<IResult> GetCategory(
         string category,
+        [AsParameters]
+        QueryByMonth byMonth,
         [FromServices]
         LedgerDbContext dbContext
     ) {
@@ -26,6 +29,7 @@ public static class Endpoints {
             .Include(t => t.DestinationAccount)
             .AsQueryable();
 
+        query = QueryTransactionsByMonth(query, byMonth, givenMonthOnly: true);
         query = category == NULL_CATEGORY_NAME
             ? query.Where(t => t.Category == null || t.Category == "")
             : query.Where(t => t.Category == category);
@@ -47,11 +51,13 @@ public static class Endpoints {
 
 
     private static async Task<IResult> ListCategories(
+        [AsParameters]
+        QueryByMonth byMonth,
         [FromServices]
         LedgerDbContext dbContext
     ) {
         // ? Watch this for performance issues
-        var transactions = await dbContext.Transactions
+        var transactions = await QueryTransactionsByMonth(dbContext.Transactions, byMonth, givenMonthOnly: true)
             .GroupBy(t => t.Category)
             .ToListAsync();
 
