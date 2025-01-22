@@ -75,12 +75,12 @@
                     <div class="flex items-center">
                         <p class="p">{monthManager.selectedMonth.name} {monthManager.selectedMonth.year}</p>
                         <a href="{$page.url.pathname}?month={monthManager.lastMonth.number}&year={monthManager.lastMonth.year}"
-                           class="btn btn-icon text-tertiary-500"
+                           class="btn btn-icon-sm text-tertiary-500 p-1"
                         >
                             <Fa icon={faArrowLeft} />
                         </a>
                         <a href="{$page.url.pathname}?year={monthManager.nextMonth.year}&month={monthManager.nextMonth.number}"
-                           class="btn btn-icon text-tertiary-500 ml-[-1rem]"
+                           class="btn btn-icon-sm text-tertiary-500 p-1"
                         >
                             <Fa icon={faArrowRight} />
                         </a>
