@@ -71,6 +71,7 @@
     import AccountForm from "$lib/accounts/AccountForm.svelte";
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import {monthManager} from "$lib/selectedMonth.svelte";
 
     let accounts: AccountGrouping = $state({
         Bank: [],
@@ -79,7 +80,7 @@
     });
 
     async function load() {
-        let response = await apiClient.get<AccountGrouping>("accounts");
+        let response = await apiClient.get<AccountGrouping>(`accounts?${monthManager.params}`);
         accounts = response.data;
     }
 

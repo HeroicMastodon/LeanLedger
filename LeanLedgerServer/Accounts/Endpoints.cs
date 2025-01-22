@@ -19,7 +19,12 @@ public static class Endpoints {
         accounts.MapGet("options", ListAccountOptions);
     }
 
-    private static async Task<IResult> ListAccounts([FromServices] LedgerDbContext dbContext) {
+    private static async Task<IResult> ListAccounts(
+        [AsParameters]
+        QueryByMonth queryByMonth,
+        [FromServices]
+        LedgerDbContext dbContext
+    ) {
         var accounts = await dbContext.Accounts
             .Include(a => a.Withdrawls)
             .Include(a => a.Deposits)
@@ -30,7 +35,7 @@ public static class Endpoints {
                     a.Name,
                     a.Active,
                     a.IncludeInNetWorth,
-                    Balance = CalculateBalance(a),
+                    Balance = CalculateBalance(a, queryByMonth),
                     LastActivityDate = a.Withdrawls.Count != 0
                         ? a.Withdrawls.OrderByDescending(t => t.Date).First().Date
                         : a.Deposits.Count != 0
@@ -47,13 +52,34 @@ public static class Endpoints {
         return Ok(grouped);
     }
 
-    private static decimal CalculateBalance(Account a) =>
-        a.Deposits.Sum(t => t.Amount) -
-        a.Withdrawls.Sum(t => t.Amount) +
-        a.OpeningBalance;
+    private static decimal CalculateBalance(Account a, QueryByMonth byMonth) =>
+        byMonth.Month == null || byMonth.Year == null
+            ? a.Deposits.Where(t => t.Date > a.OpeningDate).Sum(t => t.Amount)
+              - a.Withdrawls.Where(t => t.Date > a.OpeningDate).Sum(t => t.Amount)
+              + a.OpeningBalance
+            : a.Deposits
+                  .Where(
+                      t => t.Date > a.OpeningDate
+                           && (t.Date.Year < byMonth.Year
+                               || (t.Date.Year == byMonth.Year && t.Date.Month <= byMonth.Month)
+                           )
+                  )
+                  .Sum(t => t.Amount)
+              - a.Withdrawls.Where(
+                      t => t.Date > a.OpeningDate
+                           && (t.Date.Year < byMonth.Year
+                               || (t.Date.Year == byMonth.Year && t.Date.Month <= byMonth.Month)
+                           )
+                  )
+                  .Sum(t => t.Amount)
+              + a.OpeningBalance;
 
 
-    private static async Task<IResult> GetAccount(Guid id, [FromServices] LedgerDbContext dbContext) {
+    private static async Task<IResult> GetAccount(
+        Guid id,
+        [AsParameters] QueryByMonth byMonth,
+        [FromServices] LedgerDbContext dbContext
+    ) {
         var account = await dbContext
             .Accounts
             .Include(a => a.Withdrawls)
@@ -77,7 +103,7 @@ public static class Endpoints {
                 account.Active,
                 account.IncludeInNetWorth,
                 account.Notes,
-                Balance = CalculateBalance(account),
+                Balance = CalculateBalance(account, byMonth),
                 Transactions = account
                     .Withdrawls
                     .ToImmutableArray()
@@ -165,7 +191,12 @@ public static class Endpoints {
     private static async Task<IResult> ListAccountOptions([FromServices] LedgerDbContext dbContext) {
         var accounts = await dbContext.Accounts
             .OrderBy(a => a.AccountType)
-            .Select(a => new { Name = string.Concat(a.Name, " - (", a.AccountType.ToString(), ")"), a.Id })
+            .Select(
+                a => new {
+                    Name = string.Concat(a.Name, " - (", a.AccountType.ToString(), ")"),
+                    a.Id
+                }
+            )
             .ToListAsync();
 
         return Ok(accounts);
