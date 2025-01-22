@@ -5,6 +5,7 @@ using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
+using static Common.QueryByMonthFunctions;
 using static Results;
 
 public static class Endpoints {
@@ -27,7 +28,18 @@ public static class Endpoints {
         var accounts = await dbContext.Accounts.ToArrayAsync();
         var mappedAccounts = new List<dynamic>();
         foreach (var account in accounts) {
-            var balanceChange = await QueryBalanceChange(queryByMonth, dbContext, account);
+            var finalBalance = await QueryBalanceChangeByMonth(queryByMonth, dbContext, account);
+            var lastMonthsBalance = queryByMonth is { Month: not null, Year: not null }
+                ? await QueryBalanceChangeByMonth(
+                    queryByMonth.Month == 1
+                        ? new QueryByMonth(12, queryByMonth.Year - 1)
+                        : queryByMonth with {
+                            Month = queryByMonth.Month - 1
+                        },
+                    dbContext,
+                    account
+                )
+                : account.OpeningBalance;
 
             mappedAccounts.Add(
                 new {
@@ -36,8 +48,8 @@ public static class Endpoints {
                     account.Name,
                     account.Active,
                     account.IncludeInNetWorth,
-                    Balance = balanceChange + account.OpeningBalance,
-                    BalanceChange = balanceChange,
+                    Balance = finalBalance,
+                    BalanceChange = finalBalance - lastMonthsBalance,
                     LastActivityDate = await dbContext.Accounts
                         .Include(a => a.Withdrawls)
                         .Include(a => a.Deposits)
@@ -76,7 +88,7 @@ public static class Endpoints {
             return NotFound();
         }
 
-        var balanceChange = await QueryBalanceChange(byMonth, dbContext, account);
+        var balance = await QueryBalanceChangeByMonth(byMonth, dbContext, account);
 
         return Ok(
             new {
@@ -88,14 +100,14 @@ public static class Endpoints {
                 account.Active,
                 account.IncludeInNetWorth,
                 account.Notes,
-                Balance = balanceChange + account.OpeningBalance,
+                Balance = balance,
                 Transactions = (
                         await QueryTransactionsByMonth(
                                 dbContext.Transactions,
-                                account,
                                 byMonth,
                                 givenMonthOnly: true
                             )
+                            .Where(t => t.SourceAccountId == account.Id || t.DestinationAccountId == account.Id)
                             .OrderByDescending(t => t.Date)
                             .ToArrayAsync()
                     )
@@ -104,36 +116,17 @@ public static class Endpoints {
         );
     }
 
-    private static async Task<decimal> QueryBalanceChange(
+    private static async Task<decimal> QueryBalanceChangeByMonth(
         QueryByMonth queryByMonth,
         LedgerDbContext dbContext,
         Account account
     ) =>
-        await QueryTransactionsByMonth(dbContext.Transactions, account, queryByMonth)
+        (await QueryTransactionsByMonth(dbContext.Transactions, queryByMonth)
+            .Where(t => t.SourceAccountId == account.Id || t.DestinationAccountId == account.Id)
             .Where(t => t.Date >= account.OpeningDate)
             .Select(t => t.SourceAccountId == account.Id ? t.Amount * -1 : t.Amount)
-            .SumAsync();
-
-    private static IQueryable<Transaction> QueryTransactionsByMonth(
-        IQueryable<Transaction> transactions,
-        Account account,
-        QueryByMonth byMonth,
-        bool givenMonthOnly = false
-    ) {
-        var query = transactions
-            .Where(t => t.SourceAccountId == account.Id || t.DestinationAccountId == account.Id);
-
-        return byMonth is { Month: not null, Year: not null }
-            ? givenMonthOnly
-                ? query.Where(
-                    t => t.Date.Year == byMonth.Year && t.Date.Month == byMonth.Month
-                )
-                : query.Where(
-                    t => (t.Date.Year < byMonth.Year
-                          || (t.Date.Year == byMonth.Year && t.Date.Month <= byMonth.Month))
-                )
-            : query;
-    }
+            .SumAsync())
+        + account.OpeningBalance;
 
     private static async Task<IResult> CreateAccount(
         [FromBody]
