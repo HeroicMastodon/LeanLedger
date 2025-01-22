@@ -12,13 +12,14 @@
     import DialogButton from "$lib/components/dialog/DialogButton.svelte";
     import ImportButton from "$lib/accounts/ImportButton.svelte";
     import {page} from "$app/stores";
+    import {monthManager} from "$lib/selectedMonth.svelte";
 
     let id = $page.params.id;
     let account: AccountData | null = $state(null);
     let isSaving = $state(false);
 
     async function load() {
-        const response = await apiClient.get<AccountData>(`accounts/${id}`);
+        const response = await apiClient.get<AccountData>(`accounts/${id}?${monthManager.params}`);
         account = response.data;
     }
 

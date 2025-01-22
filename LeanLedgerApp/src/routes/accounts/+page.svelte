@@ -37,7 +37,7 @@
                     </thead>
                     <tbody>
                     {#each accounts[accountType] as account}
-                        <tr class="hover:cursor-pointer" onclick={() => goto(`/accounts/${account.id}`)}>
+                        <tr class="hover:cursor-pointer" onclick={() => goto(`/accounts/${account.id}?${monthManager.params}`)}>
                             <td>
                                 {account.name}
                             </td>

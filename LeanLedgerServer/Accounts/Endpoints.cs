@@ -1,6 +1,5 @@
 namespace LeanLedgerServer.Accounts;
 
-using System.Collections.Immutable;
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
@@ -25,93 +24,115 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext dbContext
     ) {
-        var accounts = await dbContext.Accounts
-            .Include(a => a.Withdrawls)
-            .Include(a => a.Deposits)
-            .Select(
-                a => new {
-                    a.Id,
-                    a.AccountType,
-                    a.Name,
-                    a.Active,
-                    a.IncludeInNetWorth,
-                    Balance = CalculateBalance(a, queryByMonth),
-                    LastActivityDate = a.Withdrawls.Count != 0
-                        ? a.Withdrawls.OrderByDescending(t => t.Date).First().Date
-                        : a.Deposits.Count != 0
-                            ? (DateOnly?)a.Deposits.OrderByDescending(t => t.Date).First().Date
-                            : null,
-                    BalanceChange = a.Deposits.Sum(t => t.Amount) - a.Withdrawls.Sum(t => t.Amount),
+        var accounts = await dbContext.Accounts.ToArrayAsync();
+        var mappedAccounts = new List<dynamic>();
+        foreach (var account in accounts) {
+            var balanceChange = await QueryBalanceChange(queryByMonth, dbContext, account);
+
+            mappedAccounts.Add(
+                new {
+                    account.Id,
+                    account.AccountType,
+                    account.Name,
+                    account.Active,
+                    account.IncludeInNetWorth,
+                    Balance = balanceChange + account.OpeningBalance,
+                    BalanceChange = balanceChange,
+                    LastActivityDate = await dbContext.Accounts
+                        .Include(a => a.Withdrawls)
+                        .Include(a => a.Deposits)
+                        .Where(a => a.Id == account.Id)
+                        .Select(
+                            a => a.Withdrawls.Count != 0
+                                ? a.Withdrawls.OrderByDescending(t => t.Date).First().Date
+                                : a.Deposits.Count != 0
+                                    ? (DateOnly?)a.Deposits.OrderByDescending(t => t.Date).First().Date
+                                    : null
+                        )
+                        .SingleAsync(),
                 }
-            )
-            .AsSplitQuery()
-            .ToArrayAsync();
-        var grouped = accounts
+            );
+        }
+
+        var grouped = mappedAccounts
             .GroupBy(a => a.AccountType)
             .ToDictionary(group => group.Key, group => group.OrderBy(a => a.Name).ToArray());
         return Ok(grouped);
     }
 
-    private static decimal CalculateBalance(Account a, QueryByMonth byMonth) =>
-        byMonth.Month == null || byMonth.Year == null
-            ? a.Deposits.Where(t => t.Date > a.OpeningDate).Sum(t => t.Amount)
-              - a.Withdrawls.Where(t => t.Date > a.OpeningDate).Sum(t => t.Amount)
-              + a.OpeningBalance
-            : a.Deposits
-                  .Where(
-                      t => t.Date > a.OpeningDate
-                           && (t.Date.Year < byMonth.Year
-                               || (t.Date.Year == byMonth.Year && t.Date.Month <= byMonth.Month)
-                           )
-                  )
-                  .Sum(t => t.Amount)
-              - a.Withdrawls.Where(
-                      t => t.Date > a.OpeningDate
-                           && (t.Date.Year < byMonth.Year
-                               || (t.Date.Year == byMonth.Year && t.Date.Month <= byMonth.Month)
-                           )
-                  )
-                  .Sum(t => t.Amount)
-              + a.OpeningBalance;
-
 
     private static async Task<IResult> GetAccount(
         Guid id,
-        [AsParameters] QueryByMonth byMonth,
-        [FromServices] LedgerDbContext dbContext
+        [AsParameters]
+        QueryByMonth byMonth,
+        [FromServices]
+        LedgerDbContext dbContext
     ) {
         var account = await dbContext
             .Accounts
-            .Include(a => a.Withdrawls)
-            .ThenInclude(t => t.DestinationAccount)
-            .Include(a => a.Deposits)
-            .ThenInclude(t => t.SourceAccount)
-            .AsSplitQuery()
             .SingleOrDefaultAsync(a => a.Id == id);
 
         if (account is null) {
             return NotFound();
         }
 
+        var balanceChange = await QueryBalanceChange(byMonth, dbContext, account);
+
         return Ok(
             new {
                 account.Id,
                 account.Name,
-                AccountType = account.AccountType.ToString(),
+                account.AccountType,
                 account.OpeningBalance,
                 account.OpeningDate,
                 account.Active,
                 account.IncludeInNetWorth,
                 account.Notes,
-                Balance = CalculateBalance(account, byMonth),
-                Transactions = account
-                    .Withdrawls
-                    .ToImmutableArray()
-                    .AddRange(account.Deposits)
+                Balance = balanceChange + account.OpeningBalance,
+                Transactions = (
+                        await QueryTransactionsByMonth(
+                                dbContext.Transactions,
+                                account,
+                                byMonth,
+                                givenMonthOnly: true
+                            )
+                            .OrderByDescending(t => t.Date)
+                            .ToArrayAsync()
+                    )
                     .Select(TableTransaction.FromTransaction)
-                    .OrderByDescending(t => t.Date)
             }
         );
+    }
+
+    private static async Task<decimal> QueryBalanceChange(
+        QueryByMonth queryByMonth,
+        LedgerDbContext dbContext,
+        Account account
+    ) =>
+        await QueryTransactionsByMonth(dbContext.Transactions, account, queryByMonth)
+            .Where(t => t.Date >= account.OpeningDate)
+            .Select(t => t.SourceAccountId == account.Id ? t.Amount * -1 : t.Amount)
+            .SumAsync();
+
+    private static IQueryable<Transaction> QueryTransactionsByMonth(
+        IQueryable<Transaction> transactions,
+        Account account,
+        QueryByMonth byMonth,
+        bool givenMonthOnly = false
+    ) {
+        var query = transactions
+            .Where(t => t.SourceAccountId == account.Id || t.DestinationAccountId == account.Id);
+
+        return byMonth is { Month: not null, Year: not null }
+            ? givenMonthOnly
+                ? query.Where(
+                    t => t.Date.Year == byMonth.Year && t.Date.Month == byMonth.Month
+                )
+                : query.Where(
+                    t => (t.Date.Year < byMonth.Year
+                          || (t.Date.Year == byMonth.Year && t.Date.Month <= byMonth.Month))
+                )
+            : query;
     }
 
     private static async Task<IResult> CreateAccount(
