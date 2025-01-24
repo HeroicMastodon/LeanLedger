@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Transactions;
 using static Common.QueryByMonthFunctions;
 using static Results;
+using static AccountFunctions;
 
 public static class Endpoints {
     public static void MapAccounts(this RouteGroupBuilder app) {
@@ -116,17 +117,6 @@ public static class Endpoints {
         );
     }
 
-    private static async Task<decimal> QueryBalanceChangeByMonth(
-        QueryByMonth queryByMonth,
-        LedgerDbContext dbContext,
-        Account account
-    ) =>
-        (await QueryTransactionsByMonth(dbContext.Transactions, queryByMonth)
-            .Where(t => t.SourceAccountId == account.Id || t.DestinationAccountId == account.Id)
-            .Where(t => t.Date >= account.OpeningDate)
-            .Select(t => t.SourceAccountId == account.Id ? t.Amount * -1 : t.Amount)
-            .SumAsync())
-        + account.OpeningBalance;
 
     private static async Task<IResult> CreateAccount(
         [FromBody]

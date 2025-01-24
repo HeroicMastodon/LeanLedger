@@ -3,10 +3,16 @@ namespace LeanLedgerServer.Common;
 using Microsoft.AspNetCore.Mvc;
 using Transactions;
 
-public record QueryByMonth([FromQuery] int? Month, [FromQuery] int? Year);
+public record QueryByMonth(
+    [FromQuery]
+    int? Month,
+    [FromQuery]
+    int? Year
+) {
+    public bool IsValidQuery() => this is { Year: not null, Month: not null };
+}
 
 public static class QueryByMonthFunctions {
-
     public static IQueryable<Transaction> QueryTransactionsByMonth(
         IQueryable<Transaction> query,
         QueryByMonth byMonth,
