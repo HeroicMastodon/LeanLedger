@@ -29,9 +29,9 @@ public static class Endpoints {
         var accounts = await dbContext.Accounts.ToArrayAsync();
         var mappedAccounts = new List<dynamic>();
         foreach (var account in accounts) {
-            var finalBalance = await QueryBalanceChangeByMonth(queryByMonth, dbContext, account);
+            var finalBalance = await QueryBalanceByMonth(queryByMonth, dbContext, account);
             var lastMonthsBalance = queryByMonth is { Month: not null, Year: not null }
-                ? await QueryBalanceChangeByMonth(
+                ? await QueryBalanceByMonth(
                     queryByMonth.Month == 1
                         ? new QueryByMonth(12, queryByMonth.Year - 1)
                         : queryByMonth with {
@@ -89,7 +89,7 @@ public static class Endpoints {
             return NotFound();
         }
 
-        var balance = await QueryBalanceChangeByMonth(byMonth, dbContext, account);
+        var balance = await QueryBalanceByMonth(byMonth, dbContext, account);
 
         return Ok(
             new {

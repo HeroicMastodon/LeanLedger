@@ -10,6 +10,17 @@ public record QueryByMonth(
     int? Year
 ) {
     public bool IsValidQuery() => this is { Year: not null, Month: not null };
+
+    public QueryByMonth Increment() => Month == 12
+        ? new QueryByMonth(1, Year + 1)
+        : this with {
+            Month = Month + 1
+        };
+    public QueryByMonth Decrement() => Month == 1
+        ? new QueryByMonth(12, Year - 1)
+        : this with {
+            Month = Month - 1
+        };
 }
 
 public static class QueryByMonthFunctions {

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using static Common.QueryByMonthFunctions;
 
 public static class AccountFunctions {
-    public static async Task<decimal> QueryBalanceChangeByMonth(
+    public static async Task<decimal> QueryBalanceByMonth(
         QueryByMonth queryByMonth,
         LedgerDbContext dbContext,
         Account account
