@@ -99,6 +99,8 @@
 {/snippet}
 
 <Drawer>
+    <h1 class="h1 m-4">Lean Ledger</h1>
+    <hr class="hr"/>
     {@render navigation(true)}
 </Drawer>
 <AppShell slotSidebarLeft="w-0 lg:w-64">
