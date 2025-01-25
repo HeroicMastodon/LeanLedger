@@ -15,6 +15,8 @@
     import {afterNavigate} from "$app/navigation";
     import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
     import {monthManager} from "$lib/selectedMonth.svelte";
+    import {faAngleUp} from "@fortawesome/free-solid-svg-icons/faAngleUp";
+    import {faAngleDown} from "@fortawesome/free-solid-svg-icons/faAngleDown";
 
     type BudgetCategory = {
         category: string;
@@ -130,6 +132,26 @@
         budget.categoryGroups.splice(index, 1);
         save();
     }
+
+    function moveItemUp(arr: any[], idx: number) {
+        if (idx == 0 || idx >= arr.length) {
+            return;
+        }
+        const prev = arr[idx - 1];
+        arr[idx - 1] = arr[idx];
+        arr[idx] = prev;
+        save();
+    }
+
+    function moveItemDown(arr: any[], idx: number) {
+        if (idx < 0 || idx >= arr.length - 1) {
+            return;
+        }
+        const next = arr[idx + 1];
+        arr[idx + 1] = arr[idx];
+        arr[idx] = next;
+        save();
+    }
 </script>
 
 {#await loading}
@@ -173,8 +195,9 @@
 
     {#each budget.categoryGroups as group, groupIdx}
         <div class="card overflow-hidden mb-8">
-            <div class="p-4 bg-surface-700">
+            <div class="p-4 bg-surface-700 flex gap-8 items-center">
                 <BudgetItem
+                    class="grow"
                     bind:name={group.name}
                     expected={group.limit}
                     expectedIsEditable={false}
@@ -193,28 +216,66 @@
                         <Fa icon={faTrashCan} />
                     </button>
                 </BudgetItem>
+                <div class="flex flex-col">
+                    {#if groupIdx > 0}
+                        <button
+                            onclick={() => moveItemUp(budget.categoryGroups, groupIdx)}
+                            class="btn"
+                        >
+                            <Fa icon={faAngleUp} />
+                        </button>
+                    {/if}
+                    {#if groupIdx < budget.categoryGroups.length - 1}
+                        <button
+                            onclick={() => moveItemDown(budget.categoryGroups, groupIdx)}
+                            class="btn"
+                        >
+                            <Fa icon={faAngleDown} />
+                        </button>
+                    {/if}
+                </div>
             </div>
             <div class="p-4 pl-12">
                 {#each group.categories as category, categoryIdx}
-                    <BudgetItem
-                        class="mb-4"
-                        bind:name={category.category}
-                        bind:expected={category.limit}
-                        actual={category.actual}
-                        barColor={categoryColor(category.limit, category.actual)}
-                        onSave={save}
-                        id="{groupIdx}-{categoryIdx}"
-                        options={categoryOptions}
-                    >
-                        <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
-                            <Fa icon={faArrowUpRightFromSquare} />
-                        </a>
-                        <button onclick={() => removeCategory(groupIdx, categoryIdx)}
-                                class="btn btn-icon text-error-500"
+                    <div class="flex gap-8 items-center">
+                        <BudgetItem
+                            class="mb-4 grow"
+                            bind:name={category.category}
+                            bind:expected={category.limit}
+                            actual={category.actual}
+                            barColor={categoryColor(category.limit, category.actual)}
+                            onSave={save}
+                            id="{groupIdx}-{categoryIdx}"
+                            options={categoryOptions}
                         >
-                            <Fa icon={faTrashCan} />
-                        </button>
-                    </BudgetItem>
+                            <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
+                                <Fa icon={faArrowUpRightFromSquare} />
+                            </a>
+                            <button onclick={() => removeCategory(groupIdx, categoryIdx)}
+                                    class="btn btn-icon text-error-500"
+                            >
+                                <Fa icon={faTrashCan} />
+                            </button>
+                        </BudgetItem>
+                        <div class="flex flex-col">
+                            {#if categoryIdx > 0}
+                                <button
+                                    onclick={() => moveItemUp(group.categories, categoryIdx)}
+                                    class="btn"
+                                >
+                                    <Fa icon={faAngleUp} />
+                                </button>
+                            {/if}
+                            {#if categoryIdx < group.categories.length - 1}
+                                <button
+                                    onclick={() => moveItemDown(group.categories, categoryIdx)}
+                                    class="btn"
+                                >
+                                    <Fa icon={faAngleDown} />
+                                </button>
+                            {/if}
+                        </div>
+                    </div>
                 {/each}
             </div>
         </div>
