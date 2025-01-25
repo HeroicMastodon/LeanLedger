@@ -2,27 +2,28 @@
     import '../app.postcss';
 
     // Floating UI for Popups
-    import {computePosition, autoUpdate, flip, shift, offset, arrow} from '@floating-ui/dom';
-    import {AppBar, AppShell, storePopup} from '@skeletonlabs/skeleton';
+    import {arrow, autoUpdate, computePosition, flip, offset, shift} from '@floating-ui/dom';
+    import {
+        AppBar,
+        AppShell,
+        Drawer,
+        getDrawerStore,
+        initializeStores,
+        popup,
+        storePopup
+    } from '@skeletonlabs/skeleton';
     import {Fa} from "svelte-fa";
     import {faCaretDown, faDollar, faPalette,} from "@fortawesome/free-solid-svg-icons";
-    import {popup} from "@skeletonlabs/skeleton";
 
     import {page} from "$app/stores";
 
     import {monthManager} from "$lib/selectedMonth.svelte";
-    import {afterNavigate, beforeNavigate, onNavigate} from "$app/navigation";
+    import {afterNavigate} from "$app/navigation";
     import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
     import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
     import {faHamburger} from "@fortawesome/free-solid-svg-icons/faHamburger";
 
-    import {initializeStores, Drawer, getDrawerStore} from "@skeletonlabs/skeleton";
 
-    initializeStores();
-    const drawerStore = getDrawerStore();
-    onNavigate(() => {
-        drawerStore.close();
-    })
     interface Props {
         children?: import('svelte').Snippet;
 
@@ -30,13 +31,22 @@
     }
 
     let props: Props = $props();
+    initializeStores();
     storePopup.set({computePosition, autoUpdate, flip, shift, offset, arrow});
 
     const themes = ['carbon-fox', 'wintry'] as const;
-    let selectedTheme = $state('carbon-fox');
+    let selectedTheme = $state(window.localStorage.getItem("theme") ?? 'carbon-fox');
+
+    $effect(() => {
+        window.localStorage.setItem("theme", selectedTheme);
+        document.body.setAttribute('data-theme', selectedTheme);
+    })
+
+    const drawerStore = getDrawerStore();
 
     afterNavigate(() => {
         monthManager.selectFromQuery($page.url.searchParams)
+        drawerStore.close();
     })
 
     function isActive(path: string, href: string) {
@@ -146,7 +156,6 @@
                                 class:bg-primary-active-token={selectedTheme === theme}
                                 onclick={() => {
                                 selectedTheme = theme;
-                                document.body.setAttribute('data-theme', theme);
                             }}
                             >{theme}</button>
                         {/each}
