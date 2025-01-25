@@ -27,7 +27,7 @@ public static class Endpoints {
         var query = dbContext.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
-            .AsQueryable();
+            .Where(t => t.Type == TransactionType.Expense);
 
         query = QueryTransactionsByMonth(query, byMonth, givenMonthOnly: true);
         query = category == NULL_CATEGORY_NAME
@@ -58,18 +58,20 @@ public static class Endpoints {
     ) {
         // ? Watch this for performance issues
         var transactions = await QueryTransactionsByMonth(dbContext.Transactions, byMonth, givenMonthOnly: true)
+            .Where(t => t.Type == TransactionType.Expense)
             .GroupBy(t => t.Category)
             .ToListAsync();
 
         return Ok(
             transactions.Select(
-                g => new {
-                    Name = string.IsNullOrWhiteSpace(g.Key)
-                        ? NULL_CATEGORY_NAME
-                        : g.Key,
-                    Amount = g.Select(TransactionAmount).Sum()
-                }
-            )
+                    g => new {
+                        Name = string.IsNullOrWhiteSpace(g.Key)
+                            ? NULL_CATEGORY_NAME
+                            : g.Key,
+                        Amount = g.Select(TransactionAmount).Sum()
+                    }
+                )
+                .OrderBy(t => t.Name)
         );
     }
 
