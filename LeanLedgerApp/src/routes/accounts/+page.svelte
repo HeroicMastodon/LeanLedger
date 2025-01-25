@@ -31,8 +31,8 @@
                         <th>Name</th>
                         <th>Balance</th>
                         <th>Change</th>
-                        <th>Active</th>
-                        <th>Last Activity</th>
+                        <th class="hidden md:table-cell">Active</th>
+                        <th class="hidden md:table-cell">Last Activity</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -47,10 +47,10 @@
                             <td>
                                 <Money amount={account.balanceChange} />
                             </td>
-                            <td>
+                            <td class="hidden md:table-cell">
                                 <input type="checkbox" class="checkbox" checked={account.active} disabled />
                             </td>
-                            <td>{account.lastActivityDate ?? "No Activity"}</td>
+                            <td class="hidden md:table-cell">{account.lastActivityDate ?? "No Activity"}</td>
                         </tr>
                     {/each}
                     </tbody>

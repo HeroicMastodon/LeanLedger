@@ -49,7 +49,7 @@
     {#if !account}
         {@render errorMessage(null)}
     {:else }
-        <div class="mb-4 flex gap-4 justify-start items-center">
+        <div class="mb-4 flex gap-4 justify-start items-center flex-wrap">
             <h1 class="h1">Account</h1>
             <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
             {#if account.accountType !== "Merchant"}

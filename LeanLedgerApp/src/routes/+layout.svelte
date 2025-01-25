@@ -11,7 +11,7 @@
     import {page} from "$app/stores";
 
     import {monthManager} from "$lib/selectedMonth.svelte";
-    import {afterNavigate, beforeNavigate} from "$app/navigation";
+    import {afterNavigate, beforeNavigate, onNavigate} from "$app/navigation";
     import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
     import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
     import {faHamburger} from "@fortawesome/free-solid-svg-icons/faHamburger";
@@ -20,7 +20,9 @@
 
     initializeStores();
     const drawerStore = getDrawerStore();
-
+    onNavigate(() => {
+        drawerStore.close();
+    })
     interface Props {
         children?: import('svelte').Snippet;
 
