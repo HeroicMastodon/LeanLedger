@@ -14,6 +14,12 @@
     import {afterNavigate, beforeNavigate} from "$app/navigation";
     import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
     import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
+    import {faHamburger} from "@fortawesome/free-solid-svg-icons/faHamburger";
+
+    import {initializeStores, Drawer, getDrawerStore} from "@skeletonlabs/skeleton";
+
+    initializeStores();
+    const drawerStore = getDrawerStore();
 
     interface Props {
         children?: import('svelte').Snippet;
@@ -32,11 +38,15 @@
     })
 
     function isActive(path: string, href: string) {
-        const withoutLeadingSlash = path.substring(1);
-        const withoutQuery = href.split("?")[0];
-        const firstInPath = withoutQuery.split("/")[1];
+        const pathWithoutLeadingSlash = path.substring(1);
+        const hrefWithoutQuery = href.split("?")[0];
+        const firstInHrefPath = hrefWithoutQuery.split("/")[1];
 
-        return withoutLeadingSlash.startsWith(firstInPath)
+        if (firstInHrefPath === "") {
+            return pathWithoutLeadingSlash === "";
+        }
+
+        return pathWithoutLeadingSlash.startsWith(firstInHrefPath)
     }
 
     const isControlledByGlobalMonth = $derived.by(() => {
@@ -56,18 +66,51 @@
         </a>
     </li>
 {/snippet}
+{#snippet navigation(renderHome: boolean)}
+    <div class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ?? ''}">
+        <section class="p-4 pb-20 space-y-4 overflow-y-auto">
+            <nav class="list-nav">
+                <ul>
+                    {#if renderHome}
+                        {@render navItem(`/${selectedMonthParams}`, "Home")}
+                    {/if}
+                    {@render navItem(`/accounts${selectedMonthParams}`, "Accounts")}
+                    {@render navItem(`/transactions${selectedMonthParams}`, "Transactions")}
+                    {@render navItem(`/categories${selectedMonthParams}`, "Categories")}
+                    {@render navItem("/rules", "Rules")}
+                    {@render navItem(`/budgets${selectedMonthParams}`, "Budgets")}
+                </ul>
+            </nav>
+        </section>
+    </div>
 
-<AppShell>
+{/snippet}
+
+<Drawer>
+    {@render navigation(true)}
+</Drawer>
+<AppShell slotSidebarLeft="w-0 lg:w-64">
     {#snippet header()}
 
         <!-- App Bar -->
         <AppBar>
             {#snippet lead()}
-                <a aria-label="Home" class="btn-icon btn-icon-xl" href="/{selectedMonthParams}">
+                <a aria-label="Home"
+                   class="lg:btn-icon lg:btn-icon-xl w-0 overflow-hidden lg:overflow-visible"
+                   href="/{selectedMonthParams}"
+                >
                     <Fa icon={faDollar} />
                 </a>
+                <button
+                    onclick={() => drawerStore.open({})}
+                    class="btn-icon btn-icon-xl w-fit overflow-visible lg:w-0 lg:overflow-hidden"
+                >
+                    <Fa icon={faHamburger} />
+                </button>
             {/snippet}
-            <a href="/{selectedMonthParams}" class="h2 font-bold">
+            <a href="/{selectedMonthParams}"
+               class="h2 font-bold w-0 hidden overflow-hidden lg:w-fit lg:overflow-visible lg:inline"
+            >
                 Lean Ledger
             </a>
             {#snippet trail()}
@@ -113,20 +156,7 @@
     {/snippet}
     {#snippet sidebarLeft()}
         <!-- Nav List -->
-        <div class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ?? ''}">
-            <section class="p-4 pb-20 space-y-4 overflow-y-auto">
-                <nav class="list-nav">
-                    <ul>
-                        {@render navItem(`/accounts${selectedMonthParams}`, "Accounts")}
-                        {@render navItem(`/transactions${selectedMonthParams}`, "Transactions")}
-                        {@render navItem(`/categories${selectedMonthParams}`, "Categories")}
-                        {@render navItem("/rules", "Rules")}
-                        {@render navItem(`/budgets${selectedMonthParams}`, "Budgets")}
-                    </ul>
-                </nav>
-            </section>
-        </div>
-
+        {@render navigation(false)}
     {/snippet}
     <!-- Page Route Content -->
     <section class="m-8">

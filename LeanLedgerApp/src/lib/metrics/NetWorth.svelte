@@ -19,13 +19,13 @@
 
 
 {#await netWorthPromise}
-    <Card>
+    <Card class="grow lg:flex-initial">
         <h2 class="h2">Net Worth</h2>
         <hr class="hr" />
         <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
     </Card>
 {:then netWorth}
-    <Card>
+    <Card class="grow lg:flex-initial">
         <h2 class="h2">Net Worth: <Money  amount={netWorth.netWorth} /></h2>
         <hr class="hr mb-4" />
         <div class="grid grid-cols-2 gap-4">
