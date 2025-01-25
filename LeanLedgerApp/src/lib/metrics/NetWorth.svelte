@@ -8,6 +8,7 @@
             netWorth: number;
             income: number;
             expenses: number;
+            yearOverYear: number;
         };
 
     const netWorthPromise = $derived.by(async () => {
@@ -32,6 +33,7 @@
             <div>In: <Money amount= {netWorth.income} /> </div>
             <div>Change: <Money amount={netWorth.income - netWorth.expenses} /> </div>
             <div>Out: <Money amount={netWorth.expenses} type="Expense"/></div>
+            <div>YoY Change: <Money amount={netWorth.yearOverYear} /></div>
         </div>
     </Card>
 {/await}

@@ -18,6 +18,7 @@ public class MetricsController(
         QueryByMonth byMonth
     ) {
         var netWorth = await QueryNetWorth(byMonth);
+        var lastYearsNetWorth = await QueryNetWorth(byMonth with {Year = byMonth.Year - 1});
 
         var shouldGetEverything = !byMonth.IsValidQuery();
         var totals = await dbContext.Accounts
@@ -48,6 +49,7 @@ public class MetricsController(
                 netWorth,
                 income = totals.Sum(t => t.totalIncome),
                 expenses = totals.Sum(t => t.totalExpenses),
+                yearOverYear = netWorth - lastYearsNetWorth,
             }
         );
     }
