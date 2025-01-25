@@ -122,7 +122,10 @@ public class MetricsController(
             }
         );
         var expectedExpenses = categoryGroups.Sum(c => c.Limit);
-        var totalExpenses = categoryGroups.Sum(c => c.Actual);
+        var totalExpenses = await dbContext.Transactions
+            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+            .Where(t => t.Type == TransactionType.Expense)
+            .SumAsync(t => t.Amount);
 
         return Ok(
             new {
