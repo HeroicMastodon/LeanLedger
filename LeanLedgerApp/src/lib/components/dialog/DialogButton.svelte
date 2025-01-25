@@ -3,6 +3,8 @@
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import type {MaybePromise} from "$lib";
     import {Dialog} from "$lib/dialog.svelte";
+    import {Fa} from "svelte-fa";
+    import type {IconDefinition} from "@fortawesome/free-solid-svg-icons";
 
     type ColorType = 'primary' | 'error' | 'warning' | 'success';
 
@@ -18,25 +20,34 @@
         cancelText?: string;
         onclick?: () => MaybePromise<any>;
         oncancel?: () => MaybePromise<any>;
+        icon?: IconDefinition;
     } = $props();
     let dialog = new Dialog();
 
     const onConfirm = async () => await dialog.close(props.onConfirm);
     const onClick = async () => await dialog.open(props.onclick);
+
     async function cancel() {
         await props.oncancel?.();
         return true;
     }
+
     const close = async () => await dialog.close(cancel);
 </script>
 
 <button
     onclick={onClick}
     class="btn {props.class ?? ''}"
->{props.text}
+    class:btn-icon={!!props.icon}
+>
+    {#if props.icon}
+        <Fa icon={props.icon} />
+    {:else}
+        {props.text}
+    {/if}
 </button>
 <DefaultDialog bind:dialog={dialog.value} onenter={props.onConfirm}>
-    <div class="flex flex-col gap-4" >
+    <div class="flex flex-col gap-4">
         <h2 class="h2">{props.title}</h2>
         {#if props.children}
             {@render props.children()}

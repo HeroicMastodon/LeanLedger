@@ -24,10 +24,22 @@ public static class Endpoints {
         return transaction is null ? NotFound() : Ok(transaction);
     }
 
-    private static async Task<IResult> ListTransactions([FromServices] LedgerDbContext db) {
-        var transactions = await db.Transactions
+    private static async Task<IResult> ListTransactions(
+        [AsParameters]
+        QueryByMonth byMonth,
+        [FromServices]
+        LedgerDbContext db
+    ) {
+        var query = db.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
+            .AsQueryable();
+
+        if (byMonth is { Month: not null, Year: not null }) {
+            query = query.Where(t => t.Date.Month == byMonth.Month && t.Date.Year == byMonth.Year);
+        }
+
+        var transactions = await query
             .OrderByDescending(t => t.Date)
             .ToListAsync();
 

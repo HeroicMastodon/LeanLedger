@@ -1,6 +1,5 @@
 <script lang="ts">
     import {page} from "$app/stores";
-    import {lastMonth as getLastMonth, monthFromNumber, nextMonth as getNextMonth} from "$lib/dateTools";
     import {Fa} from "svelte-fa";
     import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
     import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
@@ -15,10 +14,10 @@
     import {faArrowUpRightFromSquare} from "@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare";
     import {afterNavigate} from "$app/navigation";
     import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
-
-    const month = $derived(monthFromNumber($page.params.month, $page.params.year))
-    const lastMonth = $derived(getLastMonth(month));
-    const nextMonth = $derived(getNextMonth(month));
+    import {monthManager} from "$lib/selectedMonth.svelte";
+    import {faAngleUp} from "@fortawesome/free-solid-svg-icons/faAngleUp";
+    import {faAngleDown} from "@fortawesome/free-solid-svg-icons/faAngleDown";
+    import {faFolderPlus} from "@fortawesome/free-solid-svg-icons/faFolderPlus";
 
     type BudgetCategory = {
         category: string;
@@ -37,6 +36,7 @@
         year: number;
         expectedIncome: number;
         actualIncome: number;
+        remainingExpenseTotal: number;
         categoryGroups: BudgetCategoryGroup[];
     };
     let loading = $state(load());
@@ -46,12 +46,14 @@
         year: 0,
         expectedIncome: 0,
         actualIncome: 0,
+        remainingExpenseTotal: 0,
         categoryGroups: []
     });
 
-    afterNavigate(() => {
+    $effect(() => {
         loading = load();
     })
+
 
     const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
     const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
@@ -79,7 +81,7 @@
     let categoryOptions = $state<string[]>([]);
 
     async function load() {
-        const res = await apiClient.get<Budget>(`budgets/${$page.params.year}/${$page.params.month}`);
+        const res = await apiClient.get<Budget>(`budgets/${monthManager.selectedMonth.year}/${monthManager.selectedMonth.number}`);
         budget = res.data;
 
         categoryOptions = await loadCategoryOptions();
@@ -131,21 +133,27 @@
         budget.categoryGroups.splice(index, 1);
         save();
     }
-</script>
 
-<div class="flex items-center mb-8">
-    <a href="/budgets/{lastMonth.year}/{lastMonth.number}"
-       class="btn btn-icon text-tertiary-500"
-    >
-        <Fa icon={faArrowLeft} />
-    </a>
-    <a href="/budgets/{nextMonth.year}/{nextMonth.number}"
-       class="btn btn-icon text-tertiary-500"
-    >
-        <Fa icon={faArrowRight} />
-    </a>
-    <h1 class="h1">Budget for {month.name} {month.year}</h1>
-</div>
+    function moveItemUp(arr: any[], idx: number) {
+        if (idx == 0 || idx >= arr.length) {
+            return;
+        }
+        const prev = arr[idx - 1];
+        arr[idx - 1] = arr[idx];
+        arr[idx] = prev;
+        save();
+    }
+
+    function moveItemDown(arr: any[], idx: number) {
+        if (idx < 0 || idx >= arr.length - 1) {
+            return;
+        }
+        const next = arr[idx + 1];
+        arr[idx + 1] = arr[idx];
+        arr[idx] = next;
+        save();
+    }
+</script>
 
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
@@ -163,24 +171,36 @@
     </Card>
     <Card class="mb-8">
         <BudgetItem
+            class="mb-4"
             readonly
-            name="Expenses"
+            name="Planned Expenses"
             expected={totalExpected}
             actual={totalActual}
             barColor={categoryColor(totalExpected, totalActual)}
-            id="Expenses"
+            id="Planned Expenses"
         >
             <div class="w-4"></div>
             <div>Left to allocate: {formatMoney(leftToAllocate)}</div>
             <div class="w-4"></div>
-            <button onclick={addCategoryGroup} class="btn variant-outline-secondary">New Group</button>
+            <button onclick={addCategoryGroup} class="btn text-secondary-500">
+                <Fa icon={faFolderPlus} />
+            </button>
         </BudgetItem>
+        <BudgetItem
+            readonly
+            name="Unallocated Expenses"
+            expected={leftToAllocate}
+            actual={budget.remainingExpenseTotal}
+            barColor={categoryColor(leftToAllocate, budget.remainingExpenseTotal)}
+            id="Unallocated Expenses"
+        ></BudgetItem>
     </Card>
 
     {#each budget.categoryGroups as group, groupIdx}
         <div class="card overflow-hidden mb-8">
-            <div class="p-4 bg-surface-700">
+            <div class="p-4 bg-surface-700 flex gap-8 items-center">
                 <BudgetItem
+                    class="grow"
                     bind:name={group.name}
                     expected={group.limit}
                     expectedIsEditable={false}
@@ -199,25 +219,66 @@
                         <Fa icon={faTrashCan} />
                     </button>
                 </BudgetItem>
+                <div class="hidden md:flex flex-col">
+                    {#if groupIdx > 0}
+                        <button
+                            onclick={() => moveItemUp(budget.categoryGroups, groupIdx)}
+                            class="btn"
+                        >
+                            <Fa icon={faAngleUp} />
+                        </button>
+                    {/if}
+                    {#if groupIdx < budget.categoryGroups.length - 1}
+                        <button
+                            onclick={() => moveItemDown(budget.categoryGroups, groupIdx)}
+                            class="btn"
+                        >
+                            <Fa icon={faAngleDown} />
+                        </button>
+                    {/if}
+                </div>
             </div>
             <div class="p-4 pl-12">
                 {#each group.categories as category, categoryIdx}
-                    <div class="mb-4"><BudgetItem
-                        bind:name={category.category}
-                        bind:expected={category.limit}
-                        actual={category.actual}
-                        barColor={categoryColor(category.limit, category.actual)}
-                        onSave={save}
-                        id="{groupIdx}-{categoryIdx}"
-                        options={categoryOptions}
-                    >
-                        <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
-                            <Fa icon={faArrowUpRightFromSquare} />
-                        </a>
-                        <button onclick={() => removeCategory(groupIdx, categoryIdx)} class="btn btn-icon text-error-500">
-                            <Fa icon={faTrashCan} />
-                        </button>
-                    </BudgetItem></div>
+                    <div class="flex gap-8 items-center">
+                        <BudgetItem
+                            class="mb-4 grow"
+                            bind:name={category.category}
+                            bind:expected={category.limit}
+                            actual={category.actual}
+                            barColor={categoryColor(category.limit, category.actual)}
+                            onSave={save}
+                            id="{groupIdx}-{categoryIdx}"
+                            options={categoryOptions}
+                        >
+                            <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
+                                <Fa icon={faArrowUpRightFromSquare} />
+                            </a>
+                            <button onclick={() => removeCategory(groupIdx, categoryIdx)}
+                                    class="btn btn-icon text-error-500"
+                            >
+                                <Fa icon={faTrashCan} />
+                            </button>
+                        </BudgetItem>
+                        <div class="hidden md:flex flex-col">
+                            {#if categoryIdx > 0}
+                                <button
+                                    onclick={() => moveItemUp(group.categories, categoryIdx)}
+                                    class="btn"
+                                >
+                                    <Fa icon={faAngleUp} />
+                                </button>
+                            {/if}
+                            {#if categoryIdx < group.categories.length - 1}
+                                <button
+                                    onclick={() => moveItemDown(group.categories, categoryIdx)}
+                                    class="btn"
+                                >
+                                    <Fa icon={faAngleDown} />
+                                </button>
+                            {/if}
+                        </div>
+                    </div>
                 {/each}
             </div>
         </div>

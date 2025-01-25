@@ -5,6 +5,7 @@
     import type {Transaction} from "$lib/transactions";
     import TransactionTable from "$lib/transactions/TransactionTable.svelte";
     import {page} from "$app/stores";
+    import {monthManager} from "$lib/selectedMonth.svelte";
 
     type Category = { amount: number; name: string; transactions: Transaction[] }
 
@@ -12,7 +13,7 @@
     let name = $page.params.name;
 
     async function load() {
-        const resp = await apiClient.get<Category>(`categories/${name}`);
+        const resp = await apiClient.get<Category>(`categories/${name}?${monthManager.params}`);
         category = resp.data;
     }
 </script>

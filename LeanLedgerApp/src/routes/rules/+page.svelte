@@ -12,6 +12,12 @@
     import {goto} from "$app/navigation";
     import type {SelectOption} from "$lib";
     import {loadAccountOptions} from "$lib/transactions";
+    import {Fa} from "svelte-fa";
+    import {faFolderPlus} from "@fortawesome/free-solid-svg-icons/faFolderPlus";
+    import {faEdit} from "@fortawesome/free-solid-svg-icons/faEdit";
+    import {faRunning} from "@fortawesome/free-solid-svg-icons/faRunning";
+    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
+    import {faPlusCircle} from "@fortawesome/free-solid-svg-icons/faPlusCircle";
 
     let accounts = $state<SelectOption<string>[]>([]);
     let ruleGroups = $state(load());
@@ -86,7 +92,9 @@
 
 <div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Rules</h1>
-    <button onclick={() => openRuleGroupDialog()} class="btn variant-filled-secondary">New Group</button>
+    <button onclick={() => openRuleGroupDialog()} class="btn text-secondary-500 p-0">
+        <Fa icon={faFolderPlus} />
+    </button>
     <RunRuleButton
         text="Run all rules"
         countPromise={changedCount}
@@ -100,13 +108,13 @@
     {#each groups as group}
         <div class="card mb-8 p-4">
             <div class="flex justify-between mb-4">
-                <div class="flex gap-4">
+                <div class="flex items-center gap-4">
                     <h2 class="h2">{group.name || "(ungrouped)"}</h2>
                     {#if group.name}
                         <button
-                            class="btn variant-outline-tertiary"
+                            class="btn text-tertiary-500 p-0"
                             onclick={() => openRuleGroupDialog(group.name)}
-                        >Edit
+                        ><Fa icon={faEdit} />
                         </button>
                         <DeleteConfirmationButton
                             onDelete={() => deleteRuleGroup(group.name ?? "")}
@@ -119,10 +127,11 @@
                     />
                 </div>
                 <FormButton
-                    class="variant-outline-secondary"
+                    class="text-secondary-500 p-0"
                     text="New Rule"
                     confirmText="Save"
                     onConfirm={() => createNewRule(group.name)}
+                    icon={faPlusCircle}
                 >
                     <LabeledInput
                         label="Name"
@@ -132,7 +141,7 @@
                 </FormButton>
             </div>
             <div class="table-container">
-                <table class="table table-fixed">
+                <table class="table table-compact table-hover lg:table-fixed">
                     <thead>
                     <tr>
                         <th> Name</th>

@@ -4,6 +4,7 @@ using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
+using static Common.QueryByMonthFunctions;
 using static Results;
 
 public static class Endpoints {
@@ -18,14 +19,17 @@ public static class Endpoints {
 
     private static async Task<IResult> GetCategory(
         string category,
+        [AsParameters]
+        QueryByMonth byMonth,
         [FromServices]
         LedgerDbContext dbContext
     ) {
         var query = dbContext.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
-            .AsQueryable();
+            .Where(t => t.Type == TransactionType.Expense);
 
+        query = QueryTransactionsByMonth(query, byMonth, givenMonthOnly: true);
         query = category == NULL_CATEGORY_NAME
             ? query.Where(t => t.Category == null || t.Category == "")
             : query.Where(t => t.Category == category);
@@ -47,23 +51,27 @@ public static class Endpoints {
 
 
     private static async Task<IResult> ListCategories(
+        [AsParameters]
+        QueryByMonth byMonth,
         [FromServices]
         LedgerDbContext dbContext
     ) {
         // ? Watch this for performance issues
-        var transactions = await dbContext.Transactions
+        var transactions = await QueryTransactionsByMonth(dbContext.Transactions, byMonth, givenMonthOnly: true)
+            .Where(t => t.Type == TransactionType.Expense)
             .GroupBy(t => t.Category)
             .ToListAsync();
 
         return Ok(
             transactions.Select(
-                g => new {
-                    Name = string.IsNullOrWhiteSpace(g.Key)
-                        ? NULL_CATEGORY_NAME
-                        : g.Key,
-                    Amount = g.Select(TransactionAmount).Sum()
-                }
-            )
+                    g => new {
+                        Name = string.IsNullOrWhiteSpace(g.Key)
+                            ? NULL_CATEGORY_NAME
+                            : g.Key,
+                        Amount = g.Select(TransactionAmount).Sum()
+                    }
+                )
+                .OrderBy(t => t.Name)
         );
     }
 

@@ -1,6 +1,9 @@
-<div class="container h-full mx-auto flex justify-center items-center">
-	<div class="space-y-5">
-		<h1 class="h1">Lean Ledger</h1>
-        <p>Overview to come...</p>
-	</div>
+<script>
+    import NetWorth from "$lib/metrics/NetWorth.svelte";
+    import BudgetMetrics from "$lib/metrics/BudgetMetrics.svelte";
+</script>
+
+<div class="container h-full flex justify-start items-start gap-4 flex-wrap">
+    <NetWorth />
+    <BudgetMetrics />
 </div>

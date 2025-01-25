@@ -40,7 +40,7 @@
 </script>
 
 <DialogButton
-    class="variant-outline-warning"
+    class="variant-outline-warning hidden lg:inline-block"
     text="Import"
     title="Import Account"
     confirmText="Import"

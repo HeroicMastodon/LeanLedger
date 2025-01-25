@@ -57,7 +57,7 @@
     bind:error
     onClick={onClick}
     onConfirm={onSave}
-    class="variant-filled-secondary"
+    class="variant-filled-secondary hidden lg:inline-block"
 >
     <div class="flex flex-col gap-4">
         <div class="flex flex-row gap-4">

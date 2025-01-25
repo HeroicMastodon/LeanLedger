@@ -1,9 +1,11 @@
-<div class="mb-8 flex gap-4 items-end">
+<div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Accounts</h1>
     <FormButton
+        class="btn-icon-sm p-2 variant-outline-primary text-primary-500"
         text="New Account"
         onConfirm={saveNewAccount}
         confirmText="Create"
+        icon={faPlus}
     >
         <AccountForm bind:account={newAccount} />
     </FormButton>
@@ -25,19 +27,19 @@
         {/snippet}
         {#snippet content()}
             <div class="table-container">
-                <table class="table table-hover md:table-fixed">
+                <table class="table table-compact table-hover md:table-fixed">
                     <thead>
                     <tr>
                         <th>Name</th>
                         <th>Balance</th>
                         <th>Change</th>
-                        <th>Active</th>
-                        <th>Last Activity</th>
+                        <th class="hidden md:table-cell">Active</th>
+                        <th class="hidden md:table-cell">Last Activity</th>
                     </tr>
                     </thead>
                     <tbody>
                     {#each accounts[accountType] as account}
-                        <tr class="hover:cursor-pointer" onclick={() => goto(`/accounts/${account.id}`)}>
+                        <tr class="hover:cursor-pointer" onclick={() => goto(`/accounts/${account.id}?${monthManager.params}`)}>
                             <td>
                                 {account.name}
                             </td>
@@ -47,10 +49,10 @@
                             <td>
                                 <Money amount={account.balanceChange} />
                             </td>
-                            <td>
+                            <td class="hidden md:table-cell">
                                 <input type="checkbox" class="checkbox" checked={account.active} disabled />
                             </td>
-                            <td>{account.lastActivityDate ?? "No Activity"}</td>
+                            <td class="hidden md:table-cell">{account.lastActivityDate ?? "No Activity"}</td>
                         </tr>
                     {/each}
                     </tbody>
@@ -71,6 +73,8 @@
     import AccountForm from "$lib/accounts/AccountForm.svelte";
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import {monthManager} from "$lib/selectedMonth.svelte";
+    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
 
     let accounts: AccountGrouping = $state({
         Bank: [],
@@ -79,7 +83,7 @@
     });
 
     async function load() {
-        let response = await apiClient.get<AccountGrouping>("accounts");
+        let response = await apiClient.get<AccountGrouping>(`accounts?${monthManager.params}`);
         accounts = response.data;
     }
 

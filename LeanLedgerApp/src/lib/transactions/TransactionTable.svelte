@@ -7,7 +7,7 @@
 </script>
 
 <div class="table-container">
-    <table class="table">
+    <table class="table table-compact table-hover">
         <thead>
         <tr>
             <th>Description</th>

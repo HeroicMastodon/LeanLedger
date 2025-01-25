@@ -7,11 +7,14 @@
     import type {AxiosError} from "axios";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import Alert from "$lib/components/Alert.svelte";
+    import {monthManager} from "$lib/selectedMonth.svelte";
+    import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
+    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
 
     let transactions: Transaction[] = $state([]);
 
     async function load() {
-        const response = await apiClient.get<Transaction[]>("transactions");
+        const response = await apiClient.get<Transaction[]>(`transactions?${monthManager.params}`);
         transactions = response.data;
     }
 
@@ -33,19 +36,36 @@
 
         return true;
     }
+
+    let search = $state("");
+    const searchLower = $derived(search.toLowerCase());
+    const filteredTransactions = $derived(transactions.filter(t =>
+        t.description.toLowerCase().includes(searchLower)
+        || t.sourceAccount?.name.toLowerCase().includes(searchLower)
+        || t.destinationAccount?.name.toLowerCase().includes(searchLower)
+        || t.category?.toLowerCase().includes(searchLower)
+        || (!t.category && "none".includes(searchLower))
+    ));
 </script>
-<div class="mb-8 flex justify-start items-center gap-8">
+<div class="mb-8 flex justify-start items-center gap-4 md:gap-8 flex-wrap">
     <h1 class="h1">Transactions</h1>
     <FormButton
-            text="New Transaction"
-            bind:error
-            onConfirm={saveTransaction}
-            confirmText="Create"
+        class="btn-icon-sm p-2 variant-outline-primary text-primary-500"
+        text="New Transaction"
+        bind:error
+        onConfirm={saveTransaction}
+        confirmText="Create"
+        icon={faPlus}
     >
         <TransactionForm bind:transaction />
     </FormButton>
+    <LabeledInput
+        type="text"
+        bind:value={search}
+        placeholder="Search..."
+    />
 </div>
-<TransactionTable transactions={transactions} />
+<TransactionTable transactions={filteredTransactions} />
 {#await load()}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:catch err}
