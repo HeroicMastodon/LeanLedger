@@ -158,7 +158,7 @@
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
-    <Card class="mb-8">
+    <Card class="mb-4">
         <BudgetItem
             name="Income"
             nameIsEditable={false}
@@ -169,7 +169,7 @@
             id="Income"
         />
     </Card>
-    <Card class="mb-8">
+    <Card class="mb-4">
         <BudgetItem
             class="mb-4"
             readonly
@@ -197,8 +197,8 @@
     </Card>
 
     {#each budget.categoryGroups as group, groupIdx}
-        <div class="card overflow-hidden mb-8">
-            <div class="p-4 bg-surface-700 flex gap-8 items-center">
+        <div class="card overflow-hidden mb-4">
+            <div class="p-4 bg-surface-700 flex gap-4 items-center">
                 <BudgetItem
                     class="grow"
                     bind:name={group.name}

@@ -51,12 +51,12 @@
 
 <div class={className}>
     <div
-        class="flex flex-row mb-4 items-center"
-        class:items-center={!nameIsEditable || readonly}
+        class="flex flex-row"
+        class:items-center={mode === "view" || !nameIsEditable || readonly}
         class:items-end={mode === "edit" && nameIsEditable}
     >
         {#if mode === "view"}
-            <h2 class="h2">{name}</h2>
+            <h3 class="h3">{name}</h3>
             {#if !readonly}
                 <button onclick={edit} class="btn btn-icon text-secondary-500">
                     <Fa icon={faEdit} />
@@ -88,20 +88,20 @@
             </button>
         {/if}
     </div>
-    <div class="mb-2">
+    <div class="mb-1">
         <ProgressBar
             meter="bg-{barColor}-500"
             track="bg-{barColor}-500/30"
             min={0}
             max={expected}
             value={actual}
-            height="h-4"
+            height="h-2"
         />
     </div>
     {#if mode === "view" || !expectedIsEditable}
         <p class="p">{formatMoney(actual)} of {formatMoney(expected)}</p>
     {:else}
-        <div class="flex gap-4 items-center mb-4">
+        <div class="flex gap-4 items-center">
             <MoneyInput
                 label="Expected"
                 bind:value={expected}
