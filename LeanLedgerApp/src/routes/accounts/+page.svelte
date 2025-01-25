@@ -1,9 +1,11 @@
-<div class="mb-8 flex gap-4 items-end">
+<div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Accounts</h1>
     <FormButton
+        class="btn-icon-sm p-2 variant-outline-primary text-primary-500"
         text="New Account"
         onConfirm={saveNewAccount}
         confirmText="Create"
+        icon={faPlus}
     >
         <AccountForm bind:account={newAccount} />
     </FormButton>
@@ -72,6 +74,7 @@
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import {monthManager} from "$lib/selectedMonth.svelte";
+    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
 
     let accounts: AccountGrouping = $state({
         Bank: [],

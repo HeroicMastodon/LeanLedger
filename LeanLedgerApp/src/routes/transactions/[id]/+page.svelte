@@ -9,6 +9,8 @@
     import TransactionForm from "$lib/transactions/TransactionForm.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import {page} from "$app/stores";
+    import {Fa} from "svelte-fa";
+    import {faSave} from "@fortawesome/free-solid-svg-icons/faSave";
 
     let id: string = $page.params.id;
     let transaction: EditableTransaction = $state(defaultTransaction());
@@ -38,8 +40,8 @@
     <h1 class="h1">Transaction</h1>
     <button
             onclick={saveTransaction}
-            class="btn variant-filled-primary"
-    >Save
+            class="btn text-primary-500 p-2"
+    ><Fa icon={faSave} />
     </button>
     <DeleteConfirmationButton onDelete={deleteTransaction} />
     {#if isSaving}

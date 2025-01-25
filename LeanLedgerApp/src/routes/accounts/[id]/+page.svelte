@@ -13,6 +13,8 @@
     import ImportButton from "$lib/accounts/ImportButton.svelte";
     import {page} from "$app/stores";
     import {monthManager} from "$lib/selectedMonth.svelte";
+    import {Fa} from "svelte-fa";
+    import {faSave} from "@fortawesome/free-solid-svg-icons/faSave";
 
     let id = $page.params.id;
     let account: AccountData | null = $state(null);
@@ -51,7 +53,9 @@
     {:else }
         <div class="mb-4 flex gap-4 justify-start items-center flex-wrap">
             <h1 class="h1">Account</h1>
-            <button class="btn variant-filled-primary" onclick={ saveChanges }>Save</button>
+            <button class="btn text-primary-500 p-2" onclick={ saveChanges }>
+                <Fa icon={faSave}/>
+            </button>
             {#if account.accountType !== "Merchant"}
                 <ImportSettingsButton accountId={account.id} />
                 <ImportButton onClose={load} accountId={account.id}/>

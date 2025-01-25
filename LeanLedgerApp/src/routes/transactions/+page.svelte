@@ -9,8 +9,7 @@
     import Alert from "$lib/components/Alert.svelte";
     import {monthManager} from "$lib/selectedMonth.svelte";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
-    import {Fa} from "svelte-fa";
-    import {faSearch} from "@fortawesome/free-solid-svg-icons/faSearch";
+    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
 
     let transactions: Transaction[] = $state([]);
 
@@ -48,13 +47,15 @@
         || (!t.category && "none".includes(searchLower))
     ));
 </script>
-<div class="mb-8 flex justify-start items-center gap-8">
+<div class="mb-8 flex justify-start items-center gap-4 md:gap-8 flex-wrap">
     <h1 class="h1">Transactions</h1>
     <FormButton
+        class="btn-icon-sm p-2 variant-outline-primary text-primary-500"
         text="New Transaction"
         bind:error
         onConfirm={saveTransaction}
         confirmText="Create"
+        icon={faPlus}
     >
         <TransactionForm bind:transaction />
     </FormButton>

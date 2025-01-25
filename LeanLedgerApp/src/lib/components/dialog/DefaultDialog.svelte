@@ -15,7 +15,7 @@
 </script>
 <dialog
     bind:this={dialog}
-    class="card p-8 mt-48 ml-auto mr-auto text-on-surface-token backdrop:bg-surface-50 backdrop:opacity-10"
+    class="card p-8 mt-48 ml-auto mr-auto text-on-surface-token backdrop:bg-surface-50 backdrop:opacity-10 top-[-10rem] md:top-0"
     onclick={(event) => { if(event.target === event.currentTarget) dialog?.close() }}
     onkeyup={handleKeypress}
 >

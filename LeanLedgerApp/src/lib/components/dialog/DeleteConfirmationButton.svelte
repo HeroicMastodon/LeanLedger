@@ -2,6 +2,7 @@
 
 import DialogButton from "$lib/components/dialog/DialogButton.svelte";
 import type {MaybePromise} from "$lib";
+import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
 let {onDelete}: {onDelete: () => MaybePromise<boolean>;} = $props();
 </script>
 
@@ -10,7 +11,8 @@ let {onDelete}: {onDelete: () => MaybePromise<boolean>;} = $props();
     confirmText="Delete"
     onConfirm={onDelete}
     text="Delete"
-    class="variant-outline-error"
+    class="text-error-500 p-2"
     confirmButtonColorType="error"
     cancelButtonColorType="success"
+    icon={faTrashCan}
 />
