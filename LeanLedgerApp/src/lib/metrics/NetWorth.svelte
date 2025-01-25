@@ -28,10 +28,10 @@
     <Card>
         <h2 class="h2">Net Worth: <Money  amount={netWorth.netWorth} /></h2>
         <hr class="hr mb-4" />
-        <div class="flex gap-4">
-            <div>Expenses: <Money amount={netWorth.expenses} type="Expense"/></div>
-            <div>Income: <Money amount= {netWorth.income} /> </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>In: <Money amount= {netWorth.income} /> </div>
             <div>Change: <Money amount={netWorth.income - netWorth.expenses} /> </div>
+            <div>Out: <Money amount={netWorth.expenses} type="Expense"/></div>
         </div>
     </Card>
 {/await}

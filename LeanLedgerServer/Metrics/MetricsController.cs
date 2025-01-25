@@ -1,9 +1,11 @@
 namespace LeanLedgerServer.Metrics;
 
+using System.Collections.Immutable;
 using Accounts;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Transactions;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -68,6 +70,68 @@ public class MetricsController(
         }
 
         return netWorth;
+    }
+
+    [HttpGet("budget")]
+    public async Task<IActionResult> GetBudget(
+        [FromQuery]
+        QueryByMonth byMonth
+    ) {
+        if (!byMonth.IsValidQuery()) {
+            return BadRequest("Must provide both month and year");
+        }
+
+        var budget = await dbContext.Budgets
+            .FirstOrDefaultAsync(b => b.Month == byMonth.Month && b.Year == byMonth.Year);
+
+        if (budget is null) {
+            return NotFound("Budget was not found for the given month and year");
+        }
+
+        var categoryNames = budget.CategoryGroups.SelectMany(g => g.Categories.Select(c => c.Category));
+        var categorySums = await dbContext.Transactions
+            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+            .Where(t => t.Type == TransactionType.Expense)
+            .Where(t => t.Category != null)
+            .Where(t => categoryNames.Contains(t.Category))
+            .GroupBy(t => t.Category)
+            .Select(
+                group => new {
+                    Category = group.Key,
+                    Sum = group.Sum(g => g.Amount)
+                }
+            )
+            .ToDictionaryAsync(c => c.Category, c => c.Sum);
+        var categoryGroups = budget.CategoryGroups.Select(
+            group => {
+                var categories = group.Categories.Select(
+                        c => new {
+                            c.Limit,
+                            c.Category,
+                            Actual = categorySums.TryGetValue(c.Category, out var sum) ? sum : 0
+                        }
+                    )
+                    .ToImmutableArray();
+
+                return new {
+                    group.Name,
+                    Categories = categories,
+                    Limit = group.Categories.Sum(c => c.Limit),
+                    Actual = categories.Sum(c => c.Actual)
+                };
+            }
+        );
+        var expectedExpenses = categoryGroups.Sum(c => c.Limit);
+        var totalExpenses = categoryGroups.Sum(c => c.Actual);
+
+        return Ok(
+            new {
+                budget.ExpectedIncome,
+                ExpectedExpenses = expectedExpenses,
+                TotalExpenses = totalExpenses,
+                LeftToSpend = expectedExpenses - totalExpenses,
+            }
+        );
     }
 
     // Leaving this endpoint in case I ever want to try time series data again

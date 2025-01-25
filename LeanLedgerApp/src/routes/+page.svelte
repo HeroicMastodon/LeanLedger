@@ -1,9 +1,9 @@
 <script>
     import NetWorth from "$lib/metrics/NetWorth.svelte";
+    import BudgetMetrics from "$lib/metrics/BudgetMetrics.svelte";
 </script>
 
-<div class="container h-full mx-auto flex justify-center items-center">
-	<div class="space-y-5">
-        <NetWorth/>
-	</div>
+<div class="container h-full flex justify-start items-start gap-4">
+    <NetWorth />
+    <BudgetMetrics />
 </div>
