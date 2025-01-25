@@ -70,6 +70,7 @@ public class MetricsController(
         return netWorth;
     }
 
+    // Leaving this endpoint in case I ever want to try time series data again
     [HttpGet("time-series/net-worth")]
     public async Task<IActionResult> GetNetWorthChange(
         [FromQuery]

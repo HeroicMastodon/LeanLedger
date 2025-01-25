@@ -86,51 +86,51 @@
                         </a>
                     </div>
                 {/if}
-                    <button class="btn hover:variant-soft-primary"
-                            use:popup={{ event: 'click', target: 'theme', closeQuery: 'a[href]' }}
-                    >
-                        <Fa icon={faPalette} class="svelte-fa-size-lg md:!hidden"></Fa>
-                        <span class="hidden md:inline-block">Theme</span>
-                        <Fa icon={faCaretDown} class="fa-solid opacity-50"></Fa>
-                    </button>
-                    <div class="card p-4 w-60 shadow-xl" data-popup="theme">
-                        <div class="flex flex-col gap-4">
-                            {#each themes as theme}
-                                <button
-                                    class="btn"
-                                    class:bg-primary-active-token={selectedTheme === theme}
-                                    onclick={() => {
+                <button class="btn hover:variant-soft-primary"
+                        use:popup={{ event: 'click', target: 'theme', closeQuery: 'a[href]' }}
+                >
+                    <Fa icon={faPalette} class="svelte-fa-size-lg md:!hidden"></Fa>
+                    <span class="hidden md:inline-block">Theme</span>
+                    <Fa icon={faCaretDown} class="fa-solid opacity-50"></Fa>
+                </button>
+                <div class="card p-4 w-60 shadow-xl" data-popup="theme">
+                    <div class="flex flex-col gap-4">
+                        {#each themes as theme}
+                            <button
+                                class="btn"
+                                class:bg-primary-active-token={selectedTheme === theme}
+                                onclick={() => {
                                 selectedTheme = theme;
                                 document.body.setAttribute('data-theme', theme);
                             }}
-                                >{theme}</button>
-                            {/each}
-                        </div>
+                            >{theme}</button>
+                        {/each}
                     </div>
-                    {/snippet}
-                    </AppBar>
+                </div>
+            {/snippet}
+        </AppBar>
 
-                    {/snippet}
-                    {#snippet sidebarLeft()}
-                        <!-- Nav List -->
-                        <div class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ?? ''}">
-                            <section class="p-4 pb-20 space-y-4 overflow-y-auto">
-                                <nav class="list-nav">
-                                    <ul>
-                                        {@render navItem(`/accounts${selectedMonthParams}`, "Accounts")}
-                                        {@render navItem(`/transactions${selectedMonthParams}`, "Transactions")}
-                                        {@render navItem(`/categories${selectedMonthParams}`, "Categories")}
-                                        {@render navItem("/rules", "Rules")}
-                                        {@render navItem(`/budgets${selectedMonthParams}`, "Budgets")}
-                                    </ul>
-                                </nav>
-                            </section>
-                        </div>
+    {/snippet}
+    {#snippet sidebarLeft()}
+        <!-- Nav List -->
+        <div class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ?? ''}">
+            <section class="p-4 pb-20 space-y-4 overflow-y-auto">
+                <nav class="list-nav">
+                    <ul>
+                        {@render navItem(`/accounts${selectedMonthParams}`, "Accounts")}
+                        {@render navItem(`/transactions${selectedMonthParams}`, "Transactions")}
+                        {@render navItem(`/categories${selectedMonthParams}`, "Categories")}
+                        {@render navItem("/rules", "Rules")}
+                        {@render navItem(`/budgets${selectedMonthParams}`, "Budgets")}
+                    </ul>
+                </nav>
+            </section>
+        </div>
 
-                    {/snippet}
-                    <!-- Page Route Content -->
-                    <section class="m-8">
-                        {@render props.children?.()}
-                    </section>
+    {/snippet}
+    <!-- Page Route Content -->
+    <section class="m-8">
+        {@render props.children?.()}
+    </section>
 
-                    </AppShell>
+</AppShell>
