@@ -17,6 +17,7 @@
     import {monthManager} from "$lib/selectedMonth.svelte";
     import {faAngleUp} from "@fortawesome/free-solid-svg-icons/faAngleUp";
     import {faAngleDown} from "@fortawesome/free-solid-svg-icons/faAngleDown";
+    import {faFolderPlus} from "@fortawesome/free-solid-svg-icons/faFolderPlus";
 
     type BudgetCategory = {
         category: string;
@@ -181,7 +182,9 @@
             <div class="w-4"></div>
             <div>Left to allocate: {formatMoney(leftToAllocate)}</div>
             <div class="w-4"></div>
-            <button onclick={addCategoryGroup} class="btn variant-outline-secondary">New Group</button>
+            <button onclick={addCategoryGroup} class="btn text-secondary-500">
+                <Fa icon={faFolderPlus} />
+            </button>
         </BudgetItem>
         <BudgetItem
             readonly
@@ -216,7 +219,7 @@
                         <Fa icon={faTrashCan} />
                     </button>
                 </BudgetItem>
-                <div class="flex flex-col">
+                <div class="hidden md:flex flex-col">
                     {#if groupIdx > 0}
                         <button
                             onclick={() => moveItemUp(budget.categoryGroups, groupIdx)}
@@ -257,7 +260,7 @@
                                 <Fa icon={faTrashCan} />
                             </button>
                         </BudgetItem>
-                        <div class="flex flex-col">
+                        <div class="hidden md:flex flex-col">
                             {#if categoryIdx > 0}
                                 <button
                                     onclick={() => moveItemUp(group.categories, categoryIdx)}

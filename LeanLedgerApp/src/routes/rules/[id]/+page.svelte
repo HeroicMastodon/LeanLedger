@@ -16,7 +16,7 @@
     import {ProgressBar} from "@skeletonlabs/skeleton";
     import {apiClient} from "$lib/apiClient";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
-    import {type SelectOption, splitPascal, } from "$lib";
+    import {type SelectOption, splitPascal,} from "$lib";
     import RuleValueInput from "$lib/rules/RuleValueInput.svelte";
     import {loadAccountOptions, type Transaction} from "$lib/transactions";
     import {goto} from "$app/navigation"
@@ -27,6 +27,11 @@
     import PredictiveSelect from "$lib/components/forms/PredictiveSelect.svelte";
     import {firstOfThisYear, todaysDateString} from "$lib/dateTools";
     import {page} from "$app/stores";
+    import {Fa} from "svelte-fa";
+    import {faSave} from "@fortawesome/free-solid-svg-icons/faSave";
+    import {faSearchDollar} from "@fortawesome/free-solid-svg-icons/faSearchDollar";
+    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
+    import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
 
     let id = $page.params.id;
     let rule = $state<Rule>(defaultRule());
@@ -216,14 +221,17 @@
 
 
 <div class="mb-8 flex justify-between">
-    <div class="flex gap-4">
+    <div class="flex gap-4 items-center flex-wrap">
         <h1 class="h1">Rule</h1>
-        <button onclick={save} class="btn variant-filled-primary">Save</button>
+        <button onclick={save} class="btn text-primary-500 p-2">
+            <Fa icon={faSave} />
+        </button>
         <FormButton
-            class="variant-outline-secondary"
+            class="text-secondary-500"
             text="Find Matching Transactions"
             confirmText="Find"
             onConfirm={findMatchingTransactions}
+            icon={faSearchDollar}
         >
             <div class="flex gap-8">
                 <LabeledInput
@@ -260,7 +268,7 @@
 {#await loading}
     <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
 {:then _}
-    <div class="flex gap-8 items-end w-fit mb-8">
+    <div class="flex gap-8 items-end w-fit mb-8 flex-wrap">
         <LabeledInput
             label="Name"
             bind:value={rule.name}
@@ -282,9 +290,9 @@
     <div class="mb-4 flex gap-4">
         <h2 class="h2"> Rule triggers when </h2>
         <button
-            class="btn variant-outline-primary"
+            class="btn variant-outline-primary text-primary-500 p-2"
             onclick={addTrigger}
-        >New Trigger
+        ><Fa icon={faPlus} />
         </button>
     </div>
     <div class="table-container mb-8">
@@ -302,9 +310,9 @@
                 <tr>
                     <td>
                         <button
-                            class="btn variant-outline-error mr-4"
+                            class="btn text-error-500 mr-4 p-0"
                             onclick={() => removeTrigger(idx)}
-                        >Delete
+                        ><Fa icon={faTrashCan} />
                         </button>
                         <select
                             class="select w-fit"
@@ -326,7 +334,7 @@
                             {/each}
                         </select>
                     </td>
-                    <td>
+                    <td class="min-w-64">
                         <RuleValueInput
                             disabled={isTriggerValueDisabled(trigger.condition)}
                             bind:value={trigger.value}
@@ -351,9 +359,9 @@
     <div class="mb-4 flex gap-4">
         <h2 class="h2"> Then rule will </h2>
         <button
-            class="btn variant-outline-primary"
+            class="btn variant-outline-primary text-primary-500 p-2"
             onclick={addAction}
-        >New Action
+        ><Fa icon={faPlus} />
         </button>
     </div>
     <div class="table-container">
@@ -370,9 +378,9 @@
                 <tr>
                     <td>
                         <button
-                            class="btn variant-outline-error mr-4"
+                            class="btn text-error-500 mr-4 p-0"
                             onclick={() => removeAction(idx)}
-                        >Delete
+                        ><Fa icon={faTrashCan} />
                         </button>
                         <select class="select w-fit" bind:value={action.actionType}>
                             {#each ruleActionTypes as actionType}
@@ -392,7 +400,7 @@
                             {/each}
                         </select>
                     </td>
-                    <td>
+                    <td class="min-w-64">
                         <RuleValueInput
                             disabled={isActionValueDisabled(action.actionType)}
                             bind:value={action.value}

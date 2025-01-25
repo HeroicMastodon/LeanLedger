@@ -51,7 +51,7 @@
 
 <div class={className}>
     <div
-        class="flex flex-row mb-4"
+        class="flex flex-row mb-4 items-center"
         class:items-center={!nameIsEditable || readonly}
         class:items-end={mode === "edit" && nameIsEditable}
     >

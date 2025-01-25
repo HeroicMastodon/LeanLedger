@@ -5,6 +5,7 @@ import Alert from "$lib/components/Alert.svelte";
 import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
 import {ProgressBar} from "@skeletonlabs/skeleton";
 import {todaysDateString, firstOfThisYear} from "$lib/dateTools";
+import {faRunning} from "@fortawesome/free-solid-svg-icons/faRunning";
 
 let {run, countPromise, text}: {
     run: (start: string, end: string) => void;
@@ -17,10 +18,11 @@ let endDate = $state(todaysDateString());
 </script>
 
 <FormButton
-    class="variant-outline-warning"
+    class="text-warning-500 p-0"
     text={text}
     confirmText="Run"
     onConfirm={() => {run(startDate, endDate); return false;}}
+    icon={faRunning}
 >
     <div class="flex gap-8">
         <LabeledInput
