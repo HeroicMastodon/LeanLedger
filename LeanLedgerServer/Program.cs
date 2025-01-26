@@ -6,6 +6,7 @@ using LeanLedgerServer.Categories;
 using LeanLedgerServer.Common;
 using LeanLedgerServer.TransactionImport;
 using LeanLedgerServer.Transactions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(
@@ -54,6 +55,20 @@ baseRoute.MapAccounts();
 baseRoute.MapTransactions();
 baseRoute.MapCategories();
 baseRoute.MapImport();
+baseRoute.MapDelete(
+    "admin/transactions/all",
+    async ([FromServices] LedgerDbContext dbContext) => {
+        var transactionCount = await dbContext.Transactions.IgnoreQueryFilters().CountAsync();
+        var deleteCount = await dbContext.Transactions.IgnoreQueryFilters().ExecuteDeleteAsync();
+
+        return Results.Ok(
+            new {
+                deleteCount,
+                transactionCount
+            }
+        );
+    }
+);
 app.MapControllers();
 
 app.Run();

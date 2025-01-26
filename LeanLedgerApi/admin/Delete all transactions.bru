@@ -1,0 +1,11 @@
+meta {
+  name: Delete all transactions
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/admin/transactions/all
+  body: none
+  auth: none
+}
