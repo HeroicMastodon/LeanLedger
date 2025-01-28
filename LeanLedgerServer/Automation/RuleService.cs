@@ -48,9 +48,9 @@ public class RuleService(LedgerDbContext dbContext) {
             };
             var valueName = $"@value{index}";
             var comparison = condition switch {
-                RuleCondition.StartsWith => $"{NotToString(not)} like {valueName} + '%'",
-                RuleCondition.EndsWith => $"{NotToString(not)} like '%' + {valueName}",
-                RuleCondition.Contains => $"{NotToString(not)} like '%' + {valueName} + '%'",
+                RuleCondition.StartsWith => $"{NotToString(not)} like {valueName} || '%'",
+                RuleCondition.EndsWith => $"{NotToString(not)} like '%' || {valueName}",
+                RuleCondition.Contains => $"{NotToString(not)} like '%' || {valueName} || '%'",
                 RuleCondition.IsExactly => $"{NotToString(not)} like {valueName}",
                 RuleCondition.GreaterThan => $"{(not ? "<=" : ">")} {valueName}",
                 RuleCondition.LessThan => $"{(not ? ">=" : "<")} {valueName}",
