@@ -50,11 +50,6 @@
         categoryGroups: []
     });
 
-    $effect(() => {
-        loading = load();
-    })
-
-
     const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
     const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
     const leftToAllocate = $derived(
