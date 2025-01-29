@@ -110,7 +110,13 @@ public class RulesController(
             return NotFound();
         }
 
-        var results = await ruleService.FindMatchingTransactionsFor(rule, startDate, endDate, limit);
+        var results = await ruleService.FindMatchingTransactionsFor(
+            rule,
+            startDate,
+            endDate,
+            limit,
+            includeAccounts:true
+        );
 
         return Ok(results.Select(TableTransaction.FromTransaction));
     }
@@ -149,7 +155,11 @@ public class RulesController(
             );
         }
 
-        return Ok(new {Count = changedCount});
+        return Ok(
+            new {
+                Count = changedCount
+            }
+        );
     }
 }
 

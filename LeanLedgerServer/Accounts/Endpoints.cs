@@ -108,6 +108,8 @@ public static class Endpoints {
                                 byMonth,
                                 givenMonthOnly: true
                             )
+                            .Include(t => t.SourceAccount)
+                            .Include(t => t.DestinationAccount)
                             .Where(t => t.SourceAccountId == account.Id || t.DestinationAccountId == account.Id)
                             .OrderByDescending(t => t.Date)
                             .ToArrayAsync()

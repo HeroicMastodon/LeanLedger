@@ -30,7 +30,8 @@ public class RuleService(LedgerDbContext dbContext) {
         Rule rule,
         DateOnly startDate,
         DateOnly endDate,
-        int? limit = null
+        int? limit = null,
+        bool includeAccounts = false
     ) {
         var queryString = "select * from transactions";
         List<SqliteParameter?> values = [];
@@ -68,6 +69,12 @@ public class RuleService(LedgerDbContext dbContext) {
             .Transactions
             .FromSqlRaw(queryString, valuesArray)
             .Where(t => t.Date >= startDate && t.Date <= endDate);
+
+        if (includeAccounts) {
+            query = query
+                .Include(t => t.DestinationAccount)
+                .Include(t => t.SourceAccount);
+        }
 
         if (limit is not null) {
             query = query.Take(limit.Value);
