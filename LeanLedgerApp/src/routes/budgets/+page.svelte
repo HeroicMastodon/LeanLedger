@@ -50,6 +50,10 @@
         categoryGroups: []
     });
 
+    afterNavigate(() => {
+        loading = load()
+    })
+
     const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
     const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
     const leftToAllocate = $derived(
@@ -88,6 +92,7 @@
     });
 
     function categoryColor(expected: number, actual: number) {
+        if (expected < 0) return "error";
         if (!expected) return "success";
         const ratio = actual / expected;
 

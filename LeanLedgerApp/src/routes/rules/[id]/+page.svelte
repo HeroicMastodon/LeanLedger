@@ -49,6 +49,17 @@
     }
 
     async function save() {
+        rule.triggers.forEach(trigger => {
+            if (typeof (trigger.value as unknown) === "number") {
+                trigger.value = (trigger.value as unknown as number).toString()
+            }
+        })
+        rule.actions.forEach(action => {
+            if (typeof (action.value as unknown) === "number") {
+                action.value = (action.value as unknown as number).toString()
+            }
+        })
+
         const res = await apiClient.put<Rule>(`Rules/${id}`, rule);
         rule = res.data;
     }
@@ -292,7 +303,8 @@
         <button
             class="btn variant-outline-primary text-primary-500 p-2"
             onclick={addTrigger}
-        ><Fa icon={faPlus} />
+        >
+            <Fa icon={faPlus} />
         </button>
     </div>
     <div class="table-container mb-8">
@@ -312,7 +324,8 @@
                         <button
                             class="btn text-error-500 mr-4 p-0"
                             onclick={() => removeTrigger(idx)}
-                        ><Fa icon={faTrashCan} />
+                        >
+                            <Fa icon={faTrashCan} />
                         </button>
                         <select
                             class="select w-fit"
@@ -361,7 +374,8 @@
         <button
             class="btn variant-outline-primary text-primary-500 p-2"
             onclick={addAction}
-        ><Fa icon={faPlus} />
+        >
+            <Fa icon={faPlus} />
         </button>
     </div>
     <div class="table-container">
@@ -380,7 +394,8 @@
                         <button
                             class="btn text-error-500 mr-4 p-0"
                             onclick={() => removeAction(idx)}
-                        ><Fa icon={faTrashCan} />
+                        >
+                            <Fa icon={faTrashCan} />
                         </button>
                         <select class="select w-fit" bind:value={action.actionType}>
                             {#each ruleActionTypes as actionType}

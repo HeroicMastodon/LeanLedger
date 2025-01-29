@@ -29,12 +29,14 @@ public class MetricsController(
             .Select(
                 a => new {
                     totalIncome = a.Deposits
+                        .Where(d => d.Type != TransactionType.Transfer)
                         .Where(
                             d => shouldGetEverything
                                  || (d.Date.Year == byMonth.Year && d.Date.Month == byMonth.Month)
                         )
                         .Sum(d => d.Amount),
                     totalExpenses = a.Withdrawls
+                        .Where(d => d.Type != TransactionType.Transfer)
                         .Where(
                             d => shouldGetEverything
                                  || (d.Date.Year == byMonth.Year && d.Date.Month == byMonth.Month)

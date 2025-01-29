@@ -40,7 +40,7 @@ public class RuleService(LedgerDbContext dbContext) {
             var fieldName = field switch {
                 RuleTransactionField.Description => "Description",
                 RuleTransactionField.Date => "Date",
-                RuleTransactionField.Amount => "Amount",
+                RuleTransactionField.Amount => "Cast(Amount as REAL)",
                 RuleTransactionField.Type => "Type",
                 RuleTransactionField.Category => "Category",
                 RuleTransactionField.Source => "SourceAccountId",
@@ -60,7 +60,8 @@ public class RuleService(LedgerDbContext dbContext) {
             };
 
             queryString += $" {prefix} {fieldName} {comparison}";
-            values.Add(new SqliteParameter(valueName, value));
+            object? finalValue = decimal.TryParse(value, out var parsed) ? parsed : value;
+            values.Add(new SqliteParameter(valueName, finalValue));
         }
 
         // avoiding some weird covariant error I guess
