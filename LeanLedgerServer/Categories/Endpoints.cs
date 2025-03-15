@@ -34,7 +34,9 @@ public static class Endpoints {
             ? query.Where(t => t.Category == null || t.Category == "")
             : query.Where(t => t.Category == category);
 
-        var transactions = await query.ToListAsync();
+        var transactions = await query
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
 
         return Ok(
             new {

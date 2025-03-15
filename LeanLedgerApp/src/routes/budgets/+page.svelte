@@ -38,6 +38,10 @@
         actualIncome: number;
         remainingExpenseTotal: number;
         categoryGroups: BudgetCategoryGroup[];
+        unallocatedCategories: {
+            name: string;
+            amount: number;
+        }[],
     };
     let loading = $state(load());
     let budget = $state<Budget>({
@@ -47,7 +51,8 @@
         expectedIncome: 0,
         actualIncome: 0,
         remainingExpenseTotal: 0,
-        categoryGroups: []
+        categoryGroups: [],
+        unallocatedCategories: []
     });
 
     afterNavigate(() => {
@@ -187,6 +192,7 @@
             </button>
         </BudgetItem>
         <BudgetItem
+            class="mb-4"
             readonly
             name="Unallocated Expenses"
             expected={leftToAllocate}
@@ -194,6 +200,21 @@
             barColor={categoryColor(leftToAllocate, budget.remainingExpenseTotal)}
             id="Unallocated Expenses"
         ></BudgetItem>
+        {#each budget.unallocatedCategories as category}
+            <BudgetItem
+                class="pl-12 mb-4"
+                readonly
+                name={category.name}
+                actual={category.amount}
+                expected={0}
+                barColor="warning"
+                id={category.name}
+            >
+                <a href="/categories/{category.name}" class="btn btn-icon text-secondary-500">
+                    <Fa icon={faArrowUpRightFromSquare} />
+                </a>
+            </BudgetItem>
+        {/each}
     </Card>
 
     {#each budget.categoryGroups as group, groupIdx}

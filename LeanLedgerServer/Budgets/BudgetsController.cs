@@ -72,11 +72,10 @@ public class BudgetsController(
 
         var categoryNames = budget.CategoryGroups.SelectMany(g => g.Categories.Select(c => c.Category));
         var categoryQuery = dbContext.Transactions
-            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
-            .Where(t => t.Type == TransactionType.Expense)
-            ;
+                .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+                .Where(t => t.Type == TransactionType.Expense) ;
 
-        var categorySums = await  categoryQuery
+        var categorySums = await categoryQuery
             .Where(t => t.Category != null)
             .Where(t => categoryNames.Contains(t.Category))
             .GroupBy(t => t.Category)
@@ -89,11 +88,14 @@ public class BudgetsController(
             .ToDictionaryAsync(c => c.Category, c => c.Sum);
         var categoryGroups = budget.CategoryGroups.Select(
             group => {
-                var categories = group.Categories.Select(c => new {
-                    c.Limit,
-                    c.Category,
-                    Actual = categorySums.TryGetValue(c.Category, out var sum) ? sum : 0
-                }).ToImmutableArray();
+                var categories = group.Categories.Select(
+                        c => new {
+                            c.Limit,
+                            c.Category,
+                            Actual = categorySums.TryGetValue(c.Category, out var sum) ? sum : 0
+                        }
+                    )
+                    .ToImmutableArray();
 
                 return new {
                     group.Name,
@@ -108,6 +110,16 @@ public class BudgetsController(
             .Where(t => t.Category == null || !categoryNames.Contains(t.Category))
             .SumAsync(t => t.Amount);
 
+        var unallocatedCategories = await categoryQuery
+            .Where(t => t.Category == null || !categoryNames.Contains(t.Category))
+            .GroupBy(t => t.Category)
+            .Select(group => new {
+                Name = group.Key ?? "(none)",
+                Amount = group.Sum(t => t.Amount)
+            })
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
         return new {
             budget.Id,
             budget.Month,
@@ -116,6 +128,7 @@ public class BudgetsController(
             categoryGroups,
             actualIncome,
             remainingExpenseTotal,
+            unallocatedCategories
         };
     }
 }
