@@ -43,7 +43,7 @@
             amount: number;
         }[],
     };
-    let loading = $state(load());
+    let loading = $state(Promise.resolve());
     let budget = $state<Budget>({
         id: "",
         month: 0,
@@ -55,7 +55,7 @@
         unallocatedCategories: []
     });
 
-    afterNavigate(() => {
+    $effect(() => {
         loading = load()
     })
 
