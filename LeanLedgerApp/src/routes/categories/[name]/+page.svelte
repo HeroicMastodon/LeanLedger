@@ -13,7 +13,7 @@
     let name = $page.params.name;
 
     async function load() {
-        const resp = await apiClient.get<Category>(`categories/${name}?${monthManager.params}`);
+        const resp = await apiClient.get<Category>(`categories/${encodeURIComponent(name)}?${monthManager.params}`);
         category = resp.data;
     }
 </script>

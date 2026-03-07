@@ -32,7 +32,7 @@
                 <tr>
                     <td>
                         <a
-                            href="/categories/{name}/?{monthManager.params}"
+                            href="/categories/{encodeURIComponent(name)}/?{monthManager.params}"
                             class="text-primary-400"
                         >
                             {name}

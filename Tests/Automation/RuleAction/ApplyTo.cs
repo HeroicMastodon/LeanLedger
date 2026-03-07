@@ -62,14 +62,14 @@ public class ApplyTo {
 
     [Test]
     public void WhenActionIsDeleteTransaction_TransactionIsDeletedIsTrue() {
-         var action = new RuleAction(RuleActionType.DeleteTransaction, null, null);
-         var transaction = new Transaction {
-             UniqueHash = "",
-             Id = Guid.NewGuid()
-         };
+        var action = new RuleAction(RuleActionType.DeleteTransaction, null, null);
+        var transaction = new Transaction {
+            UniqueHash = "",
+            Id = Guid.NewGuid()
+        };
 
-         action.ApplyTo(transaction);
+        action.ApplyTo(transaction);
 
-         Assert.That(transaction.IsDeleted, Is.True);
+        Assert.That(transaction.IsDeleted, Is.True);
     }
 }

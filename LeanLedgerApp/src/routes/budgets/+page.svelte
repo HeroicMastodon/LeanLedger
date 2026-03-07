@@ -210,7 +210,7 @@
                 barColor="warning"
                 id={category.name}
             >
-                <a href="/categories/{category.name}" class="btn btn-icon text-secondary-500">
+                <a href="/categories/{encodeURIComponent(category.name)}" class="btn btn-icon text-secondary-500">
                     <Fa icon={faArrowUpRightFromSquare} />
                 </a>
             </BudgetItem>
@@ -272,7 +272,7 @@
                             id="{groupIdx}-{categoryIdx}"
                             options={categoryOptions}
                         >
-                            <a href="/categories/{category.category}" class="btn btn-icon text-secondary-500">
+                            <a href="/categories/{encodeURIComponent(category.category)}" class="btn btn-icon text-secondary-500">
                                 <Fa icon={faArrowUpRightFromSquare} />
                             </a>
                             <button onclick={() => removeCategory(groupIdx, categoryIdx)}

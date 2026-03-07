@@ -24,15 +24,17 @@ public static class Endpoints {
         [FromServices]
         LedgerDbContext dbContext
     ) {
+        var decodedCategory = System.Net.WebUtility.UrlDecode(category);
+        Console.WriteLine($"Getting category: {decodedCategory}");
         var query = dbContext.Transactions
             .Include(t => t.SourceAccount)
             .Include(t => t.DestinationAccount)
             .Where(t => t.Type == TransactionType.Expense);
 
         query = QueryTransactionsByMonth(query, byMonth, givenMonthOnly: true);
-        query = category == NULL_CATEGORY_NAME
+        query = decodedCategory == NULL_CATEGORY_NAME
             ? query.Where(t => t.Category == null || t.Category == "")
-            : query.Where(t => t.Category == category);
+            : query.Where(t => t.Category == decodedCategory);
 
         var transactions = await query
             .OrderByDescending(t => t.Date)
@@ -40,7 +42,7 @@ public static class Endpoints {
 
         return Ok(
             new {
-                Name = category,
+                Name = decodedCategory,
                 Transactions = transactions.Select(
                     TableTransaction.FromTransaction
                 ),

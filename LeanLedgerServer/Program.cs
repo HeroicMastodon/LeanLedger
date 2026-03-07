@@ -19,7 +19,7 @@ var config = builder.Configuration;
 builder.Services.AddDbContext<LedgerDbContext>(
     options => options.UseSqlite(config.GetConnectionString("SQLite"))
 );
-builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddAutoMapper(_ => { }, Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<Importer>();
 builder.Services.AddScoped<RuleService>();
 builder.Services.AddControllers()

@@ -4,6 +4,13 @@
     import {dateFromString} from "$lib";
 
     let {transactions}: { transactions: Transaction[] } = $props();
+    function getCategoryName(category?: string | null) {
+        return category ? category : '(none)';
+    }
+    function encodeCategory(category?: string | null) {
+        let categoryStr = getCategoryName(category);
+        return encodeURIComponent(categoryStr);
+    }
 </script>
 
 <div class="table-container">
@@ -47,9 +54,9 @@
                 <td>
                     <a
                             class="text-primary-400"
-                            href="/categories/{transaction.category ? transaction.category : '(none)'}"
+                            href="/categories/{encodeCategory(transaction.category)}"
                     >
-                        {transaction.category ? transaction.category : '(none)'}
+                        {getCategoryName(transaction.category)}
                     </a>
                 </td>
             </tr>
