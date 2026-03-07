@@ -1,4 +1,4 @@
-﻿# Step 1: Build the frontend
+# Step 1: Build the frontend
 FROM node:20.18 AS build-frontend
 
 # Set the working directory for the frontend build process
@@ -13,7 +13,7 @@ RUN npm install
 RUN npm run build  # Assuming the build script places output in LeanLedgerServer/StaticFiles
 
 # Use the official .NET SDK image for building
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /app
 
@@ -37,7 +37,7 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 RUN dotnet publish -c Release -o /app/out
 
 # Use a runtime image to host the application
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 COPY --from=build /app/out ./
