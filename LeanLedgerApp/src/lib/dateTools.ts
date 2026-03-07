@@ -60,3 +60,7 @@ export function lastMonth(curr: Month) {
 
     return monthFromNumber(Number(curr.number) - 1, curr.year);
 }
+
+export function areSameMonth(month1: Month, month2: Month) {
+    return month1.number == month2.number && month1.year == month2.year;
+}

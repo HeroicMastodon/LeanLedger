@@ -1,8 +1,15 @@
 <script lang="ts">
-    import '../app.postcss';
+    import "../app.postcss";
 
     // Floating UI for Popups
-    import {arrow, autoUpdate, computePosition, flip, offset, shift} from '@floating-ui/dom';
+    import {
+        arrow,
+        autoUpdate,
+        computePosition,
+        flip,
+        offset,
+        shift,
+    } from "@floating-ui/dom";
     import {
         AppBar,
         AppShell,
@@ -10,44 +17,51 @@
         getDrawerStore,
         initializeStores,
         popup,
-        storePopup
-    } from '@skeletonlabs/skeleton';
-    import {Fa} from "svelte-fa";
-    import {faCaretDown, faDollar, faPalette,} from "@fortawesome/free-solid-svg-icons";
+        storePopup,
+    } from "@skeletonlabs/skeleton";
+    import { Fa } from "svelte-fa";
+    import {
+        faCaretDown,
+        faDollar,
+        faPalette,
+    } from "@fortawesome/free-solid-svg-icons";
 
-    import {page} from "$app/stores";
+    import { page } from "$app/stores";
 
-    import {monthManager} from "$lib/selectedMonth.svelte";
-    import {afterNavigate} from "$app/navigation";
-    import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
-    import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
-    import {faHamburger} from "@fortawesome/free-solid-svg-icons/faHamburger";
-
+    import { monthManager } from "$lib/selectedMonth.svelte";
+    import { afterNavigate } from "$app/navigation";
+    import { faArrowLeft } from "@fortawesome/free-solid-svg-icons/faArrowLeft";
+    import { faArrowRight } from "@fortawesome/free-solid-svg-icons/faArrowRight";
+    import { faHamburger } from "@fortawesome/free-solid-svg-icons/faHamburger";
+    import { faCalendarDay } from "@fortawesome/free-solid-svg-icons/faCalendarDay";
+    import { areSameMonth } from "$lib/dateTools";
 
     interface Props {
-        children?: import('svelte').Snippet;
+        children?: import("svelte").Snippet;
 
-        [key: string]: any
+        [key: string]: any;
     }
 
     let props: Props = $props();
     initializeStores();
-    storePopup.set({computePosition, autoUpdate, flip, shift, offset, arrow});
+    storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
-    const themes = ['carbon-fox', 'wintry'] as const;
-    let selectedTheme = $state(window.localStorage.getItem("theme") ?? 'carbon-fox');
+    const themes = ["carbon-fox", "wintry"] as const;
+    let selectedTheme = $state(
+        window.localStorage.getItem("theme") ?? "carbon-fox",
+    );
 
     $effect(() => {
         window.localStorage.setItem("theme", selectedTheme);
-        document.body.setAttribute('data-theme', selectedTheme);
-    })
+        document.body.setAttribute("data-theme", selectedTheme);
+    });
 
     const drawerStore = getDrawerStore();
 
     afterNavigate(() => {
-        monthManager.selectFromQuery($page.url.searchParams)
+        monthManager.selectFromQuery($page.url.searchParams);
         drawerStore.close();
-    })
+    });
 
     function isActive(path: string, href: string) {
         const pathWithoutLeadingSlash = path.substring(1);
@@ -58,60 +72,76 @@
             return pathWithoutLeadingSlash === "";
         }
 
-        return pathWithoutLeadingSlash.startsWith(firstInHrefPath)
+        return pathWithoutLeadingSlash.startsWith(firstInHrefPath);
     }
 
     const isControlledByGlobalMonth = $derived.by(() => {
         const path = $page.url.pathname.toLowerCase();
 
         return !path.startsWith("/rules");
-    })
-    const selectedMonthParams = $derived(`?${monthManager.params}`)
+    });
+    const selectedMonthParams = $derived(`?${monthManager.params}`);
 </script>
+
 {#snippet navItem(href: string, title: string)}
     <li>
-        <a href="{href}"
-           class:bg-primary-active-token={isActive($page.url.pathname, href)}
-           data-sveltekit-preload-data="hover"
+        <a
+            {href}
+            class:bg-primary-active-token={isActive($page.url.pathname, href)}
+            data-sveltekit-preload-data="hover"
         >
             <span class="flex-auto">{title}</span>
         </a>
     </li>
 {/snippet}
 {#snippet navigation(renderHome: boolean)}
-    <div class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ?? ''}">
+    <div
+        class="h-full bg-surface-50-900-token border-r border-surface-500/30 {props.class ??
+            ''}"
+    >
         <section class="p-4 pb-20 space-y-4 overflow-y-auto">
             <nav class="list-nav">
                 <ul>
                     {#if renderHome}
                         {@render navItem(`/${selectedMonthParams}`, "Home")}
                     {/if}
-                    {@render navItem(`/accounts${selectedMonthParams}`, "Accounts")}
-                    {@render navItem(`/transactions${selectedMonthParams}`, "Transactions")}
-                    {@render navItem(`/categories${selectedMonthParams}`, "Categories")}
+                    {@render navItem(
+                        `/accounts${selectedMonthParams}`,
+                        "Accounts",
+                    )}
+                    {@render navItem(
+                        `/transactions${selectedMonthParams}`,
+                        "Transactions",
+                    )}
+                    {@render navItem(
+                        `/categories${selectedMonthParams}`,
+                        "Categories",
+                    )}
                     {@render navItem("/rules", "Rules")}
-                    {@render navItem(`/budgets${selectedMonthParams}`, "Budgets")}
+                    {@render navItem(
+                        `/budgets${selectedMonthParams}`,
+                        "Budgets",
+                    )}
                 </ul>
             </nav>
         </section>
     </div>
-
 {/snippet}
 
 <Drawer>
     <h1 class="h1 m-4">Lean Ledger</h1>
-    <hr class="hr"/>
+    <hr class="hr" />
     {@render navigation(true)}
 </Drawer>
 <AppShell slotSidebarLeft="w-0 lg:w-64">
     {#snippet header()}
-
         <!-- App Bar -->
         <AppBar>
             {#snippet lead()}
-                <a aria-label="Home"
-                   class="lg:btn-icon lg:btn-icon-xl w-0 overflow-hidden lg:overflow-visible"
-                   href="/{selectedMonthParams}"
+                <a
+                    aria-label="Home"
+                    class="lg:btn-icon lg:btn-icon-xl w-0 overflow-hidden lg:overflow-visible"
+                    href="/{selectedMonthParams}"
                 >
                     <Fa icon={faDollar} />
                 </a>
@@ -122,31 +152,57 @@
                     <Fa icon={faHamburger} />
                 </button>
             {/snippet}
-            <a href="/{selectedMonthParams}"
-               class="h2 font-bold w-0 hidden overflow-hidden lg:w-fit lg:overflow-visible lg:inline"
+            <a
+                href="/{selectedMonthParams}"
+                class="h2 font-bold w-0 hidden overflow-hidden lg:w-fit lg:overflow-visible lg:inline"
             >
                 Lean Ledger
             </a>
             {#snippet trail()}
                 {#if isControlledByGlobalMonth}
                     <div class="flex items-center">
-                        <p class="p">{monthManager.selectedMonth.name} {monthManager.selectedMonth.year}</p>
-                        <a href="{$page.url.pathname}?month={monthManager.lastMonth.number}&year={monthManager.lastMonth.year}"
-                           class="btn btn-icon-sm text-tertiary-500 p-1"
+                        <p class="p">
+                            {monthManager.selectedMonth.name}
+                            {monthManager.selectedMonth.year}
+                        </p>
+                        <a
+                            href="{$page.url.pathname}?month={monthManager
+                                .lastMonth.number}&year={monthManager.lastMonth
+                                .year}"
+                            class="btn btn-icon-sm text-tertiary-500 p-1"
                         >
                             <Fa icon={faArrowLeft} />
                         </a>
-                        <a href="{$page.url.pathname}?year={monthManager.nextMonth.year}&month={monthManager.nextMonth.number}"
-                           class="btn btn-icon-sm text-tertiary-500 p-1"
+                        <a
+                            href="{$page.url.pathname}?year={monthManager
+                                .nextMonth.year}&month={monthManager.nextMonth
+                                .number}"
+                            class="btn btn-icon-sm text-tertiary-500 p-1"
                         >
                             <Fa icon={faArrowRight} />
                         </a>
+                        <a
+                            href="{$page.url.pathname}?month={monthManager
+                                .thisMonth.number}&year={monthManager.thisMonth
+                                .year}"
+                            class="btn btn-sm text-tertiary-500"
+                            title="Go to current month"
+                        >
+                            <Fa icon={faCalendarDay} class="svelte-fa-size-sm"
+                            ></Fa>
+                        </a>
                     </div>
                 {/if}
-                <button class="btn hover:variant-soft-primary"
-                        use:popup={{ event: 'click', target: 'theme', closeQuery: 'a[href]' }}
+                <button
+                    class="btn hover:variant-soft-primary"
+                    use:popup={{
+                        event: "click",
+                        target: "theme",
+                        closeQuery: "a[href]",
+                    }}
                 >
-                    <Fa icon={faPalette} class="svelte-fa-size-lg md:!hidden"></Fa>
+                    <Fa icon={faPalette} class="svelte-fa-size-lg md:!hidden"
+                    ></Fa>
                     <span class="hidden md:inline-block">Theme</span>
                     <Fa icon={faCaretDown} class="fa-solid opacity-50"></Fa>
                 </button>
@@ -155,17 +211,17 @@
                         {#each themes as theme}
                             <button
                                 class="btn"
-                                class:bg-primary-active-token={selectedTheme === theme}
+                                class:bg-primary-active-token={selectedTheme ===
+                                    theme}
                                 onclick={() => {
-                                selectedTheme = theme;
-                            }}
-                            >{theme}</button>
+                                    selectedTheme = theme;
+                                }}>{theme}</button
+                            >
                         {/each}
                     </div>
                 </div>
             {/snippet}
         </AppBar>
-
     {/snippet}
     {#snippet sidebarLeft()}
         <!-- Nav List -->
@@ -175,5 +231,4 @@
     <section class="m-8">
         {@render props.children?.()}
     </section>
-
 </AppShell>

@@ -7,6 +7,7 @@ class MonthManager {
     nextMonth = $derived(getNextMonth(this.selectedMonth));
     lastMonth = $derived(getLastMonth(this.selectedMonth));
     params = $derived(`year=${this.selectedMonth.year}&month=${this.selectedMonth.number}`);
+    thisMonth = $state<Month>(monthFromNumber(today.getMonth(), today.getFullYear()));
 
     increment() {
         this.selectedMonth = this.nextMonth;
