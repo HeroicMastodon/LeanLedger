@@ -14,6 +14,8 @@
         onLoadTextPredictions: (value: string) => Promise<any>;
         selectPopupName: string;
     } = $props();
+
+    const loadTextPredictions = debounce((e: {target: HTMLInputElement}) => onLoadTextPredictions(e.target.value), 200);
 </script>
 
 {#if field === "Type"}
@@ -41,6 +43,6 @@
         list={dataListId}
         bind:value
         disabled={disabled}
-        onkeyup={debounce((e: {target: HTMLInputElement}) => onLoadTextPredictions(e.target.value))}
+        onkeyup={loadTextPredictions}
     />
 {/if}
