@@ -130,13 +130,30 @@ public class MetricsController(
             .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
             .Where(t => t.Type == TransactionType.Expense)
             .SumAsync(t => t.Amount);
+        var actualIncome = await dbContext.Transactions
+            .Include(t => t.DestinationAccount)
+            .Where(t => t.DestinationAccount != null && t.DestinationAccount.IncludeInNetWorth)
+            .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
+            .Where(t => t.Type == TransactionType.Income)
+            .SumAsync(t => t.Amount);
 
         return Ok(
             new {
-                budget.ExpectedIncome,
-                ExpectedExpenses = expectedExpenses,
-                TotalExpenses = totalExpenses,
-                LeftToSpend = expectedExpenses - totalExpenses,
+                Income = new {
+                    Budgeted = budget.ExpectedIncome,
+                    Actual = actualIncome,
+                    Difference = actualIncome - budget.ExpectedIncome
+                },
+                Expenses = new {
+                    Budgeted = expectedExpenses,
+                    Actual = totalExpenses,
+                    Difference = totalExpenses - expectedExpenses
+                },
+                Change = new {
+                    Budgeted = budget.ExpectedIncome - expectedExpenses,
+                    Actual = actualIncome - totalExpenses,
+                    Difference = actualIncome - totalExpenses - (budget.ExpectedIncome - expectedExpenses)
+                }
             }
         );
     }

@@ -34,7 +34,6 @@
     import { faArrowRight } from "@fortawesome/free-solid-svg-icons/faArrowRight";
     import { faHamburger } from "@fortawesome/free-solid-svg-icons/faHamburger";
     import { faCalendarDay } from "@fortawesome/free-solid-svg-icons/faCalendarDay";
-    import { areSameMonth } from "$lib/dateTools";
 
     interface Props {
         children?: import("svelte").Snippet;
