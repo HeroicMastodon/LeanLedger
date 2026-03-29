@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using Accounts;
 using Common;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
 
@@ -105,7 +106,7 @@ public class MetricsController(
                     Sum = group.Sum(g => g.Amount)
                 }
             )
-            .ToDictionaryAsync(c => c.Category, c => c.Sum);
+            .ToDictionaryAsync(c => c.Category!, c => c.Sum);
         var categoryGroups = budget.CategoryGroups.Select(
             group => {
                 var categories = group.Categories.Select(
@@ -186,7 +187,7 @@ public class MetricsController(
             .Select(group => new ByDayMetric(group.Key, group.Sum(t => t.Amount * -1)))
             .AsSplitQuery()
             .ToListAsync();
-        var daysInMonth = DateTime.DaysInMonth(byMonth.Year.Value, byMonth.Month.Value);
+        var daysInMonth = DateTime.DaysInMonth(byMonth.Year!.Value, byMonth.Month!.Value);
         foreach (var day in Enumerable.Range(1, daysInMonth)) {
             if (incomeByDay.All(d => d.Day != day)) {
                 incomeByDay.Add(new ByDayMetric(day, 0));
@@ -305,7 +306,7 @@ public class MetricsController(
         var yearlyTrends = yearlyResults
             .Select(
                 (result, index) => new {
-                    Label = result.Query.Year?.ToString(),
+                    Label = result.Query.Year?.ToString(CultureInfo.InvariantCulture),
                     result.NetWorth,
                     TotalChange = currentMonthNetWorth - result.NetWorth,
                     Change = index == yearlyResults.Length - 1
@@ -324,4 +325,3 @@ public class MetricsController(
 }
 
 public record ByDayMetric(int Day, decimal Amount);
-

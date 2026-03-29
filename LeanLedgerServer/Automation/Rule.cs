@@ -3,15 +3,14 @@ namespace LeanLedgerServer.Automation;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Serialization;
-using Common;
 using Transactions;
 
 public class Rule {
     public required Guid Id { get; init; }
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
     public bool IsStrict { get; set; }
-    public List<RuleTrigger> Triggers { get; set; }
-    public List<RuleAction> Actions { get; set; }
+    public List<RuleTrigger> Triggers { get; set; } = [];
+    public List<RuleAction> Actions { get; set; } = [];
     public bool IsDeleted { get; set; }
 
     public string? RuleGroupName { get; set; }

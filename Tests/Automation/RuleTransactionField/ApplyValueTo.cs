@@ -73,7 +73,7 @@ public class ApplyValueTo {
         };
         RuleTransactionField.Date.ApplyValueTo(transaction, value);
 
-        Assert.That(transaction.Date, Is.EqualTo(DateOnly.Parse(value)));
+        Assert.That(transaction.Date, Is.EqualTo(DateOnly.Parse(value, CultureInfo.InvariantCulture)));
     }
 
     [TestCase("2836555c-9173-491b-add6-1956e406870d")]

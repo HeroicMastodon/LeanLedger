@@ -8,7 +8,7 @@ public class ImportSettings {
     public Guid Id { get; init; }
     public char? CsvDelimiter { get; set; }
     public string? DateFormat { get; set; }
-    public List<ImportMapping> ImportMappings { get; set; }
+    public List<ImportMapping> ImportMappings { get; set; } = [];
     public bool IsDeleted { get; set; }
 
     public Account? AttachedAccount { get; set; }

@@ -73,7 +73,7 @@ public class BudgetsController(
         var categoryNames = budget.CategoryGroups.SelectMany(g => g.Categories.Select(c => c.Category));
         var categoryQuery = dbContext.Transactions
                 .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
-                .Where(t => t.Type == TransactionType.Expense) ;
+                .Where(t => t.Type == TransactionType.Expense);
 
         var categorySums = await categoryQuery
             .Where(t => t.Category != null)
@@ -85,7 +85,7 @@ public class BudgetsController(
                     Sum = group.Sum(g => g.Amount)
                 }
             )
-            .ToDictionaryAsync(c => c.Category, c => c.Sum);
+            .ToDictionaryAsync(c => c.Category!, c => c.Sum);
         var categoryGroups = budget.CategoryGroups.Select(
             group => {
                 var categories = group.Categories.Select(

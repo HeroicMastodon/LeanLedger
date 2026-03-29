@@ -46,6 +46,11 @@ Code Style Guidelines (rules agents should follow)
   - Follow `.editorconfig` `csharp_style_var_*` settings: this project prefers `var` broadly (including built-in types and when the type is apparent). Use explicit types when it improves readability.
   - Prefer `implicit` type (`var`) when the type is obvious from the right-hand side.
 
+ - Collections and initializers:
+  - Prefer C# collection expressions `[...]` (array-style/collection-expression syntax) where the language version and runtime support them — they are concise and improve readability.
+  - When collection expressions are not available, prefer `new()` for simple initializers or `ImmutableList.Create(...)` for public API boundaries where immutability is desired.
+  - Initialize reference-typed collection properties at declaration to avoid nullable warnings: `public List<Foo> Items { get; set; } = [];`.
+
 - Nullability and typesafety:
   - Nullable reference types are enabled (`<Nullable>enable</Nullable>`). Respect nullability annotations and handle nullable values explicitly.
   - Prefer `ArgumentNullException.ThrowIfNull(param);` early in public APIs.
