@@ -1,5 +1,6 @@
 namespace Tests.Automation.RuleTrigger;
 
+using System.Text;
 using LeanLedgerServer.Automation;
 using LeanLedgerServer.Transactions;
 
@@ -110,5 +111,26 @@ public class Matches {
         var result = trigger.Matches(transaction);
 
         Assert.That(result, Is.False);
+    }
+
+    [TestCase]
+    public void GivenAStringField_WhenConditionIsExactly_MatchesDifferentReference() {
+        var stringOne = new StringBuilder("a description").ToString();
+        var stringTwo = new StringBuilder("a description").ToString();
+        Assert.That(stringTwo, Is.Not.SameAs(stringOne));
+        var transaction = new Transaction {
+            Id = Guid.NewGuid(),
+            UniqueHash = "",
+            Description = stringOne
+        };
+        var trigger = new RuleTrigger(
+            RuleTransactionField.Description,
+            Not: false,
+            RuleCondition.IsExactly,
+            stringTwo
+        );
+        var result = trigger.Matches(transaction);
+
+        Assert.That(result, Is.True);
     }
 }
