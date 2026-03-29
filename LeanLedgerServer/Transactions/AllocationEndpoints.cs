@@ -16,7 +16,7 @@ public static class AllocationEndpoints {
         tx.MapDelete("{transactionId:guid}/allocations/{allocationId:guid}", DeleteAllocation);
     }
 
-    private static async Task<IResult> ListAllocations(Guid transactionId, [FromServices] LedgerDbContext db) {
+    public static async Task<IResult> ListAllocations(Guid transactionId, [FromServices] LedgerDbContext db) {
         var tx = await db.Transactions.FindAsync(transactionId);
         if (tx is null) return NotFound();
 
@@ -28,7 +28,7 @@ public static class AllocationEndpoints {
         return Ok(allocs.Select(a => new { id = a.Id, amount = a.Amount, piggyBankId = a.PiggyBankId, piggyName = a.Piggy }));
     }
 
-    private static async Task<IResult> CreateAllocation(Guid transactionId, [FromBody] AllocationRequest req, [FromServices] LedgerDbContext db) {
+    public static async Task<IResult> CreateAllocation(Guid transactionId, [FromBody] AllocationRequest req, [FromServices] LedgerDbContext db) {
         var tx = await db.Transactions.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == transactionId);
         if (tx is null) return NotFound();
         if (tx.IsDeleted) return BadRequest("Cannot add allocation to deleted transaction");
@@ -56,7 +56,7 @@ public static class AllocationEndpoints {
         return Created($"/api/transactions/{transactionId}/allocations/{alloc.Id}", alloc);
     }
 
-    private static async Task<IResult> UpdateAllocation(Guid transactionId, Guid allocationId, [FromBody] AllocationRequest req, [FromServices] LedgerDbContext db) {
+    public static async Task<IResult> UpdateAllocation(Guid transactionId, Guid allocationId, [FromBody] AllocationRequest req, [FromServices] LedgerDbContext db) {
         var tx = await db.Transactions.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == transactionId);
         if (tx is null) return NotFound();
         if (tx.IsDeleted) return BadRequest("Cannot update allocation on deleted transaction");
@@ -84,7 +84,7 @@ public static class AllocationEndpoints {
         return Ok(alloc);
     }
 
-    private static async Task<IResult> DeleteAllocation(Guid transactionId, Guid allocationId, [FromServices] LedgerDbContext db) {
+    public static async Task<IResult> DeleteAllocation(Guid transactionId, Guid allocationId, [FromServices] LedgerDbContext db) {
         var alloc = await db.PiggyAllocations.FindAsync(allocationId);
         if (alloc is null) return NotFound();
         if (alloc.TransactionId != transactionId) return BadRequest("Allocation does not belong to transaction");
