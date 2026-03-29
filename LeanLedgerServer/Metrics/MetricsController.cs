@@ -18,7 +18,7 @@ public class MetricsController(
         QueryByMonth byMonth
     ) {
         var netWorth = await QueryNetWorth(byMonth);
-        var lastYearsNetWorth = await QueryNetWorth(byMonth with {Year = byMonth.Year - 1});
+        var lastYearsNetWorth = await QueryNetWorth(byMonth with { Year = byMonth.Year - 1 });
 
         var shouldGetEverything = !byMonth.IsValidQuery();
         var totals = await dbContext.Accounts
@@ -136,13 +136,14 @@ public class MetricsController(
             .Where(t => t.Date.Month == budget.Month && t.Date.Year == budget.Year)
             .Where(t => t.Type == TransactionType.Income)
             .SumAsync(t => t.Amount);
+        var incomeDifference = actualIncome - budget.ExpectedIncome;
 
         return Ok(
             new {
                 Income = new {
                     Budgeted = budget.ExpectedIncome,
                     Actual = actualIncome,
-                    Difference = actualIncome - budget.ExpectedIncome
+                    Difference = incomeDifference
                 },
                 Expenses = new {
                     Budgeted = expectedExpenses,
@@ -213,6 +214,114 @@ public class MetricsController(
 
         return Ok(everything);
     }
+
+    [HttpGet("account-trends")]
+    public async Task<IActionResult> GetAccountTrends(
+        [FromQuery]
+        QueryByMonth byMonth
+    ) {
+        // Need to retrieve networth and change in networth for 3 different trends, Monthly, Quarterly, Yearly
+        // Monthly would be the last three months
+        // Quarterly would be the last 4 quarters, so 12 months at 3 month intervals
+        // Yearly would be the last 3 years
+        // need to match this ts type structure when returning:
+        //
+        // type Trend = {
+        //     label: string; (e.g. "Jan" for monthly, "Jan-Mar" for quarterly, "2024" for yearly)
+        //     netWorth: number;
+        //     change: number;
+        // };
+        //
+        // type TrendType = "yearly" | "monthly" | "quarterly";
+        // type AccountTrends = Record<TrendType, Trend[]>;
+        // First, we need to create a list of months/quarters/years based on the query month
+        // we need an extra month/quarter/year for the change calculation
+
+        var monthlyQueries = new[] {
+            byMonth.Decrement(3),
+            byMonth.Decrement(2),
+            byMonth.Decrement(1),
+        }.Select(
+            async m => new {
+                Query = m,
+                NetWorth = await QueryNetWorth(m)
+            }
+        )
+        .ToArray();
+        var quarterlyQueries = new[] {
+            byMonth.DecrementByQuarter(4),
+            byMonth.DecrementByQuarter(3),
+            byMonth.DecrementByQuarter(2),
+            byMonth.DecrementByQuarter(1),
+        }.Select(
+                async q => new {
+                    Query = q,
+                    NetWorth = await QueryNetWorth(q)
+                }
+            )
+            .ToArray();
+        var yearlyQueries = new[] {
+            byMonth.DecrementByYear(3),
+            byMonth.DecrementByYear(2),
+            byMonth.DecrementByYear(1),
+        }.Select(
+                async y => new {
+                    Query = y,
+                    NetWorth = await QueryNetWorth(y)
+                }
+            )
+        .ToArray();
+
+        var currentMonthNetWorth = await QueryNetWorth(byMonth);
+        var monthlyResults = await Task.WhenAll(monthlyQueries);
+        var quarterlyResults = await Task.WhenAll(quarterlyQueries);
+        var yearlyResults = await Task.WhenAll(yearlyQueries);
+
+
+        // then calculate the change from the previous month/quarter/year
+        var monthlyTrends = monthlyResults
+            .Select(
+                (result, index) => new {
+                    Label = result.Query.MonthName,
+                    result.NetWorth,
+                    TotalChange = currentMonthNetWorth - result.NetWorth,
+                    Change = index == monthlyResults.Length - 1
+                        ? currentMonthNetWorth - result.NetWorth
+                        : monthlyResults[index + 1].NetWorth - result.NetWorth
+                }
+            )
+            .ToArray();
+        var quarterlyTrends = quarterlyResults.Select(
+                (result, index) => new {
+                    Label = $"{result.Query.Decrement(2).MonthName}-{result.Query.MonthName}",
+                    result.NetWorth,
+                    TotalChange = currentMonthNetWorth - result.NetWorth,
+                    Change = index == quarterlyResults.Length - 1
+                        ? currentMonthNetWorth - result.NetWorth
+                        : quarterlyResults[index + 1].NetWorth - result.NetWorth
+                }
+            )
+            .ToArray();
+        var yearlyTrends = yearlyResults
+            .Select(
+                (result, index) => new {
+                    Label = result.Query.Year?.ToString(),
+                    result.NetWorth,
+                    TotalChange = currentMonthNetWorth - result.NetWorth,
+                    Change = index == yearlyResults.Length - 1
+                        ? currentMonthNetWorth - result.NetWorth
+                        : yearlyResults[index + 1].NetWorth - result.NetWorth
+                }
+            )
+            .ToArray();
+
+        return Ok(new {
+            Monthly = monthlyTrends.Reverse(),
+            Quarterly = quarterlyTrends.Reverse(),
+            Yearly = yearlyTrends.Reverse()
+        });
+    }
 }
 
-record ByDayMetric(int Day, decimal Amount);
+public record ByDayMetric(int Day, decimal Amount);
+

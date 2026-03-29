@@ -1,6 +1,7 @@
 import {lastMonth as getLastMonth, type Month, monthFromNumber, nextMonth as getNextMonth} from "$lib/dateTools";
 
 let today = new Date();
+console.log(today.getMonth())
 
 class MonthManager {
     selectedMonth = $state<Month>(monthFromNumber(today.getMonth() + 1, today.getFullYear()));

@@ -9,6 +9,7 @@
         label: string | number | Date;
         netWorth: number;
         change: number;
+        totalChange: number;
     };
 
     type TrendType = "yearly" | "monthly" | "quarterly";
@@ -16,75 +17,25 @@
 
     let loading = $state(true);
     let trends = $state<AccountTrends>({
-        yearly: [
-            {
-                label: 2023,
-                netWorth: 10000,
-                change: 500,
-            },
-            {
-                label: 2022,
-                netWorth: 8000,
-                change: -2000,
-            },
-            {
-                label: 2021,
-                netWorth: 10000,
-                change: 0,
-            },
-        ],
-        monthly: [
-            {
-                label: "Jan",
-                netWorth: 9000,
-                change: -1000,
-            },
-            {
-                label: "Feb",
-                netWorth: 9500,
-                change: 500,
-            },
-            {
-                label: "Mar",
-                netWorth: 11000,
-                change: 1500,
-            },
-        ],
-        quarterly: [
-            {
-                label: "Q1",
-                netWorth: 9000,
-                change: -1000,
-            },
-            {
-                label: "Q2",
-                netWorth: 9500,
-                change: 500,
-            },
-            {
-                label: "Q3",
-                netWorth: 11000,
-                change: 1500,
-            },
-            {
-                label: "Q4",
-                netWorth: 12000,
-                change: 1000,
-            },
-        ],
+        yearly: [],
+        monthly: [],
+        quarterly: [],
     });
+    let params = $derived(monthManager.params);
 
     async function load() {
         // TODO: implement API
         const resp = await apiClient.get<AccountTrends>(
-            `Metrics/net-worth?${monthManager.params}`,
+            `Metrics/account-trends?${params}`,
         );
 
-        // trends = resp.data;
+        trends = resp.data;
         loading = false;
     }
 
-    load();
+    $effect(() => {
+        load();
+    });
 
     let tabSet = $state<TrendType>("monthly");
     let currentTrend = $derived(trends[tabSet]);
@@ -113,6 +64,7 @@
                             <th></th>
                             <th class="text-left">Net Worth</th>
                             <th class="text-left">Change</th>
+                            <th class="text-left">Total Change</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -124,6 +76,9 @@
                                 </td>
                                 <td>
                                     <Money amount={trend.change} />
+                                </td>
+                                <td>
+                                    <Money amount={trend.totalChange} />
                                 </td>
                             </tr>
                         {/each}
