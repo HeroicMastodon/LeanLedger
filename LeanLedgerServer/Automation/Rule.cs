@@ -21,7 +21,14 @@ public class Rule {
         ? Triggers.All(t => t.Matches(transaction))
         : Triggers.Any(t => t.Matches(transaction));
 
-    public void ApplyActionsTo(Transaction transaction) => Actions.ForEach(a => a.ApplyTo(transaction));
+    public List<LeanLedgerServer.Transactions.PendingAllocation> ApplyActionsTo(Transaction transaction) {
+        var pending = new List<LeanLedgerServer.Transactions.PendingAllocation>();
+        foreach (var a in Actions) {
+            a.ApplyTo(transaction, pending);
+        }
+
+        return pending;
+    }
 }
 
 public class RuleGroup {

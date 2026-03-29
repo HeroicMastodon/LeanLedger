@@ -17,6 +17,8 @@ public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbConte
     public DbSet<Rule> Rules { get; set; }
     public DbSet<RuleGroup> RuleGroups { get; set; }
     public DbSet<Budget> Budgets { get; set; }
+    public DbSet<LeanLedgerServer.PiggyBanks.PiggyBank> PiggyBanks { get; set; }
+    public DbSet<LeanLedgerServer.PiggyBanks.PiggyAllocation> PiggyAllocations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Account>(

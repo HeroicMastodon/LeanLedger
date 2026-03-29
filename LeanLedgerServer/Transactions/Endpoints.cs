@@ -16,6 +16,7 @@ public static class Endpoints {
         transactions.MapPost("", CreateTransaction);
         transactions.MapPut("{id:guid}", UpdateTransaction);
         transactions.MapDelete("{id:guid}", DeleteTransaction);
+        transactions.MapAllocationEndpoints();
     }
 
     private static async Task<IResult> GetTransaction(Guid id, [FromServices] LedgerDbContext db) {

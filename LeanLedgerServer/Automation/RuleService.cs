@@ -19,8 +19,45 @@ public class RuleService(LedgerDbContext dbContext) {
             startDate,
             endDate
         );
-        transactions.ForEach(rule.ApplyActionsTo);
+
+        var allocationsToAdd = new List<LeanLedgerServer.PiggyBanks.PiggyAllocation>();
+
+        foreach (var transaction in transactions) {
+            var pending = rule.ApplyActionsTo(transaction);
+
+            if (pending is not null && pending.Count > 0) {
+                // validate and prepare allocations
+                if (transaction.IsDeleted) {
+                    throw new InvalidOperationException($"Cannot apply rule allocations to deleted transaction {transaction.Id}");
+                }
+
+                if (transaction.Type == TransactionType.Transfer) {
+                    throw new InvalidOperationException($"Cannot add allocations to transfer transaction {transaction.Id}");
+                }
+
+                var existing = await dbContext.PiggyAllocations.Where(a => a.TransactionId == transaction.Id).SumAsync(a => a.Amount);
+                var pendingSum = pending.Sum(p => p.Amount);
+                if (existing + pendingSum > transaction.Amount) {
+                    throw new InvalidOperationException($"Rule would create allocations exceeding transaction amount for {transaction.Id}");
+                }
+
+                foreach (var p in pending) {
+                    var piggy = await dbContext.PiggyBanks.FindAsync(p.PiggyBankId);
+                    if (piggy is null) throw new InvalidOperationException($"Piggy bank {p.PiggyBankId} not found");
+                    if (piggy.Closed) throw new InvalidOperationException($"Piggy bank {p.PiggyBankId} is closed");
+
+                    allocationsToAdd.Add(new LeanLedgerServer.PiggyBanks.PiggyAllocation {
+                        Id = Guid.NewGuid(),
+                        TransactionId = transaction.Id,
+                        PiggyBankId = p.PiggyBankId,
+                        Amount = p.Amount
+                    });
+                }
+            }
+        }
+
         dbContext.UpdateRange(transactions);
+        if (allocationsToAdd.Count > 0) await dbContext.AddRangeAsync(allocationsToAdd);
         await dbContext.SaveChangesAsync();
 
         return transactions.Count;
