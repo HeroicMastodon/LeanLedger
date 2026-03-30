@@ -118,6 +118,10 @@
                     )}
                     {@render navItem("/rules", "Rules")}
                     {@render navItem(
+                        `/piggy-banks${selectedMonthParams}`,
+                        "Piggy Banks",
+                    )}
+                    {@render navItem(
                         `/budgets${selectedMonthParams}`,
                         "Budgets",
                     )}

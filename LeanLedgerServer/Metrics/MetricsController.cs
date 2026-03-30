@@ -322,6 +322,55 @@ public class MetricsController(
             Yearly = yearlyTrends.Reverse()
         });
     }
+
+    [HttpGet("piggy-banks")]
+    public async Task<IActionResult> GetPiggyBanksMetrics(
+        [FromQuery]
+        QueryByMonth byMonth
+    ) {
+        // Retrieve piggy banks
+        var piggies = await dbContext.PiggyBanks
+            .Where(pb => !pb.Closed)
+            .Select(pb => new { pb.Id, pb.Name, pb.InitialBalance, pb.BalanceTarget, pb.Closed })
+            .ToListAsync();
+
+        var results = new List<object>();
+        foreach (var pb in piggies) {
+            var allocSum = await dbContext.PiggyAllocations
+                .Where(a => a.PiggyBankId == pb.Id)
+                .Join(dbContext.Transactions, a => a.TransactionId, t => t.Id, (a, t) => new { a.Amount, t.Date, t.IsDeleted })
+                .Where(x => !x.IsDeleted)
+                .Where(x => (byMonth.Month != null && byMonth.Year != null)
+                    ? (x.Date.Year < byMonth.Year || (x.Date.Year == byMonth.Year && x.Date.Month <= byMonth.Month))
+                    : true)
+                .SumAsync(x => x.Amount);
+
+            var balance = pb.InitialBalance + allocSum;
+            decimal? progress = pb.BalanceTarget is null ? null : (decimal?)(balance / pb.BalanceTarget.Value * 100m);
+
+            results.Add(new {
+                id = pb.Id,
+                name = pb.Name,
+                initialBalance = pb.InitialBalance,
+                balanceTarget = pb.BalanceTarget,
+                balance,
+                progressPercent = progress,
+                closed = pb.Closed
+            });
+        }
+
+        var piggyTotal = results.Select(r => ((dynamic)r).balance as decimal?).Sum() ?? 0m;
+        var accountTotal = await QueryNetWorth(byMonth);
+
+        return Ok(new {
+            piggyBanks = results,
+            totals = new {
+                piggyTotal,
+                accountTotal,
+                piggyTotalExceedsAccounts = piggyTotal > accountTotal
+            }
+        });
+    }
 }
 
 public record ByDayMetric(int Day, decimal Amount);

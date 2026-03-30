@@ -7,6 +7,7 @@
     import {ProgressRadial} from "@skeletonlabs/skeleton";
     import {goto} from "$app/navigation"
     import TransactionForm from "$lib/transactions/TransactionForm.svelte";
+    import Allocations from "$lib/transactions/Allocations.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import {page} from "$app/stores";
     import {Fa} from "svelte-fa";
@@ -50,3 +51,7 @@
 </div>
 
 <TransactionForm bind:transaction />
+
+<section class="mt-8">
+    <Allocations transactionId={id} />
+</section>

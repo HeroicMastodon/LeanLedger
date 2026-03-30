@@ -38,6 +38,7 @@
     let loading = $state(load());
     let accounts = $state<SelectOption<string>[]>([]);
     let ruleGroups = $state<SelectOption<string>[]>([]);
+    let piggyOptions = $state<SelectOption<string>[]>([]);
 
     async function load() {
         const ruleResponse = await apiClient.get<Rule>(`Rules/${id}`);
@@ -46,6 +47,8 @@
         accounts = await loadAccountOptions();
         const ruleGroupRes = await apiClient.get<string[]>("completions/rule-groups");
         ruleGroups = ruleGroupRes.data.map(name => ({value: name, display: name}));
+        const pigRes = await apiClient.get<any[]>(`piggy-banks`);
+        piggyOptions = pigRes.data.map(p => ({ value: p.id, display: p.name }));
     }
 
     async function save() {
@@ -96,11 +99,13 @@
     }
 
     function isActionValueDisabled(actionType: RuleActionType) {
-        return actionType === "DeleteTransaction" || actionType === "Clear";
+        const at = String(actionType);
+        return at === "DeleteTransaction" || at === "Clear" || at === "AddPiggyAllocation";
     }
 
     function isActionFieldDisabled(actionType: RuleActionType) {
-        return actionType === "DeleteTransaction";
+        const at = String(actionType);
+        return at === "DeleteTransaction" || at === "AddPiggyAllocation";
     }
 
     let textValueDatalist = $state<string[]>([]);
@@ -416,15 +421,27 @@
                         </select>
                     </td>
                     <td class="min-w-64">
-                        <RuleValueInput
-                            disabled={isActionValueDisabled(action.actionType)}
-                            bind:value={action.value}
-                            dataListId="text-value"
-                            field={action.field ?? 'Description'}
-                            accounts={accounts}
-                            onLoadTextPredictions={value => loadTextCompletions(action.field ?? "Category", value, "Contains")}
-                            selectPopupName="action-value-{idx}"
-                        />
+                        {#if action.actionType === 'AddPiggyAllocation'}
+                            <div class="flex gap-2 items-center">
+                                <select class="select" bind:value={action.piggyBankId}>
+                                    <option value="">Select piggy...</option>
+                                    {#each piggyOptions as p}
+                                        <option value={p.value}>{p.display}</option>
+                                    {/each}
+                                </select>
+                                <input class="input w-32" type="number" bind:value={(action as any).piggyAmount} />
+                            </div>
+                        {:else}
+                            <RuleValueInput
+                                disabled={isActionValueDisabled(action.actionType)}
+                                bind:value={action.value}
+                                dataListId="text-value"
+                                field={action.field ?? 'Description'}
+                                accounts={accounts}
+                                onLoadTextPredictions={value => loadTextCompletions(action.field ?? "Category", value, "Contains")}
+                                selectPopupName="action-value-{idx}"
+                            />
+                        {/if}
                     </td>
                 </tr>
             {/each}

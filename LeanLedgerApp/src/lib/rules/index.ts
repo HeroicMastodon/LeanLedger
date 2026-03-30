@@ -19,12 +19,16 @@ export type RuleAction = {
     actionType: RuleActionType;
     field?: RuleTransactionField;
     value?: string;
+    piggyBankId?: string;
+    piggyAmount?: number;
 }
 
 export function defaultRuleAction(): RuleAction {
     return {
         actionType: "Set",
         field: "Description",
+        piggyBankId: undefined,
+        piggyAmount: undefined,
     }
 }
 
@@ -52,7 +56,8 @@ export const ruleActionTypes = [
     "Append",
     "Set",
     "Clear",
-    "DeleteTransaction"
+    "DeleteTransaction",
+    "AddPiggyAllocation"
 ] as const;
 export type RuleActionType = typeof ruleActionTypes[number];
 export type RuleGroup = {

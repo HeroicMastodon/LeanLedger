@@ -22,10 +22,10 @@ public static class AllocationEndpoints {
 
         var allocs = await db.PiggyAllocations
             .Where(a => a.TransactionId == transactionId)
-            .Join(db.PiggyBanks, a => a.PiggyBankId, p => p.Id, (a, p) => new { a.Id, a.Amount, Piggy = p.Name, a.PiggyBankId })
+            .Include(a => a.PiggyBank)
             .ToListAsync();
 
-        return Ok(allocs.Select(a => new { id = a.Id, amount = a.Amount, piggyBankId = a.PiggyBankId, piggyName = a.Piggy }));
+        return Ok(allocs.Select(a => new { id = a.Id, amount = a.Amount, piggyBankId = a.PiggyBankId, piggyName = a.PiggyBank.Name }));
     }
 
     public static async Task<IResult> CreateAllocation(Guid transactionId, [FromBody] AllocationRequest req, [FromServices] LedgerDbContext db) {
