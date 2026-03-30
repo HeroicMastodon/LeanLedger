@@ -9,7 +9,7 @@
         id: string;
         name: string;
         initialBalance: number;
-        balanceTarget: number | null;
+        balanceTarget?: number;
         balance: number;
         progressPercent: number | null;
         closed: boolean;
@@ -17,11 +17,17 @@
 
     type PiggyMetricsResponse = {
         piggyBanks: Piggy[];
-        totals: { piggyTotal: number; accountTotal: number; piggyTotalExceedsAccounts: boolean };
+        totals: {
+            piggyTotal: number;
+            accountTotal: number;
+            piggyTotalExceedsAccounts: boolean;
+        };
     };
 
     const metricsPromise = $derived.by(async () => {
-        const resp = await apiClient.get<PiggyMetricsResponse>(`metrics/piggy-banks?${monthManager.params}`);
+        const resp = await apiClient.get<PiggyMetricsResponse>(
+            `metrics/piggy-banks?${monthManager.params}`,
+        );
         return resp.data;
     });
 </script>
@@ -51,8 +57,20 @@
                     <tr>
                         <td>{p.name}</td>
                         <td class="text-left"><Money amount={p.balance} /></td>
-                        <td class="text-left">{p.balanceTarget ?? "-"}</td>
-                        <td class="text-left">{p.progressPercent ? `${p.progressPercent.toFixed(1)}%` : "-"}</td>
+                        <td class="text-left">
+                            <Money amount={p.balanceTarget ?? 0} />
+                        </td>
+                        <td
+                            class="text-left"
+                            class:text-error-500={(p.progressPercent ?? 0) < 40}
+                            class:text-warning-500={(p.progressPercent ?? 0) <
+                                90 && (p.progressPercent ?? 0) >= 40}
+                            class:text-success-500={(p.progressPercent ?? 0) >=
+                                90}
+                            >{p.progressPercent
+                                ? `${p.progressPercent.toFixed(1)}%`
+                                : "-"}</td
+                        >
                     </tr>
                 {/each}
             </tbody>
@@ -66,7 +84,9 @@
             <div class="text-sm">
                 Accounts: <Money amount={metrics.totals.accountTotal} />
                 {#if metrics.totals.piggyTotalExceedsAccounts}
-                    <span class="ml-2 text-warning-400">(Piggy total exceeds accounts)</span>
+                    <span class="ml-2 text-warning-400"
+                        >(Piggy total exceeds accounts)</span
+                    >
                 {/if}
             </div>
         </div>
