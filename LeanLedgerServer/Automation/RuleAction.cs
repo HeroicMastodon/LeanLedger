@@ -7,15 +7,9 @@ using Transactions;
 public record RuleAction(
     RuleActionType ActionType,
     RuleTransactionField? Field,
-    string? Value,
-    Guid? PiggyBankId = null,
-    decimal? PiggyAmount = null
+    string? Value
 ) {
     public void ApplyTo(Transaction transaction) {
-        ApplyTo(transaction, null);
-    }
-
-    public void ApplyTo(Transaction transaction, List<LeanLedgerServer.Transactions.PendingAllocation>? pendingAllocations) {
         switch (ActionType) {
             case RuleActionType.Append:
                 Append(transaction);
@@ -28,9 +22,6 @@ public record RuleAction(
                 break;
             case RuleActionType.DeleteTransaction:
                 Delete(transaction);
-                break;
-            case RuleActionType.AddPiggyAllocation:
-                AddPiggyAllocation(pendingAllocations);
                 break;
             default:
                 throw new UnreachableException();
@@ -47,7 +38,7 @@ public record RuleAction(
             return;
         }
 
-        transactionValue = transactionValue + Value;
+        transactionValue += Value;
         Field.Value.ApplyValueTo(transaction, transactionValue);
     }
 
@@ -62,40 +53,12 @@ public record RuleAction(
     }
 
     private void Delete(Transaction transaction) => transaction.IsDeleted = true;
-
-    private void AddPiggyAllocation(List<LeanLedgerServer.Transactions.PendingAllocation>? pendingAllocations) {
-        if (pendingAllocations is null) {
-            // nothing to do when not in creation flow
-            return;
-        }
-
-        // Prefer explicit properties when present (new rules)
-        if (PiggyBankId is not null && PiggyAmount is not null) {
-            pendingAllocations.Add(new LeanLedgerServer.Transactions.PendingAllocation(PiggyBankId.Value, PiggyAmount.Value));
-            return;
-        }
-
-        if (Field is null || Value is null) { throw new InvalidOperationException(); }
-
-        // Fallback to legacy storage: Field contains piggy id, Value contains amount
-        if (!Guid.TryParse(Field.Value.ToString(), out var piggyId)) {
-            throw new InvalidOperationException();
-        }
-
-        if (!decimal.TryParse(Value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var amount)) {
-            throw new InvalidOperationException();
-        }
-
-        pendingAllocations.Add(new LeanLedgerServer.Transactions.PendingAllocation(piggyId, amount));
-    }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum RuleActionType {
-        Append,
-        Set,
-        Clear,
-        DeleteTransaction
-        ,
-        AddPiggyAllocation
-    }
+public enum RuleActionType {
+    Append,
+    Set,
+    Clear,
+    DeleteTransaction,
+}
