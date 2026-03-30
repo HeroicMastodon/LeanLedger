@@ -1,16 +1,9 @@
 <script lang="ts">
     import Money from "$lib/components/Money.svelte";
     import type {Transaction} from "$lib/transactions/index";
-    import {dateFromString} from "$lib";
+    import {dateFromString, encodeCategory, getCategoryName} from "$lib";
 
     let {transactions}: { transactions: Transaction[] } = $props();
-    function getCategoryName(category?: string | null) {
-        return category ? category : '(none)';
-    }
-    function encodeCategory(category?: string | null) {
-        let categoryStr = getCategoryName(category);
-        return encodeURIComponent(categoryStr);
-    }
 </script>
 
 <div class="table-container">

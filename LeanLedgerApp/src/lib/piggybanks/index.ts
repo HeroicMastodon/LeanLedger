@@ -1,3 +1,4 @@
+import type { TransactionType } from "$lib/transactions";
 
 export type Piggy = {
     id: string;
@@ -14,6 +15,27 @@ export type PiggyData = {
     name: string;
     initialBalance: number;
     balanceTarget?: number;
+    balance?: number;
+}
+
+export type PiggyAllocation = {
+    id: string;
+    transactionId: string;
+    piggyBankId: string;
+    amount: number;
+}
+
+export type PiggyAllocationData = PiggyAllocation & {
+    transactionAmount: number;
+    description: string;
+    category: string;
+    type: TransactionType;
+    sourceAccountId: string;
+    sourceAccountName: string;
+}
+
+export type PiggyWithAllocationData = PiggyData & {
+    allocations: PiggyAllocationData[];
 }
 
 export function defaultPiggyData(): PiggyData {

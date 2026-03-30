@@ -1,23 +1,24 @@
 <script lang="ts">
-    import {apiClient} from "$lib/apiClient";
-    import {monthManager} from "$lib/selectedMonth.svelte";
+    import { apiClient } from "$lib/apiClient";
+    import { monthManager } from "$lib/selectedMonth.svelte";
     import Money from "$lib/components/Money.svelte";
-    import {ProgressBar} from "@skeletonlabs/skeleton";
-    import {page} from "$app/stores";
-    import TransactionTable from "$lib/transactions/TransactionTable.svelte";
-    import {apiClient as client} from "$lib/apiClient";
+    import { ProgressBar } from "@skeletonlabs/skeleton";
+    import { page } from "$app/stores";
+    import { apiClient as client } from "$lib/apiClient";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
-    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
+    import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
     import PiggyForm from "$lib/piggybanks/PiggyForm.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
-    import {Fa} from "svelte-fa";
-    import {faSave} from "@fortawesome/free-solid-svg-icons/faSave";
-    import {goto} from "$app/navigation";
+    import { Fa } from "svelte-fa";
+    import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
+    import { goto } from "$app/navigation";
+    import type { PiggyWithAllocationData } from "$lib/piggybanks";
+    import { encodeCategory, getCategoryName } from "$lib";
 
     let id = $page.params.id;
-    let piggy: any = $state(null);
+    let piggy = $state<PiggyWithAllocationData>();
     let isSaving = $state(false);
     let searchDescription = $state("");
     let searchStartDate: string = $state("");
@@ -28,7 +29,9 @@
     let searchError: string = $state("");
 
     async function load() {
-        const resp = await apiClient.get(`piggy-banks/${id}?${monthManager.params}`);
+        const resp = await apiClient.get<PiggyWithAllocationData>(
+            `piggy-banks/${id}?${monthManager.params}`,
+        );
         piggy = resp.data;
     }
 
@@ -41,7 +44,7 @@
         const payload = {
             name: piggy.name,
             initialBalance: Number(piggy.initialBalance) || 0,
-            balanceTarget: piggy.balanceTarget != null && piggy.balanceTarget !== "" ? Number(piggy.balanceTarget) : null,
+            balanceTarget: piggy.balanceTarget,
         };
 
         await apiClient.put(`piggy-banks/${id}`, payload);
@@ -51,7 +54,7 @@
 
     async function closePiggy() {
         await apiClient.delete(`piggy-banks/${id}`);
-        await goto('/piggy-banks');
+        await goto("/piggy-banks");
 
         return false;
     }
@@ -60,7 +63,8 @@
         searchError = "";
         const desc = (searchDescription || "").trim();
         if (desc && desc.length < 3) {
-            searchError = "Description must be at least 3 characters when provided.";
+            searchError =
+                "Description must be at least 3 characters when provided.";
             return;
         }
 
@@ -68,15 +72,22 @@
         if (desc) params.set("description", desc);
         if (searchStartDate) params.set("startDate", searchStartDate);
         if (searchEndDate) params.set("endDate", searchEndDate);
-        if (searchMinAmount !== null && searchMinAmount !== undefined) params.set("minAmount", String(searchMinAmount));
-        if (searchMaxAmount !== null && searchMaxAmount !== undefined) params.set("maxAmount", String(searchMaxAmount));
+        if (searchMinAmount !== null && searchMinAmount !== undefined)
+            params.set("minAmount", String(searchMinAmount));
+        if (searchMaxAmount !== null && searchMaxAmount !== undefined)
+            params.set("maxAmount", String(searchMaxAmount));
 
-        const resp = await client.get(`transactions/search?${params.toString()}`);
+        const resp = await client.get(
+            `transactions/search?${params.toString()}`,
+        );
         searchResults = resp.data;
     }
 
     async function createAllocationFromResult(txId: string, amount: number) {
-        await client.post(`transactions/${txId}/allocations`, { piggyBankId: id, amount });
+        await client.post(`transactions/${txId}/allocations`, {
+            piggyBankId: id,
+            amount,
+        });
         await load();
     }
 </script>
@@ -93,13 +104,13 @@
                 <Fa icon={faSave} />
             </button>
             <DeleteConfirmationButton onDelete={closePiggy} />
-            <p>Balance: <Money amount={piggy.balance} /></p>
+            <p>Balance: <Money amount={piggy.balance ?? 0} /></p>
             {#if isSaving}
                 <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
             {/if}
         </div>
 
-        <PiggyForm bind:piggy={piggy} />
+        <PiggyForm bind:piggy />
 
         <div class="flex items-center justify-start gap-4 mt-8 mb-4">
             <h2 class="h2">Allocations</h2>
@@ -111,23 +122,55 @@
                 icon={faPlus}
             >
                 <div class="p-2">
-                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end mb-4">
-                        <LabeledInput label="Description" type="text" bind:value={searchDescription} class="md:col-span-2" />
-                        <LabeledInput label="Start Date" type="date" bind:value={searchStartDate} class="md:col-span-1" />
-                        <LabeledInput label="End Date" type="date" bind:value={searchEndDate} class="md:col-span-1" />
-                        <MoneyInput label="Min Amount" bind:value={searchMinAmount} class="md:col-span-1" />
-                        <MoneyInput label="Max Amount" bind:value={searchMaxAmount} class="md:col-span-1" />
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end mb-4"
+                    >
+                        <LabeledInput
+                            label="Description"
+                            type="text"
+                            bind:value={searchDescription}
+                            class="md:col-span-2"
+                        />
+                        <LabeledInput
+                            label="Start Date"
+                            type="date"
+                            bind:value={searchStartDate}
+                            class="md:col-span-1"
+                        />
+                        <LabeledInput
+                            label="End Date"
+                            type="date"
+                            bind:value={searchEndDate}
+                            class="md:col-span-1"
+                        />
+                        <MoneyInput
+                            label="Min Amount"
+                            bind:value={searchMinAmount}
+                            class="md:col-span-1"
+                        />
+                        <MoneyInput
+                            label="Max Amount"
+                            bind:value={searchMaxAmount}
+                            class="md:col-span-1"
+                        />
                         <div class="md:col-span-6">
-                            <button class="btn text-primary-500" onclick={searchTransactions}>Search</button>
+                            <button
+                                class="btn text-primary-500"
+                                onclick={searchTransactions}>Search</button
+                            >
                         </div>
                     </div>
                     {#if searchError}
-                        <div class="p-2 variant-filled-warning mb-4">{searchError}</div>
+                        <div class="p-2 variant-filled-warning mb-4">
+                            {searchError}
+                        </div>
                     {/if}
 
                     {#if searchResults.length > 0}
                         <div class="table-container">
-                            <table class="table table-compact table-hover w-full">
+                            <table
+                                class="table table-compact table-hover w-full"
+                            >
                                 <thead>
                                     <tr>
                                         <th>Description</th>
@@ -137,14 +180,38 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {#each searchResults as tx}
+                                    {#each searchResults as searchResult}
                                         <tr>
-                                            <td><a class="text-primary-400" href="/transactions/{tx.id}">{tx.description}</a></td>
-                                            <td><Money amount={tx.amount} /></td>
-                                            <td>{tx.date}</td>
+                                            <td
+                                                ><a
+                                                    class="text-primary-400"
+                                                    href="/transactions/{searchResult.id}"
+                                                    >{searchResult.description}</a
+                                                ></td
+                                            >
+                                            <td
+                                                ><Money
+                                                    amount={searchResult.amount}
+                                                /></td
+                                            >
+                                            <td>{searchResult.date}</td>
                                             <td class="flex gap-2 items-center">
-                                                <MoneyInput bind:value={tx.__allocAmount} />
-                                                <button class="btn text-success-500" onclick={() => createAllocationFromResult(tx.id, Number(tx.__allocAmount ?? tx.amount))}>Add</button>
+                                                <MoneyInput
+                                                    bind:value={
+                                                        searchResult.__allocAmount
+                                                    }
+                                                />
+                                                <button
+                                                    class="btn text-success-500"
+                                                    onclick={() =>
+                                                        createAllocationFromResult(
+                                                            searchResult.id,
+                                                            Number(
+                                                                searchResult.__allocAmount ??
+                                                                    searchResult.amount,
+                                                            ),
+                                                        )}>Add</button
+                                                >
                                             </td>
                                         </tr>
                                     {/each}
@@ -171,16 +238,35 @@
                     {#each piggy.allocations as allocation}
                         <tr>
                             <td>
-                                <a class="text-primary-400" href="/transactions/{allocation.id}">{allocation.description}</a>
+                                <a
+                                    class="text-primary-400"
+                                    href="/transactions/{allocation.transactionId}"
+                                    >{allocation.description}</a
+                                >
                             </td>
-                            <td><Money amount={allocation.transactionAmount} /></td>
+                            <td
+                                ><Money
+                                    amount={allocation.transactionAmount}
+                                /></td
+                            >
                             <td><Money amount={allocation.amount} /></td>
                             <td>
-                                {#if allocation.sourceAccount}
-                                    <a class="text-primary-400" href="/accounts/{allocation.sourceAccount.id}">{allocation.sourceAccount.name}</a>
-                                {/if}
+                                <a
+                                    class="text-primary-400"
+                                    href="/accounts/{allocation.sourceAccountId}"
+                                    >{allocation.sourceAccountName}</a
+                                >
                             </td>
-                            <td>{allocation.category ?? "(none)"}</td>
+                            <td>
+                                <a
+                                    class="text-primary-400"
+                                    href="/categories/{encodeCategory(
+                                        allocation.category,
+                                    )}"
+                                >
+                                    {getCategoryName(allocation.category)}
+                                </a>
+                            </td>
                         </tr>
                     {/each}
                 </tbody>

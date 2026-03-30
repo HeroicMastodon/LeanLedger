@@ -41,11 +41,14 @@ public static class Endpoints {
         foreach (var pb in piggies) {
             var allocSum = await db.PiggyAllocations
                 .Where(a => a.PiggyBankId == pb.Id)
-                .Join(db.Transactions, a => a.TransactionId, t => t.Id, (a, t) => new { a.Amount, t.Date, t.IsDeleted })
-                .Where(x => !x.IsDeleted)
-                .Where(x => (byMonth.Month != null && byMonth.Year != null)
-                    ? (x.Date.Year < byMonth.Year || (x.Date.Year == byMonth.Year && x.Date.Month <= byMonth.Month))
-                    : true)
+                .Include(a => a.Transaction)
+                .Where(a => !a.Transaction!.IsDeleted)
+                .Where(a =>
+                    byMonth.Month == null
+                        || byMonth.Year == null
+                        || a.Transaction!.Date.Year < byMonth.Year
+                        || (a.Transaction.Date.Year == byMonth.Year && a.Transaction.Date.Month <= byMonth.Month)
+                )
                 .SumAsync(x => x.Amount);
 
             var balance = pb.InitialBalance + allocSum;
@@ -74,39 +77,42 @@ public static class Endpoints {
         var allocs = await db.PiggyAllocations
             .Where(a => a.PiggyBankId == pb.Id)
             .Include(a => a.Transaction)
-                .ThenInclude(t => t.SourceAccount)
-            .Include(a => a.Transaction)
-                .ThenInclude(t => t.DestinationAccount)
-            .Where(a => !a.Transaction.IsDeleted)
-            .Where(a => (byMonth.Month != null && byMonth.Year != null)
-                ? (a.Transaction.Date.Year < byMonth.Year || (a.Transaction.Date.Year == byMonth.Year && a.Transaction.Date.Month <= byMonth.Month))
-                : true)
+                .ThenInclude(t => t!.SourceAccount)
+            .Where(a => !a.Transaction!.IsDeleted)
+            .Where(a =>
+                byMonth.Month == null
+                    || byMonth.Year == null
+                    || a.Transaction!.Date.Year < byMonth.Year
+                    || (a.Transaction.Date.Year == byMonth.Year && a.Transaction.Date.Month <= byMonth.Month)
+            )
             .Select(a => new {
-                id = a.Id,
-                allocationAmount = a.Amount,
-                transactionId = a.TransactionId,
-                date = a.Transaction.Date,
-                description = a.Transaction.Description,
-                transactionAmount = a.Transaction.Amount,
-                category = a.Transaction.Category,
-                type = a.Transaction.Type,
-                sourceAccount = a.Transaction.SourceAccount == null ? null : new { id = a.Transaction.SourceAccount.Id, name = a.Transaction.SourceAccount.Name },
-                destinationAccount = a.Transaction.DestinationAccount == null ? null : new { id = a.Transaction.DestinationAccount.Id, name = a.Transaction.DestinationAccount.Name }
+                a.Id,
+                a.PiggyBankId,
+                a.TransactionId,
+                a.Transaction!.Description,
+                TransactionAmount = a.Transaction.Amount,
+                SourceAccount = a.Transaction.SourceAccount == null ? null : new { id = a.Transaction.SourceAccount.Id, name = a.Transaction.SourceAccount.Name },
+                a.Amount,
+                a.Transaction.Category,
+                a.Transaction.Type,
+                a.Transaction.SourceAccountId,
+                SourceAccountName = a.Transaction.SourceAccount == null ? null : a.Transaction.SourceAccount.Name,
+                TransactionDate = a.Transaction.Date,
             })
             .ToListAsync();
 
-        var balance = pb.InitialBalance + allocs.Sum(a => a.allocationAmount);
+        var balance = pb.InitialBalance + allocs.Sum(a => a.Amount);
         var progress = pb.BalanceTarget is null ? null : (decimal?)(balance / pb.BalanceTarget.Value * 100m);
 
         return Ok(new {
-            id = pb.Id,
-            name = pb.Name,
-            initialBalance = pb.InitialBalance,
-            balanceTarget = pb.BalanceTarget,
-            balance,
-            progressPercent = progress,
-            closed = pb.Closed,
-            allocations = allocs
+            pb.Id,
+            pb.Name,
+            pb.InitialBalance,
+            pb.BalanceTarget,
+            Balance = balance,
+            ProgressPercent = progress,
+            pb.Closed,
+            Allocations = allocs.Where(a => a.TransactionDate.Month >= byMonth.Month && a.TransactionDate.Year >= byMonth.Year).ToList()
         });
     }
 
