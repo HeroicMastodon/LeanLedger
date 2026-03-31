@@ -55,7 +55,13 @@
                 <Fa icon={faSave} />
             </button>
             <DeleteConfirmationButton onDelete={closePiggy} />
-            <p>Balance: <Money amount={piggy.balance ?? 0} /></p>
+            <h4 class="h4">
+                Balance: <Money amount={piggy.balance ?? 0} />
+            </h4>
+            <h4 class="h4">
+                Progress: {piggy.progress ?? "-"}
+            </h4>
+
             {#if isSaving}
                 <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
             {/if}
@@ -74,9 +80,11 @@
                             <th>Amount</th>
                             <th>Description</th>
                             <th>Transaction</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- TODO: make these entries invidividually editable. Probably through a dialog -->
                         {#each piggy.entries as entry}
                             <tr>
                                 <td>
@@ -97,7 +105,10 @@
                                         -
                                     {/if}
                                 </td>
-                            </tr>
+                                <td>
+                                    <button class="btn btn-sm"> Edit </button>
+                                </td></tr
+                            >
                         {/each}
                     </tbody>
                 </table>

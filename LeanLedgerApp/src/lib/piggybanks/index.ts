@@ -45,6 +45,7 @@ export type PiggyBank = {
     balance: number;
     closeDate?: string;
     targetBalance?: number;
+    progress?: number;
 }
 
 export type PiggyBankEntry = {

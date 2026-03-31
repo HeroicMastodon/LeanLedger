@@ -6,31 +6,14 @@
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
     import { ProgressBar } from "@skeletonlabs/skeleton";
+    import { defaultPiggyBank, type PiggyBank } from "$lib/piggybanks";
+    import ProgressPercent from "$lib/components/ProgressPercent.svelte";
 
-    type Piggy = {
-        id: string;
-        name: string;
-        initialBalance: number;
-        balanceTarget: number | null;
-        balance: number;
-        progressPercent: number | null;
-        closed: boolean;
-    };
-
-    let piggies: Piggy[] = $state([]);
-    let newPiggy = $state(defaultPiggy());
-
-    function defaultPiggy() {
-        return {
-            id: "",
-            name: "",
-            initialBalance: 0,
-            balanceTarget: undefined,
-        };
-    }
+    let piggies: PiggyBank[] = $state([]);
+    let newPiggy = $state(defaultPiggyBank());
 
     async function load() {
-        const resp = await apiClient.get<Piggy[]>(
+        const resp = await apiClient.get<PiggyBank[]>(
             `piggy-banks?${monthManager.params}`,
         );
         piggies = resp.data;
@@ -38,10 +21,14 @@
 
     async function saveNewPiggy() {
         await apiClient.post("piggy-banks", newPiggy);
-        newPiggy = defaultPiggy();
+        newPiggy = defaultPiggyBank();
         await load();
         return true;
     }
+
+    const totalBalance = $derived(
+        piggies.reduce((sum, p) => sum + (p.balance ?? 0), 0),
+    );
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
@@ -55,6 +42,24 @@
     >
         <PiggyForm bind:piggy={newPiggy} />
     </FormButton>
+    <div>
+        <div class="font-bold">
+            Total Balance: <Money amount={totalBalance} />
+        </div>
+        <!-- TODO: Retrieve and display net worth here -->
+        <div class="font-bold">
+            Net Worth: <Money amount={0} />
+        </div>
+        <!-- TODO: Calulate and display difference here -->
+        <div class="font-bold">
+            Difference: <Money amount={0} />
+        </div>
+    </div>
+    <div>
+        <!-- TODO: If difference is > 0, show we need to allocate
+                if difference is < 0, show we need to add disbursements
+        -->
+    </div>
 </div>
 
 {#await load()}
@@ -81,23 +86,15 @@
                         >
                         <td><Money amount={piggy.balance} /></td>
                         <td>
-                            {#if piggy.balanceTarget != null}
-                                <Money amount={piggy.balanceTarget} />
+                            {#if piggy.targetBalance != null}
+                                <Money amount={piggy.targetBalance} />
                             {:else}
                                 -
                             {/if}
                         </td>
-                        <td
-                            class="text-left"
-                            class:text-error-500={(piggy.progressPercent ?? 0) < 40}
-                            class:text-warning-500={(piggy.progressPercent ?? 0) <
-                                90 && (piggy.progressPercent ?? 0) >= 40}
-                            class:text-success-500={(piggy.progressPercent ?? 0) >=
-                                90}
-                            >{piggy.progressPercent
-                                ? `${piggy.progressPercent.toFixed(1)}%`
-                                : "-"}</td
-                        >
+                        <td class="text-left">
+                            <ProgressPercent progress={piggy.progress} />
+                        </td>
                     </tr>
                 {/each}
             </tbody>
