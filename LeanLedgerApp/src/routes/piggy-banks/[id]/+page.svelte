@@ -10,15 +10,15 @@
     import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
     import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
     import { goto } from "$app/navigation";
-    import type { PiggyWithAllocationData } from "$lib/piggybanks";
+    import type { PiggyBank, PiggyBankWithEntries } from "$lib/piggybanks";
     import { encodeCategory, getCategoryName } from "$lib";
 
     let id = $page.params.id;
-    let piggy = $state<PiggyWithAllocationData>();
+    let piggy = $state<PiggyBankWithEntries>();
     let isSaving = $state(false);
 
     async function load() {
-        const resp = await apiClient.get<PiggyWithAllocationData>(
+        const resp = await apiClient.get<PiggyBankWithEntries>(
             `piggy-banks/${id}?${monthManager.params}`,
         );
         piggy = resp.data;
@@ -30,13 +30,7 @@
         if (!piggy) return;
         isSaving = true;
 
-        const payload = {
-            name: piggy.name,
-            initialBalance: Number(piggy.initialBalance) || 0,
-            balanceTarget: piggy.balanceTarget,
-        };
-
-        await apiClient.put(`piggy-banks/${id}`, payload);
+        await apiClient.put(`piggy-banks/${id}`, piggy);
         await load();
         isSaving = false;
     }
@@ -70,7 +64,7 @@
         <PiggyForm bind:piggy />
 
         <div class="mt-8">
-            <h2 class="h2 mb-4">Allocations</h2>
+            <h2 class="h2 mb-4">Entries</h2>
 
             <div class="table-container">
                 <table class="table table-compact table-hover w-full">
@@ -78,98 +72,30 @@
                         <tr>
                             <th>Date</th>
                             <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each piggy.allocations as allocation}
-                            <tr>
-                                <td>
-                                    <a
-                                        class="text-primary-400"
-                                        href="/transactions/{allocation.transactionId}"
-                                        >{allocation.description}</a
-                                    >
-                                </td>
-                                <td
-                                    ><Money
-                                        amount={allocation.transactionAmount}
-                                    /></td
-                                >
-                                <td><Money amount={allocation.amount} /></td>
-                                <td>
-                                    <a
-                                        class="text-primary-400"
-                                        href="/accounts/{allocation.sourceAccountId}"
-                                        >{allocation.sourceAccountName}</a
-                                    >
-                                </td>
-                                <td>
-                                    <a
-                                        class="text-primary-400"
-                                        href="/categories/{encodeCategory(
-                                            allocation.category,
-                                        )}"
-                                    >
-                                        {getCategoryName(allocation.category)}
-                                    </a>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <hr class="hr my-6" />
-
-        <div class="mt-8">
-            <div class="flex gap-4 justify-start items-center">
-                <h2 class="h2 mb-4">Disbursements</h2>
-                <button class="btn btn-icon-sm p-2 variant-outline-primary text-primary-500">
-                    <Fa icon={faPlus} />
-                </button>
-            </div>
-
-            <div class="table-container">
-                <table class="table table-compact table-hover w-full">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Amount</th>
+                            <th>Description</th>
                             <th>Transaction</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {#each piggy.allocations as allocation}
+                        {#each piggy.entries as entry}
                             <tr>
                                 <td>
-                                    <a
-                                        class="text-primary-400"
-                                        href="/transactions/{allocation.transactionId}"
-                                        >{allocation.description}</a
-                                    >
+                                    {entry.date}
                                 </td>
-                                <td
-                                    ><Money
-                                        amount={allocation.transactionAmount}
-                                    /></td
-                                >
-                                <td><Money amount={allocation.amount} /></td>
+                                <td><Money amount={entry.amount} /></td>
+                                <td> {entry.description}</td>
                                 <td>
-                                    <a
-                                        class="text-primary-400"
-                                        href="/accounts/{allocation.sourceAccountId}"
-                                        >{allocation.sourceAccountName}</a
-                                    >
-                                </td>
-                                <td>
-                                    <a
-                                        class="text-primary-400"
-                                        href="/categories/{encodeCategory(
-                                            allocation.category,
-                                        )}"
-                                    >
-                                        {getCategoryName(allocation.category)}
-                                    </a>
+                                    {#if entry.transaction}
+                                        <a
+                                            class="text-primary-400"
+                                            href="/transactions/{entry
+                                                .transaction.id}"
+                                        >
+                                            {entry.transaction.description}
+                                        </a>
+                                    {:else}
+                                        -
+                                    {/if}
                                 </td>
                             </tr>
                         {/each}

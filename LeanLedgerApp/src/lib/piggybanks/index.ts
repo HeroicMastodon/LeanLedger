@@ -42,9 +42,9 @@ export type PiggyBank = {
     id: string;
     name: string;
     openDate: string;
+    balance: number;
     closeDate?: string;
     targetBalance?: number;
-    entries: PiggyBankEntry[];
 }
 
 export type PiggyBankEntry = {
@@ -58,12 +58,16 @@ export type PiggyBankEntry = {
     }
 }
 
+export type PiggyBankWithEntries = PiggyBank & {
+    entries: PiggyBankEntry[];
+}
+
 export function defaultPiggyBank(): PiggyBank {
     return {
         id: "",
         name: "",
-        openDate: new Date(),
-        entries: [],
+        openDate: new Date().toISOString(),
+        balance: 0,
     }
 }
 
