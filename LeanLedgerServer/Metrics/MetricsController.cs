@@ -77,6 +77,15 @@ public class MetricsController(
         return netWorth;
     }
 
+    [HttpGet("net-worth/amount")]
+    public async Task<IActionResult> GetNetWorthAmount(
+        [FromQuery]
+        QueryByMonth byMonth
+    ) {
+        var netWorth = await QueryNetWorth(byMonth);
+        return Ok(new { netWorth });
+    }
+
     [HttpGet("budget")]
     public async Task<IActionResult> GetBudget(
         [FromQuery]
@@ -279,6 +288,7 @@ public class MetricsController(
         var yearlyResults = await Task.WhenAll(yearlyQueries);
 
 
+        // TODO: simpflify this by extracting a method
         // then calculate the change from the previous month/quarter/year
         var monthlyTrends = monthlyResults
             .Select(

@@ -107,35 +107,8 @@ public static class Endpoints {
 
         return await CreateNewTransaction(newTransaction, db.Transactions, mapper, rules)
             .ThenAsync(
-                async creation => {
-                    var transaction = creation!.Transaction;
-
-                    // Add transaction and any pending allocations atomically
+                async transaction => {
                     db.Transactions.Add(transaction);
-
-                    if (creation.PendingAllocations is not null && creation.PendingAllocations.Count > 0) {
-                        if (transaction.IsDeleted) return BadRequest("Cannot add allocations to deleted transaction");
-                        if (transaction.Type == TransactionType.Transfer) return BadRequest("Cannot add allocations to transfer transaction");
-
-                        var pendingSum = creation.PendingAllocations.Sum(p => p.Amount);
-                        if (pendingSum > transaction.Amount) return BadRequest("Allocations exceed transaction amount");
-
-                        foreach (var p in creation.PendingAllocations) {
-                            var piggy = await db.PiggyBanks.FindAsync(p.PiggyBankId);
-                            if (piggy is null) return BadRequest($"Piggy bank {p.PiggyBankId} not found");
-                            if (piggy.Closed) return BadRequest($"Piggy bank {p.PiggyBankId} is closed");
-
-                            var alloc = new LeanLedgerServer.PiggyBanks.PiggyAllocation {
-                                Id = Guid.NewGuid(),
-                                TransactionId = transaction.Id,
-                                PiggyBankId = p.PiggyBankId,
-                                Amount = p.Amount
-                            };
-
-                            await db.AddAsync(alloc);
-                        }
-                    }
-
                     await db.SaveChangesAsync();
 
                     return Created($"/api/transactions/{transaction.Id}", transaction);

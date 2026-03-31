@@ -1,6 +1,5 @@
 namespace LeanLedgerServer.Transactions;
 
-using System.Diagnostics;
 using AutoMapper;
 using Automation;
 using Common;
@@ -8,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 public static class TransactionFunctions {
     // TODO: we will likely want to figure out how to express that a transaction has been affected by a rule
-    public static async Task<Result<TransactionCreationResult>> CreateNewTransaction(
+    public static async Task<Result<Transaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
         IMapper mapper,
@@ -35,20 +34,17 @@ public static class TransactionFunctions {
                 };
                 mapper.Map(request, transaction);
 
-                var pending = new List<PendingAllocation>();
-
                 if (rules is not null) {
                     try {
                         foreach (var rule in rules.Where(r => r.ShouldTriggerFor(transaction))) {
-                            var p = rule.ApplyActionsTo(transaction);
-                            if (p is not null && p.Count > 0) pending.AddRange(p);
+                            rule.ApplyActionsTo(transaction);
                         }
                     } catch (Exception e) {
                         return new BadRule(e);
                     }
                 }
 
-                return new TransactionCreationResult(transaction, pending).AsResult();
+                return transaction.AsResult();
             }
         );
 

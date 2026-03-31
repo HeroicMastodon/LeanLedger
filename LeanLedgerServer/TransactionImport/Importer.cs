@@ -65,35 +65,8 @@ public class Importer(
                     rules
                 )
                 .ThenAsync(
-                    async creation => {
-                        var transaction = creation!.Transaction;
-
-                        // Persist transaction and any pending allocations produced by rules
+                    async transaction => {
                         await dbContext.AddAsync(transaction);
-
-                        if (creation.PendingAllocations is not null && creation.PendingAllocations.Count > 0) {
-                            if (transaction.IsDeleted) return transaction; // will be mapped to BadRule later
-                            if (transaction.Type == TransactionType.Transfer) throw new InvalidOperationException("Cannot add allocations to transfer transaction");
-
-                            var pendingSum = creation.PendingAllocations.Sum(p => p.Amount);
-                            if (pendingSum > transaction.Amount) throw new InvalidOperationException("Allocations exceed transaction amount");
-
-                            foreach (var p in creation.PendingAllocations) {
-                                var piggy = await dbContext.PiggyBanks.FindAsync(p.PiggyBankId);
-                                if (piggy is null) throw new InvalidOperationException($"Piggy bank {p.PiggyBankId} not found");
-                                if (piggy.Closed) throw new InvalidOperationException($"Piggy bank {p.PiggyBankId} is closed");
-
-                                var alloc = new LeanLedgerServer.PiggyBanks.PiggyAllocation {
-                                    Id = Guid.NewGuid(),
-                                    TransactionId = transaction.Id,
-                                    PiggyBankId = p.PiggyBankId,
-                                    Amount = p.Amount
-                                };
-
-                                await dbContext.AddAsync(alloc);
-                            }
-                        }
-
                         return transaction;
                     }
                 );
