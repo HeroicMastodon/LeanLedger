@@ -4,14 +4,16 @@
     import { monthManager } from "$lib/selectedMonth.svelte";
     import { ProgressBar } from "@skeletonlabs/skeleton";
     import Money from "$lib/components/Money.svelte";
+    import ProgressPercent from "$lib/components/ProgressPercent.svelte";
 
+    // TODO: fix these types
     type Piggy = {
         id: string;
         name: string;
         initialBalance: number;
         balanceTarget?: number;
         balance: number;
-        progressPercent: number | null;
+        progressPercent?: number;
         closed: boolean;
     };
 
@@ -30,8 +32,13 @@
         );
         return resp.data;
     });
+
+    function difference(metrics: PiggyMetricsResponse) {
+        return metrics.totals.accountTotal - metrics.totals.piggyTotal;
+    }
 </script>
 
+<!-- TODO: Handle loading differently so I can use reactivity correctly -->
 {#await metricsPromise}
     <Card class="grow lg:flex-initial">
         <h2 class="h2">Piggy Banks</h2>
@@ -49,7 +56,7 @@
                     <th></th>
                     <th class="text-left">Balance</th>
                     <th class="text-left">Target</th>
-                    <th class="text-left">Progress</th>
+                    <th class="text-right">Progress</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,17 +67,9 @@
                         <td class="text-left">
                             <Money amount={p.balanceTarget ?? 0} />
                         </td>
-                        <td
-                            class="text-left"
-                            class:text-error-500={(p.progressPercent ?? 0) < 40}
-                            class:text-warning-500={(p.progressPercent ?? 0) <
-                                90 && (p.progressPercent ?? 0) >= 40}
-                            class:text-success-500={(p.progressPercent ?? 0) >=
-                                90}
-                            >{p.progressPercent
-                                ? `${p.progressPercent.toFixed(1)}%`
-                                : "-"}</td
-                        >
+                        <td class="text-right">
+                            <ProgressPercent progress={p.progressPercent} />
+                        </td>
                     </tr>
                 {/each}
             </tbody>
@@ -82,11 +81,20 @@
                 Total in Piggies: <Money amount={metrics.totals.piggyTotal} />
             </div>
             <div class="text-sm">
-                Accounts: <Money amount={metrics.totals.accountTotal} />
-                {#if metrics.totals.piggyTotalExceedsAccounts}
-                    <span class="ml-2 text-warning-400"
-                        >(Piggy total exceeds accounts)</span
-                    >
+                {#if difference(metrics) > 0}
+                    <div class="text-warning-500">
+                        Need to allocate: <Money amount={difference(metrics)} />
+                    </div>
+                {:else if difference(metrics) < 0}
+                    <div class="text-error-500">
+                        Need to disburse: <Money
+                            amount={-difference(metrics)}
+                        />
+                    </div>
+                {:else}
+                    <div class="text-success-500">
+                        All piggies are perfectly allocated!
+                    </div>
                 {/if}
             </div>
         </div>
