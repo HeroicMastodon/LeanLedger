@@ -58,38 +58,6 @@
 
         return false;
     }
-
-    async function searchTransactions() {
-        searchError = "";
-        const desc = (searchDescription || "").trim();
-        if (desc && desc.length < 3) {
-            searchError =
-                "Description must be at least 3 characters when provided.";
-            return;
-        }
-
-        const params = new URLSearchParams();
-        if (desc) params.set("description", desc);
-        if (searchStartDate) params.set("startDate", searchStartDate);
-        if (searchEndDate) params.set("endDate", searchEndDate);
-        if (searchMinAmount !== null && searchMinAmount !== undefined)
-            params.set("minAmount", String(searchMinAmount));
-        if (searchMaxAmount !== null && searchMaxAmount !== undefined)
-            params.set("maxAmount", String(searchMaxAmount));
-
-        const resp = await client.get(
-            `transactions/search?${params.toString()}`,
-        );
-        searchResults = resp.data;
-    }
-
-    async function createAllocationFromResult(txId: string, amount: number) {
-        await client.post(`transactions/${txId}/allocations`, {
-            piggyBankId: id,
-            amount,
-        });
-        await load();
-    }
 </script>
 
 {#await load()}
@@ -166,61 +134,52 @@
                         </div>
                     {/if}
 
-                    {#if searchResults.length > 0}
-                        <div class="table-container">
-                            <table
-                                class="table table-compact table-hover w-full"
-                            >
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th>Amount</th>
-                                        <th>Date</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each searchResults as searchResult}
-                                        <tr>
-                                            <td
-                                                ><a
-                                                    class="text-primary-400"
-                                                    href="/transactions/{searchResult.id}"
-                                                    >{searchResult.description}</a
-                                                ></td
-                                            >
-                                            <td
-                                                ><Money
-                                                    amount={searchResult.amount}
-                                                /></td
-                                            >
-                                            <td>{searchResult.date}</td>
-                                            <td class="flex gap-2 items-center">
-                                                <MoneyInput
-                                                    bind:value={
-                                                        searchResult.__allocAmount
-                                                    }
-                                                />
-                                                <button
-                                                    class="btn text-success-500"
-                                                    onclick={() =>
-                                                        createAllocationFromResult(
-                                                            searchResult.id,
-                                                            Number(
-                                                                searchResult.__allocAmount ??
-                                                                    searchResult.amount,
-                                                            ),
-                                                        )}>Add</button
-                                                >
-                                            </td>
-                                        </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
-                        </div>
-                    {/if}
-                </div>
-            </FormButton>
+            <div class="table-container">
+                <table class="table table-compact table-hover w-full">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each piggy.allocations as allocation}
+                            <tr>
+                                <td>
+                                    <a
+                                        class="text-primary-400"
+                                        href="/transactions/{allocation.transactionId}"
+                                        >{allocation.description}</a
+                                    >
+                                </td>
+                                <td
+                                    ><Money
+                                        amount={allocation.transactionAmount}
+                                    /></td
+                                >
+                                <td><Money amount={allocation.amount} /></td>
+                                <td>
+                                    <a
+                                        class="text-primary-400"
+                                        href="/accounts/{allocation.sourceAccountId}"
+                                        >{allocation.sourceAccountName}</a
+                                    >
+                                </td>
+                                <td>
+                                    <a
+                                        class="text-primary-400"
+                                        href="/categories/{encodeCategory(
+                                            allocation.category,
+                                        )}"
+                                    >
+                                        {getCategoryName(allocation.category)}
+                                    </a>
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="table-container">
