@@ -1,12 +1,11 @@
 <script lang="ts">
-    import {apiClient} from "$lib/apiClient";
-    import {monthManager} from "$lib/selectedMonth.svelte";
+    import { apiClient } from "$lib/apiClient";
+    import { monthManager } from "$lib/selectedMonth.svelte";
     import Money from "$lib/components/Money.svelte";
     import PiggyForm from "$lib/piggybanks/PiggyForm.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
-    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
-    import {ProgressBar} from "@skeletonlabs/skeleton";
-    import {goto} from "$app/navigation";
+    import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
+    import { ProgressBar } from "@skeletonlabs/skeleton";
 
     type Piggy = {
         id: string;
@@ -16,38 +15,33 @@
         balance: number;
         progressPercent: number | null;
         closed: boolean;
-    }
+    };
 
     let piggies: Piggy[] = $state([]);
     let newPiggy = $state(defaultPiggy());
 
     function defaultPiggy() {
-        return { id: "", name: "", initialBalance: 0, balanceTarget: undefined };
+        return {
+            id: "",
+            name: "",
+            initialBalance: 0,
+            balanceTarget: undefined,
+        };
     }
 
     async function load() {
-        const resp = await apiClient.get<Piggy[]>(`piggy-banks?${monthManager.params}`);
+        const resp = await apiClient.get<Piggy[]>(
+            `piggy-banks?${monthManager.params}`,
+        );
         piggies = resp.data;
     }
 
     async function saveNewPiggy() {
-        // Coerce values to expected backend shapes (decimal? / null)
-        const payload = {
-            name: newPiggy.name,
-            initialBalance: Number(newPiggy.initialBalance) || 0,
-            balanceTarget: newPiggy.balanceTarget != null && newPiggy.balanceTarget !== "" ? Number(newPiggy.balanceTarget) : null,
-        };
-
-        await apiClient.post("piggy-banks", payload);
+        await apiClient.post("piggy-banks", newPiggy);
         newPiggy = defaultPiggy();
         await load();
         return true;
     }
-
-    function openPiggy(id: string) {
-        goto(`/piggy-banks/${id}?${monthManager.params}`);
-    }
-
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
@@ -77,12 +71,33 @@
                 </tr>
             </thead>
             <tbody>
-                {#each piggies as p}
-                    <tr class="hover:cursor-pointer" onclick={() => openPiggy(p.id)}>
-                        <td>{p.name}</td>
-                        <td><Money amount={p.balance} /></td>
-                        <td>{p.balanceTarget ?? "-"}</td>
-                        <td>{p.progressPercent ? `${p.progressPercent.toFixed(1)}%` : "-"}</td>
+                {#each piggies as piggy}
+                    <tr>
+                        <td
+                            ><a
+                                class="text-primary-400"
+                                href="/piggy-banks/{piggy.id}">{piggy.name}</a
+                            ></td
+                        >
+                        <td><Money amount={piggy.balance} /></td>
+                        <td>
+                            {#if piggy.balanceTarget != null}
+                                <Money amount={piggy.balanceTarget} />
+                            {:else}
+                                -
+                            {/if}
+                        </td>
+                        <td
+                            class="text-left"
+                            class:text-error-500={(piggy.progressPercent ?? 0) < 40}
+                            class:text-warning-500={(piggy.progressPercent ?? 0) <
+                                90 && (piggy.progressPercent ?? 0) >= 40}
+                            class:text-success-500={(piggy.progressPercent ?? 0) >=
+                                90}
+                            >{piggy.progressPercent
+                                ? `${piggy.progressPercent.toFixed(1)}%`
+                                : "-"}</td
+                        >
                     </tr>
                 {/each}
             </tbody>

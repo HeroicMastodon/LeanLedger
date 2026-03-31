@@ -2,10 +2,9 @@
     import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import Card from "$lib/components/Card.svelte";
-    import type {PiggyData} from "$lib/piggybanks";
+    import type { PiggyBank } from "$lib/piggybanks";
 
-let {piggy = $bindable()}: { piggy: PiggyData } = $props();
-
+    let { piggy = $bindable() }: { piggy: PiggyBank } = $props();
 </script>
 
 <Card class="grid grid-cols-1 md:grid-cols-6 gap-4 max-w-3xl items-center">
@@ -18,14 +17,20 @@ let {piggy = $bindable()}: { piggy: PiggyData } = $props();
     />
 
     <MoneyInput
-        class="md:col-span-2"
-        label="Initial Balance"
-        bind:value={piggy.initialBalance}
+        class="md:col-span-3"
+        label="Target"
+        bind:value={piggy.targetBalance}
     />
 
-    <MoneyInput
-        class="md:col-span-2"
-        label="Target"
-        bind:value={piggy.balanceTarget}
-    />
+    <LabeledInput
+        class="md:col-span-3"
+        label="Opened"
+        type="date"
+        bind:value={piggy.openDate} />
+
+    <LabeledInput
+        class="md:col-span-3"
+        label="Closed"
+        type="date"
+        bind:value={piggy.closeDate} />
 </Card>

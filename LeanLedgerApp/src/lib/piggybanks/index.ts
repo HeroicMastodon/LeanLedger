@@ -38,6 +38,35 @@ export type PiggyWithAllocationData = PiggyData & {
     allocations: PiggyAllocationData[];
 }
 
+export type PiggyBank = {
+    id: string;
+    name: string;
+    openDate: string;
+    closeDate?: string;
+    targetBalance?: number;
+    entries: PiggyBankEntry[];
+}
+
+export type PiggyBankEntry = {
+    id: string;
+    date: Date;
+    amount: number;
+    description: string;
+    transaction?: {
+        id: string;
+        description: TransactionType;
+    }
+}
+
+export function defaultPiggyBank(): PiggyBank {
+    return {
+        id: "",
+        name: "",
+        openDate: new Date(),
+        entries: [],
+    }
+}
+
 export function defaultPiggyData(): PiggyData {
     return {
         id: "",

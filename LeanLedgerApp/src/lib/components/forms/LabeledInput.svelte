@@ -4,7 +4,7 @@
     let {type, value = $bindable(), class: className, label, placeholder, onkeyup}: {
         label?: string;
         type: InputType;
-        value: string | number;
+        value?: string | number;
         class?: string;
         placeholder?: string;
         onkeyup?: (value: Event & { currentTarget: EventTarget & HTMLInputElement }) => void;
