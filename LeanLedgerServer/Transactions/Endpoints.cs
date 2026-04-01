@@ -1,6 +1,5 @@
 namespace LeanLedgerServer.Transactions;
 
-using System.Diagnostics;
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
@@ -17,10 +16,6 @@ public static class Endpoints {
         transactions.MapPost("", CreateTransaction);
         transactions.MapPut("{id:guid}", UpdateTransaction);
         transactions.MapDelete("{id:guid}", DeleteTransaction);
-
-        // Register allocation endpoints on the root endpoints so they map to
-        // /transactions/{transactionId}/allocations rather than /transactions/transactions/...
-        endpoints.MapAllocationEndpoints();
     }
 
     private static async Task<IResult> GetTransaction(Guid id, [FromServices] LedgerDbContext db) {
