@@ -105,8 +105,16 @@
                         {@render navItem(`/${selectedMonthParams}`, "Home")}
                     {/if}
                     {@render navItem(
+                        `/budgets${selectedMonthParams}`,
+                        "Budgets",
+                    )}
+                    {@render navItem(
                         `/accounts${selectedMonthParams}`,
                         "Accounts",
+                    )}
+                    {@render navItem(
+                        `/piggy-banks${selectedMonthParams}`,
+                        "Piggy Banks",
                     )}
                     {@render navItem(
                         `/transactions${selectedMonthParams}`,
@@ -117,14 +125,6 @@
                         "Categories",
                     )}
                     {@render navItem("/rules", "Rules")}
-                    {@render navItem(
-                        `/piggy-banks${selectedMonthParams}`,
-                        "Piggy Banks",
-                    )}
-                    {@render navItem(
-                        `/budgets${selectedMonthParams}`,
-                        "Budgets",
-                    )}
                 </ul>
             </nav>
         </section>
