@@ -7,7 +7,7 @@
 
 <div class="container h-full flex justify-start items-start gap-4 flex-wrap">
     <NetWorth />
-    <AccountTrends />
     <BudgetMetrics />
+    <AccountTrends />
     <PiggyBanks />
 </div>

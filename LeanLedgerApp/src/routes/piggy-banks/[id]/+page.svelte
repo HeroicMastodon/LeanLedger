@@ -8,10 +8,9 @@
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
     import { Fa } from "svelte-fa";
     import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
-    import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
     import { goto } from "$app/navigation";
-    import type { PiggyBank, PiggyBankWithEntries } from "$lib/piggybanks";
-    import { encodeCategory, getCategoryName } from "$lib";
+    import type { PiggyBankWithEntries } from "$lib/piggybanks";
+    import PiggyBankEntries from "$lib/piggybanks/PiggyBankEntries.svelte";
 
     let id = $page.params.id;
     let piggy = $state<PiggyBankWithEntries>();
@@ -71,48 +70,7 @@
 
         <div class="mt-8">
             <h2 class="h2 mb-4">Entries</h2>
-
-            <div class="table-container">
-                <table class="table table-compact table-hover w-full">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Description</th>
-                            <th>Transaction</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- TODO: make these entries invidividually editable. Probably through a dialog -->
-                        {#each piggy.entries as entry}
-                            <tr>
-                                <td>
-                                    {entry.date}
-                                </td>
-                                <td><Money amount={entry.amount} /></td>
-                                <td> {entry.description}</td>
-                                <td>
-                                    {#if entry.transaction}
-                                        <a
-                                            class="text-primary-400"
-                                            href="/transactions/{entry
-                                                .transaction.id}"
-                                        >
-                                            {entry.transaction.description}
-                                        </a>
-                                    {:else}
-                                        -
-                                    {/if}
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm"> Edit </button>
-                                </td></tr
-                            >
-                        {/each}
-                    </tbody>
-                </table>
-            </div>
+            <PiggyBankEntries entries={piggy.entries} />
         </div>
     {/if}
 {:catch err}

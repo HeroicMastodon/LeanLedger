@@ -53,6 +53,10 @@ export type PiggyBankEntry = {
     date: Date;
     amount: number;
     description: string;
+    piggyBank: {
+        id: string;
+        name: string;
+    };
     transaction?: {
         id: string;
         description: TransactionType;

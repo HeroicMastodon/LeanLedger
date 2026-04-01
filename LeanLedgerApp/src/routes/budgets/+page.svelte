@@ -1,35 +1,37 @@
 <script lang="ts">
-    import {page} from "$app/stores";
-    import {Fa} from "svelte-fa";
-    import {faArrowLeft} from "@fortawesome/free-solid-svg-icons/faArrowLeft";
-    import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
-    import {apiClient} from "$lib/apiClient";
-    import {ProgressBar} from "@skeletonlabs/skeleton";
-    import {formatMoney, sumUp} from "$lib";
-    import {loadCategoryOptions} from "$lib/transactions";
+    import { Fa } from "svelte-fa";
+    import { apiClient } from "$lib/apiClient";
+    import { ProgressBar } from "@skeletonlabs/skeleton";
+    import { formatMoney, sumUp } from "$lib";
+    import { loadCategoryOptions } from "$lib/transactions";
     import BudgetItem from "$lib/budgets/BudgetItem.svelte";
     import Card from "$lib/components/Card.svelte";
-    import {debounce} from "$lib/rules";
-    import {faPlusCircle} from "@fortawesome/free-solid-svg-icons/faPlusCircle";
-    import {faArrowUpRightFromSquare} from "@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare";
-    import {afterNavigate} from "$app/navigation";
-    import {faTrashCan} from "@fortawesome/free-solid-svg-icons/faTrashCan";
-    import {monthManager} from "$lib/selectedMonth.svelte";
-    import {faAngleUp} from "@fortawesome/free-solid-svg-icons/faAngleUp";
-    import {faAngleDown} from "@fortawesome/free-solid-svg-icons/faAngleDown";
-    import {faFolderPlus} from "@fortawesome/free-solid-svg-icons/faFolderPlus";
+    import { debounce } from "$lib/rules";
+    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons/faPlusCircle";
+    import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare";
+    import { faTrashCan } from "@fortawesome/free-solid-svg-icons/faTrashCan";
+    import { monthManager } from "$lib/selectedMonth.svelte";
+    import { faAngleUp } from "@fortawesome/free-solid-svg-icons/faAngleUp";
+    import { faAngleDown } from "@fortawesome/free-solid-svg-icons/faAngleDown";
+    import { faFolderPlus } from "@fortawesome/free-solid-svg-icons/faFolderPlus";
+    import PiggyBankEntries from "$lib/piggybanks/PiggyBankEntries.svelte";
+    import type { PiggyBankEntry } from "$lib/piggybanks";
+    import PiggyBankDiffText from "$lib/piggybanks/PiggyBankDiffText.svelte";
+    import Money from "$lib/components/Money.svelte";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
     type BudgetCategory = {
         category: string;
         limit: number;
         actual: number;
-    }
+    };
     type BudgetCategoryGroup = {
         name: string;
         limit: number;
         actual: number;
-        categories: BudgetCategory[],
-    }
+        categories: BudgetCategory[];
+    };
     type Budget = {
         id: string;
         month: number;
@@ -41,7 +43,7 @@
         unallocatedCategories: {
             name: string;
             amount: number;
-        }[],
+        }[];
     };
     let loading = $state(Promise.resolve());
     let budget = $state<Budget>({
@@ -52,40 +54,70 @@
         actualIncome: 0,
         remainingExpenseTotal: 0,
         categoryGroups: [],
-        unallocatedCategories: []
+        unallocatedCategories: [],
     });
+    let piggyBankEntries = $state<PiggyBankEntry[]>([]);
 
     $effect(() => {
-        loading = load()
-    })
+        loading = load();
+    });
 
-    const totalExpected = $derived(sumUp(budget.categoryGroups, c => c.limit));
-    const totalActual = $derived(sumUp(budget.categoryGroups, c => c.actual));
-    const leftToAllocate = $derived(
-        budget.expectedIncome - totalExpected
+    const piggyBankSum = $derived(sumUp(piggyBankEntries, (e) => e.amount));
+    const piggyBankAllocations = $derived(
+        sumUp(
+            piggyBankEntries.filter((e) => e.amount > 0),
+            (e) => e.amount,
+        ),
+    );
+    const piggyBankDisbursements = $derived(
+        sumUp(
+            piggyBankEntries.filter((e) => e.amount < 0),
+            (e) => e.amount,
+        ),
+    );
+    const totalExpected = $derived(
+        sumUp(budget.categoryGroups, (c) => c.limit),
+    );
+    const totalActual = $derived(
+        sumUp(budget.categoryGroups, (c) => c.actual) +
+            budget.remainingExpenseTotal,
+    );
+    const maxExpenses = $derived(
+        totalActual > totalExpected ? totalActual : totalExpected,
+    );
+    const maxIncome = $derived(
+        budget.expectedIncome > budget.actualIncome
+            ? budget.expectedIncome
+            : budget.actualIncome,
+    );
+    const leftToAllocate = $derived(maxIncome - totalExpected);
+    const piggyBankDifference = $derived(
+        maxIncome - maxExpenses - piggyBankSum,
     );
 
     const incomeColor = $derived.by(() => {
         if (budget.expectedIncome <= 0) {
-            return 'error';
+            return "error";
         }
         const ratio = budget.actualIncome / budget.expectedIncome;
 
-        if (ratio >= .9) {
-            return 'success';
+        if (ratio >= 0.9) {
+            return "success";
         }
 
-        if (ratio >= .4) {
-            return 'warning';
+        if (ratio >= 0.4) {
+            return "warning";
         }
 
-        return 'error';
+        return "error";
     });
 
     let categoryOptions = $state<string[]>([]);
 
     async function load() {
-        const res = await apiClient.get<Budget>(`budgets/${monthManager.selectedMonth.year}/${monthManager.selectedMonth.number}`);
+        const res = await apiClient.get<Budget>(
+            `budgets/${monthManager.selectedMonth.year}/${monthManager.selectedMonth.number}`,
+        );
         budget = res.data;
 
         categoryOptions = await loadCategoryOptions();
@@ -105,7 +137,7 @@
             return "error";
         }
 
-        if (ratio > .9) {
+        if (ratio > 0.9) {
             return "warning";
         }
 
@@ -114,13 +146,15 @@
 
     function addCategory(groupIndex: number) {
         budget.categoryGroups[groupIndex].categories.push({
-            category: "New Category", limit: 0, actual: 0
-        })
+            category: "New Category",
+            limit: 0,
+            actual: 0,
+        });
         save();
     }
 
     async function removeCategory(groupIndex: number, categoryIndex: number) {
-        budget.categoryGroups[groupIndex].categories.splice(categoryIndex, 1)
+        budget.categoryGroups[groupIndex].categories.splice(categoryIndex, 1);
         save();
     }
 
@@ -129,8 +163,8 @@
             categories: [],
             name: "New Group",
             actual: 0,
-            limit: 0
-        })
+            limit: 0,
+        });
         save();
     }
 
@@ -165,6 +199,7 @@
 {:then _}
     <Card class="mb-4">
         <BudgetItem
+            class="mb-4"
             name="Income"
             nameIsEditable={false}
             actual={budget.actualIncome}
@@ -173,31 +208,82 @@
             onSave={save}
             id="Income"
         />
-    </Card>
-    <Card class="mb-4">
         <BudgetItem
-            class="mb-4"
             readonly
-            name="Planned Expenses"
+            class="mb-4"
+            name="Expenses"
             expected={totalExpected}
             actual={totalActual}
             barColor={categoryColor(totalExpected, totalActual)}
             id="Planned Expenses"
         >
-            <div class="w-4"></div>
-            <div>Left to allocate: {formatMoney(leftToAllocate)}</div>
-            <div class="w-4"></div>
-            <button onclick={addCategoryGroup} class="btn text-secondary-500">
+            <button
+                title="Add Expense Section"
+                onclick={addCategoryGroup}
+                class="btn text-secondary-500"
+            >
                 <Fa icon={faFolderPlus} />
             </button>
         </BudgetItem>
         <BudgetItem
+            readonly
+            name="Expense Vs Income"
+            nameIsEditable={false}
+            actual={totalActual}
+            expected={maxIncome}
+            barColor={categoryColor(maxIncome, totalActual)}
+            onSave={save}
+            id="Income"
+        >
+            <div class="w-4"></div>
+            {#if maxIncome - totalActual < 0}
+                <p class="text-error-500">
+                    Overspent by {formatMoney(totalActual - maxIncome)}!
+                </p>
+            {:else if maxIncome - totalActual > 0}
+                <p class="text-success-500">
+                    Saving {formatMoney(maxIncome - totalActual)}!
+                </p>
+            {/if}
+        </BudgetItem>
+    </Card>
+    <Card class="mb-4">
+        <div class="flex gap-4 items-center justify-start mb-4 flex-wrap">
+            <h4 class="h4">Piggy Bank Entries</h4>
+            <div>
+                Allocated: <Money amount={piggyBankAllocations} />
+            </div>
+            <div>
+                Disbursed: <Money amount={piggyBankDisbursements} />
+            </div>
+            <div>
+                Change: <Money amount={piggyBankSum} />
+            </div>
+        </div>
+        <div class="mb-2 flex gap-4 items-center">
+            <PiggyBankDiffText difference={piggyBankDifference} />
+            <FormButton
+                class="btn-icon-sm p-2 variant-filled-secondary size-5"
+                icon={faPlus}
+                text="New Entry"
+                onConfirm={() => false}
+            >
+                <div>Not implemented</div>
+            </FormButton>
+        </div>
+        <PiggyBankEntries entries={piggyBankEntries} showPiggyBank />
+    </Card>
+    <Card class="mb-4">
+        <BudgetItem
             class="mb-4"
             readonly
-            name="Unallocated Expenses"
+            name="Unplanned Expenses"
             expected={leftToAllocate}
             actual={budget.remainingExpenseTotal}
-            barColor={categoryColor(leftToAllocate, budget.remainingExpenseTotal)}
+            barColor={categoryColor(
+                leftToAllocate,
+                budget.remainingExpenseTotal,
+            )}
             id="Unallocated Expenses"
         ></BudgetItem>
         {#each budget.unallocatedCategories as category}
@@ -210,7 +296,10 @@
                 barColor="warning"
                 id={category.name}
             >
-                <a href="/categories/{encodeURIComponent(category.name)}" class="btn btn-icon text-secondary-500">
+                <a
+                    href="/categories/{encodeURIComponent(category.name)}"
+                    class="btn btn-icon text-secondary-500"
+                >
                     <Fa icon={faArrowUpRightFromSquare} />
                 </a>
             </BudgetItem>
@@ -236,14 +325,18 @@
                     >
                         <Fa icon={faPlusCircle} />
                     </button>
-                    <button onclick={() => removeCategoryGroup(groupIdx)} class="btn btn-icon text-error-500">
+                    <button
+                        onclick={() => removeCategoryGroup(groupIdx)}
+                        class="btn btn-icon text-error-500"
+                    >
                         <Fa icon={faTrashCan} />
                     </button>
                 </BudgetItem>
                 <div class="hidden md:flex flex-col">
                     {#if groupIdx > 0}
                         <button
-                            onclick={() => moveItemUp(budget.categoryGroups, groupIdx)}
+                            onclick={() =>
+                                moveItemUp(budget.categoryGroups, groupIdx)}
                             class="btn"
                         >
                             <Fa icon={faAngleUp} />
@@ -251,7 +344,8 @@
                     {/if}
                     {#if groupIdx < budget.categoryGroups.length - 1}
                         <button
-                            onclick={() => moveItemDown(budget.categoryGroups, groupIdx)}
+                            onclick={() =>
+                                moveItemDown(budget.categoryGroups, groupIdx)}
                             class="btn"
                         >
                             <Fa icon={faAngleDown} />
@@ -267,16 +361,26 @@
                             bind:name={category.category}
                             bind:expected={category.limit}
                             actual={category.actual}
-                            barColor={categoryColor(category.limit, category.actual)}
+                            barColor={categoryColor(
+                                category.limit,
+                                category.actual,
+                            )}
                             onSave={save}
                             id="{groupIdx}-{categoryIdx}"
                             options={categoryOptions}
                         >
-                            <a href="/categories/{encodeURIComponent(category.category)}" class="btn btn-icon text-secondary-500">
+                            <a
+                                href="/categories/{encodeURIComponent(
+                                    category.category,
+                                )}"
+                                class="btn btn-icon text-secondary-500"
+                            >
                                 <Fa icon={faArrowUpRightFromSquare} />
                             </a>
-                            <button onclick={() => removeCategory(groupIdx, categoryIdx)}
-                                    class="btn btn-icon text-error-500"
+                            <button
+                                onclick={() =>
+                                    removeCategory(groupIdx, categoryIdx)}
+                                class="btn btn-icon text-error-500"
                             >
                                 <Fa icon={faTrashCan} />
                             </button>
@@ -284,7 +388,11 @@
                         <div class="hidden md:flex flex-col">
                             {#if categoryIdx > 0}
                                 <button
-                                    onclick={() => moveItemUp(group.categories, categoryIdx)}
+                                    onclick={() =>
+                                        moveItemUp(
+                                            group.categories,
+                                            categoryIdx,
+                                        )}
                                     class="btn"
                                 >
                                     <Fa icon={faAngleUp} />
@@ -292,7 +400,11 @@
                             {/if}
                             {#if categoryIdx < group.categories.length - 1}
                                 <button
-                                    onclick={() => moveItemDown(group.categories, categoryIdx)}
+                                    onclick={() =>
+                                        moveItemDown(
+                                            group.categories,
+                                            categoryIdx,
+                                        )}
                                     class="btn"
                                 >
                                     <Fa icon={faAngleDown} />

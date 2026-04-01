@@ -15,6 +15,7 @@
         balance: number;
         progressPercent?: number;
         closed: boolean;
+        change: number;
     };
 
     type PiggyMetricsResponse = {
@@ -50,12 +51,13 @@
         <h2 class="h2">Piggy Banks</h2>
         <hr class="hr mb-4" />
 
-        <table class="w-96">
+        <table class="w-full">
             <thead>
                 <tr>
                     <th></th>
-                    <th class="text-left">Balance</th>
-                    <th class="text-left">Target</th>
+                    <th class="text-left px-1">Balance</th>
+                    <th class="text-center px-1">Change</th>
+                    <th class="text-center px-1">Target</th>
                     <th class="text-right">Progress</th>
                 </tr>
             </thead>
@@ -63,8 +65,9 @@
                 {#each metrics.piggyBanks as p}
                     <tr>
                         <td>{p.name}</td>
-                        <td class="text-left"><Money amount={p.balance} /></td>
-                        <td class="text-left">
+                        <td class="text-center"><Money amount={p.balance} /></td>
+                        <td class="text-center"><Money amount={p.change} /></td>
+                        <td class="text-center">
                             <Money amount={p.balanceTarget ?? 0} />
                         </td>
                         <td class="text-right">
