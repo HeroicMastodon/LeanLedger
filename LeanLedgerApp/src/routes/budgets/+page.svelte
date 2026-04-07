@@ -15,11 +15,12 @@
     import { faAngleDown } from "@fortawesome/free-solid-svg-icons/faAngleDown";
     import { faFolderPlus } from "@fortawesome/free-solid-svg-icons/faFolderPlus";
     import PiggyBankEntries from "$lib/piggybanks/PiggyBankEntries.svelte";
-    import type { PiggyBankEntry } from "$lib/piggybanks";
+    import { defaultPiggyBankEntry, type PiggyBankEntry } from "$lib/piggybanks";
     import PiggyBankDiffText from "$lib/piggybanks/PiggyBankDiffText.svelte";
     import Money from "$lib/components/Money.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
-    import { faPlus } from "@fortawesome/free-solid-svg-icons";
+    import { faExternalLink, faPlus } from "@fortawesome/free-solid-svg-icons";
+    import PiggyBankEntryForm from "$lib/piggybanks/PiggyBankEntryForm.svelte";
 
     type BudgetCategory = {
         category: string;
@@ -192,6 +193,22 @@
         arr[idx] = next;
         save();
     }
+
+    let piggyEntry = $state<PiggyBankEntry>(defaultPiggyBankEntry());
+
+    async function savePiggyEntry() {
+        if (piggyEntry.id) {
+            await apiClient.put(`piggy-banks/entries/${piggyEntry.id}`, piggyEntry);
+        } else {
+            await apiClient.post(`piggy-banks/entries`, piggyEntry);
+        }
+        piggyEntry = defaultPiggyBankEntry();
+        const res = await apiClient.get<PiggyBankEntry[]>(`piggy-banks/entries`);
+        piggyBankEntries = res.data;
+
+        return true;
+    }
+
 </script>
 
 {#await loading}
@@ -266,10 +283,17 @@
                 class="btn-icon-sm p-2 variant-filled-secondary size-5"
                 icon={faPlus}
                 text="New Entry"
-                onConfirm={() => false}
+                onConfirm={savePiggyEntry}
             >
-                <div>Not implemented</div>
+                <PiggyBankEntryForm bind:entry={piggyEntry} />
             </FormButton>
+            <a
+                href="/piggy-banks"
+                title="Piggy Banks"
+                class="btn btn-icon-sm p-2 text-secondary-500"
+            >
+                <Fa icon={faExternalLink} />
+            </a>
         </div>
         <PiggyBankEntries entries={piggyBankEntries} showPiggyBank />
     </Card>
