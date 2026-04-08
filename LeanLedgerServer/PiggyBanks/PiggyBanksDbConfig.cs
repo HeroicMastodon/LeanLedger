@@ -5,24 +5,29 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 public class PiggyBanksDbConfig: IEntityTypeConfiguration<PiggyBank> {
     public void Configure(EntityTypeBuilder<PiggyBank> builder) {
-        builder.HasKey(pb => pb.Id);
+        _ = builder.HasKey(pb => pb.Id);
 
-        builder.HasMany(pb => pb.Allocations)
+        _ = builder.HasMany(pb => pb.Entries)
             .WithOne(a => a.PiggyBank)
             .HasForeignKey(a => a.PiggyBankId);
     }
 }
 
-public class PiggyAllocationDbConfig: IEntityTypeConfiguration<PiggyAllocation> {
-    public void Configure(EntityTypeBuilder<PiggyAllocation> builder) {
-        builder.HasKey(a => a.Id);
+public class PiggyEntryDbConfig: IEntityTypeConfiguration<PiggyBankEntry> {
+    public void Configure(EntityTypeBuilder<PiggyBankEntry> builder) {
+        _ = builder.HasKey(a => a.Id);
 
-        builder.HasOne(a => a.PiggyBank)
-            .WithMany(pb => pb.Allocations)
-            .HasForeignKey(a => a.PiggyBankId);
+        // TODO: Test that deleting a piggy bank deletes its entries
+        _ = builder.HasOne(a => a.PiggyBank)
+            .WithMany(pb => pb.Entries)
+            .HasForeignKey(a => a.PiggyBankId)
+            .IsRequired(true);
 
-        builder.HasOne(a => a.Transaction)
+        // TODO: thoroughly test that deleting an entry or a piggy bank does not delete transactions
+        _ = builder.HasOne(a => a.Transaction)
             .WithMany()
-            .HasForeignKey(a => a.TransactionId);
+            .HasForeignKey(a => a.TransactionId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

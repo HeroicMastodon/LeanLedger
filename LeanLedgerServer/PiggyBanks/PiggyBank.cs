@@ -1,16 +1,28 @@
 namespace LeanLedgerServer.PiggyBanks;
 
-using System.Text.Json.Serialization;
-using Transactions;
+using LeanLedgerServer.Transactions;
 
-public class PiggyBank
-{
-    public Guid Id { get; set; }
+public class PiggyBank {
+    public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
-    public decimal InitialBalance { get; set; } = 0m;
-    public decimal? BalanceTarget { get; set; }
-    public bool Closed { get; set; } = false;
+    public DateOnly OpenDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public DateOnly? CloseDate { get; set; }
+    public decimal? TargetBalance { get; set; }
+    public bool Closed => CloseDate is not null;
 
-    [JsonIgnore]
-    public List<PiggyAllocation> Allocations { get; set; } = new();
+    public List<PiggyBankEntry> Entries { get; set; } = [];
+}
+
+public class PiggyBankEntry {
+    public Guid Id { get; set; }
+    public DateOnly Date { get; set; }
+    public decimal Amount { get; set; }
+    public string Description { get; set; } = string.Empty;
+
+    public Guid PiggyBankId { get; set; }
+    public PiggyBank? PiggyBank { get; set; }
+
+
+    public Guid? TransactionId { get; set; }
+    public Transaction? Transaction { get; set; }
 }

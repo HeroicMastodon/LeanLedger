@@ -62,16 +62,16 @@
                 </tr>
             </thead>
             <tbody>
-                {#each metrics.piggyBanks as p}
+                {#each metrics.piggyBanks as piggy}
                     <tr>
-                        <td>{p.name}</td>
-                        <td class="text-center"><Money amount={p.balance} /></td>
-                        <td class="text-center"><Money amount={p.change} /></td>
+                        <td>{piggy.name}</td>
+                        <td class="text-center"><Money amount={piggy.balance} /></td>
+                        <td class="text-center"><Money amount={piggy.change} /></td>
                         <td class="text-center">
-                            <Money amount={p.balanceTarget ?? 0} />
+                            <Money amount={piggy.balanceTarget ?? 0} />
                         </td>
                         <td class="text-right">
-                            <ProgressPercent progress={p.progressPercent} />
+                            <ProgressPercent progress={piggy.progressPercent} />
                         </td>
                     </tr>
                 {/each}
@@ -102,7 +102,7 @@
             </div>
         </div>
     </Card>
-{:catch err}
+{:catch _err}
     <Card class="variant-filled-error">
         <h2 class="h2">Piggy Banks</h2>
         <hr class="hr" />

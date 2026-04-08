@@ -54,7 +54,7 @@ namespace LeanLedgerServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("Accounts", (string)null);
                 });
 
             modelBuilder.Entity("LeanLedgerServer.Automation.Rule", b =>
@@ -88,7 +88,7 @@ namespace LeanLedgerServer.Migrations
 
                     b.HasIndex("RuleGroupName");
 
-                    b.ToTable("Rules");
+                    b.ToTable("Rules", (string)null);
                 });
 
             modelBuilder.Entity("LeanLedgerServer.Automation.RuleGroup", b =>
@@ -98,7 +98,7 @@ namespace LeanLedgerServer.Migrations
 
                     b.HasKey("Name");
 
-                    b.ToTable("RuleGroups");
+                    b.ToTable("RuleGroups", (string)null);
                 });
 
             modelBuilder.Entity("LeanLedgerServer.Budgets.Budget", b =>
@@ -122,55 +122,7 @@ namespace LeanLedgerServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Budgets");
-                });
-
-            modelBuilder.Entity("LeanLedgerServer.PiggyBanks.PiggyAllocation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("PiggyBankId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("TransactionId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PiggyBankId");
-
-                    b.HasIndex("TransactionId");
-
-                    b.ToTable("PiggyAllocations");
-                });
-
-            modelBuilder.Entity("LeanLedgerServer.PiggyBanks.PiggyBank", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("BalanceTarget")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("Closed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("InitialBalance")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PiggyBanks");
+                    b.ToTable("Budgets", (string)null);
                 });
 
             modelBuilder.Entity("LeanLedgerServer.TransactionImport.ImportSettings", b =>
@@ -200,7 +152,7 @@ namespace LeanLedgerServer.Migrations
                     b.HasIndex("AttachedAccountId")
                         .IsUnique();
 
-                    b.ToTable("ImportSettings");
+                    b.ToTable("ImportSettings", (string)null);
                 });
 
             modelBuilder.Entity("LeanLedgerServer.Transactions.Transaction", b =>
@@ -247,7 +199,7 @@ namespace LeanLedgerServer.Migrations
 
                     b.HasIndex("SourceAccountId");
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", (string)null);
                 });
 
             modelBuilder.Entity("LeanLedgerServer.Automation.Rule", b =>
@@ -257,25 +209,6 @@ namespace LeanLedgerServer.Migrations
                         .HasForeignKey("RuleGroupName");
 
                     b.Navigation("RuleGroup");
-                });
-
-            modelBuilder.Entity("LeanLedgerServer.PiggyBanks.PiggyAllocation", b =>
-                {
-                    b.HasOne("LeanLedgerServer.PiggyBanks.PiggyBank", "PiggyBank")
-                        .WithMany("Allocations")
-                        .HasForeignKey("PiggyBankId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LeanLedgerServer.Transactions.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PiggyBank");
-
-                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("LeanLedgerServer.TransactionImport.ImportSettings", b =>
@@ -314,11 +247,6 @@ namespace LeanLedgerServer.Migrations
             modelBuilder.Entity("LeanLedgerServer.Automation.RuleGroup", b =>
                 {
                     b.Navigation("Rules");
-                });
-
-            modelBuilder.Entity("LeanLedgerServer.PiggyBanks.PiggyBank", b =>
-                {
-                    b.Navigation("Allocations");
                 });
 #pragma warning restore 612, 618
         }
