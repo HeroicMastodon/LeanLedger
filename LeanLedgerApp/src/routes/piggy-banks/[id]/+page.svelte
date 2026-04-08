@@ -9,8 +9,14 @@
     import { Fa } from "svelte-fa";
     import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
     import { goto } from "$app/navigation";
-    import type { PiggyBankWithEntries } from "$lib/piggybanks";
+    import {
+        defaultPiggyBankEntry,
+        type PiggyBankWithEntries,
+    } from "$lib/piggybanks";
     import PiggyBankEntries from "$lib/piggybanks/PiggyBankEntries.svelte";
+    import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import PiggyBankEntryForm from "$lib/piggybanks/PiggyBankEntryForm.svelte";
 
     let id = $page.params.id;
     let piggy = $state<PiggyBankWithEntries>();
@@ -39,6 +45,20 @@
         await goto("/piggy-banks");
 
         return false;
+    }
+
+    let newEntry = $state(defaultPiggyBankEntry());
+
+    async function saveEntry() {
+        if (!piggy) return true;
+        isSaving = true;
+
+        await apiClient.post(`piggy-banks/${id}/entries`, newEntry);
+        newEntry = defaultPiggyBankEntry();
+        await load();
+        isSaving = false;
+
+        return true;
     }
 </script>
 
@@ -69,7 +89,18 @@
         <PiggyForm bind:piggy />
 
         <div class="mt-8">
-            <h2 class="h2 mb-4">Entries</h2>
+            <div class="flex gap-4 items-center mb-4">
+                <h2 class="h2">Entries</h2>
+
+                <FormButton
+                    class="btn-icon-sm p-2 variant-filled-secondary size-5"
+                    icon={faPlus}
+                    text="New Entry"
+                    onConfirm={saveEntry}
+                >
+                    <PiggyBankEntryForm bind:entry={newEntry} />
+                </FormButton>
+            </div>
             <PiggyBankEntries entries={piggy.entries} />
         </div>
     {/if}

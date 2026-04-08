@@ -1,11 +1,34 @@
 <script lang="ts">
+    import { apiClient } from "$lib/apiClient";
+    import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import Money from "$lib/components/Money.svelte";
+    import { Dialog } from "$lib/dialog.svelte";
     import { type PiggyBankEntry } from "$lib/piggybanks";
+    import Fa from "svelte-fa";
+    import PiggyBankEntryForm from "./PiggyBankEntryForm.svelte";
+    import { faEdit } from "@fortawesome/free-solid-svg-icons/faEdit";
 
     let {
         entries,
         showPiggyBank,
     }: { entries: PiggyBankEntry[]; showPiggyBank?: boolean } = $props();
+
+    let selectedEntry = $state<PiggyBankEntry>();
+    let dialog = new Dialog();
+
+    function selectEntry(entry: PiggyBankEntry) {
+        selectedEntry = entry;
+        dialog.open();
+    }
+    async function saveEntry() {
+        if (!selectedEntry) return true;
+        await apiClient.put(
+            `piggy-banks/entries/${selectedEntry.id}`,
+            selectedEntry,
+        );
+
+        return true;
+    }
 </script>
 
 <div class="table-container">
@@ -23,7 +46,6 @@
             </tr>
         </thead>
         <tbody>
-            <!-- TODO: make these entries invidividually editable. Probably through a dialog -->
             {#each entries as entry}
                 <tr>
                     {#if showPiggyBank}
@@ -47,10 +69,28 @@
                         {/if}
                     </td>
                     <td>
-                        <button class="btn btn-sm"> Edit </button>
+                        <button
+                            onclick={() => selectEntry(entry)}
+                            class="btn btn-icon-sm"
+                        >
+                            <Fa icon={faEdit} />
+                        </button>
                     </td>
                 </tr>
             {/each}
         </tbody>
     </table>
 </div>
+<DefaultDialog bind:dialog={dialog.value} onenter={saveEntry}>
+    {#if selectedEntry}
+        <div class="flex flex-col gap-4">
+            <PiggyBankEntryForm bind:entry={selectedEntry} />
+            <div class="flex gap-4 items-center justify-end">
+                <button onclick={() => dialog.close()} class="btn variant-outline-error">Cancel</button>
+                <button onclick={saveEntry} class="btn variant-filled-success">Save</button>
+            </div>
+        </div>
+    {:else}
+        <div class="p-4 variant-filled-error">No entry selected</div>
+    {/if}
+</DefaultDialog>

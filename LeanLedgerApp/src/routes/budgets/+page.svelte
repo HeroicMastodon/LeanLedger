@@ -15,7 +15,10 @@
     import { faAngleDown } from "@fortawesome/free-solid-svg-icons/faAngleDown";
     import { faFolderPlus } from "@fortawesome/free-solid-svg-icons/faFolderPlus";
     import PiggyBankEntries from "$lib/piggybanks/PiggyBankEntries.svelte";
-    import { defaultPiggyBankEntry, type PiggyBankEntry } from "$lib/piggybanks";
+    import {
+        defaultPiggyBankEntry,
+        type PiggyBankEntry,
+    } from "$lib/piggybanks";
     import PiggyBankDiffText from "$lib/piggybanks/PiggyBankDiffText.svelte";
     import Money from "$lib/components/Money.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
@@ -122,6 +125,7 @@
         budget = res.data;
 
         categoryOptions = await loadCategoryOptions();
+        await loadPiggyBankEntries();
     }
 
     const save = debounce(async function () {
@@ -194,21 +198,29 @@
         save();
     }
 
+    async function loadPiggyBankEntries() {
+        try {
+        const res =
+            await apiClient.get<PiggyBankEntry[]>(`piggy-banks/entries?${monthManager.params}`);
+        piggyBankEntries = res.data;
+        } catch (e) {
+            piggyBankEntries = [];
+        }
+    }
+
     let piggyEntry = $state<PiggyBankEntry>(defaultPiggyBankEntry());
 
     async function savePiggyEntry() {
-        if (piggyEntry.id) {
-            await apiClient.put(`piggy-banks/entries/${piggyEntry.id}`, piggyEntry);
-        } else {
-            await apiClient.post(`piggy-banks/entries`, piggyEntry);
-        }
+        if (!piggyEntry.id) return true;
+
+        await apiClient.post(`piggy-banks/entries`, piggyEntry);
         piggyEntry = defaultPiggyBankEntry();
-        const res = await apiClient.get<PiggyBankEntry[]>(`piggy-banks/entries`);
+        const res =
+            await apiClient.get<PiggyBankEntry[]>(`piggy-banks/entries`);
         piggyBankEntries = res.data;
 
         return true;
     }
-
 </script>
 
 {#await loading}

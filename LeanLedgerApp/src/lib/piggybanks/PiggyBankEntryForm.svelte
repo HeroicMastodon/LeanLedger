@@ -8,6 +8,7 @@
     const piggyBankOptions = $derived(
         piggyBanks.map((pb) => ({ value: pb.id, display: pb.name })),
     );
+    // TODO: Load piggy banks
     // TODO: Allow for searching and selecting a transaction
 </script>
 
