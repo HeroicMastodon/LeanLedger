@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
-using LeanLedgerServer.PiggyBanks;
+using PiggyBanks;
 
 [ApiController]
 [Route("api/[controller]")]

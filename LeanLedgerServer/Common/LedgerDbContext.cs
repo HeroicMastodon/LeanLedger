@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using LeanLedgerServer.Accounts;
-using LeanLedgerServer.Automation;
-using LeanLedgerServer.Budgets;
-using LeanLedgerServer.PiggyBanks;
-using LeanLedgerServer.TransactionImport;
-using LeanLedgerServer.Transactions;
+using Accounts;
+using Automation;
+using Budgets;
+using PiggyBanks;
+using TransactionImport;
+using Transactions;
 
 public class LedgerDbContext(DbContextOptions<LedgerDbContext> options): DbContext(options) {
     public DbSet<Account> Accounts { get; set; }
