@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using LeanLedgerServer.Accounts;
 using LeanLedgerServer.Automation;
 using LeanLedgerServer.Categories;
-using LeanLedgerServer.PiggyBanks;
 using LeanLedgerServer.Common;
 using LeanLedgerServer.TransactionImport;
 using LeanLedgerServer.Transactions;
@@ -55,7 +54,6 @@ var baseRoute = app.MapGroup("api");
 baseRoute.MapAccounts();
 baseRoute.MapTransactions();
 baseRoute.MapCategories();
-baseRoute.MapPiggyBanks();
 baseRoute.MapImport();
 baseRoute.MapDelete(
     "admin/transactions/all",

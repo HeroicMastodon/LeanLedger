@@ -346,7 +346,7 @@ public class MetricsController(
 
         var results = new List<object>();
         foreach (var pb in piggies) {
-            var allocSum = await dbContext.PiggyAllocations
+            var allocSum = await dbContext.PiggyBankEntries
                 .Where(a => a.PiggyBankId == pb.Id)
                 .Join(dbContext.Transactions, a => a.TransactionId, t => t.Id, (a, t) => new { a.Amount, t.Date, t.IsDeleted })
                 .Where(x => !x.IsDeleted)
