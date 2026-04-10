@@ -1,7 +1,5 @@
 namespace LeanLedgerServer.PiggyBanks;
 
-using LeanLedgerServer.Transactions;
-
 public class PiggyBank {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
@@ -14,15 +12,11 @@ public class PiggyBank {
 }
 
 public class PiggyBankEntry {
-    public Guid Id { get; set; }
-    public DateOnly Date { get; set; }
-    public decimal Amount { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public required DateOnly Date { get; set; }
+    public required decimal Amount { get; set; }
     public string Description { get; set; } = string.Empty;
 
-    public Guid PiggyBankId { get; set; }
+    public required Guid PiggyBankId { get; set; }
     public PiggyBank? PiggyBank { get; set; }
-
-
-    public Guid? TransactionId { get; set; }
-    public Transaction? Transaction { get; set; }
 }

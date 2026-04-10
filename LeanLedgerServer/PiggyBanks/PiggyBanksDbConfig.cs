@@ -23,13 +23,6 @@ public class PiggyEntryDbConfig: IEntityTypeConfiguration<PiggyBankEntry> {
             .WithMany(pb => pb.Entries)
             .HasForeignKey(a => a.PiggyBankId)
             .IsRequired(true);
-
-        // TODO: thoroughly test that deleting an entry or a piggy bank does not delete transactions
-        _ = builder.HasOne(a => a.Transaction)
-            .WithMany()
-            .HasForeignKey(a => a.TransactionId)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.NoAction);
     }
 }
 
@@ -40,7 +33,6 @@ public static class PiggyFunctions {
     ) {
         var results = db.PiggyBankEntries
             .Include(e => e.PiggyBank)
-            .Where(e => e.Transaction == null || !e.Transaction.IsDeleted)
             .Where(e => byMonth.Month == null
                 || byMonth.Year == null
                 || ((e.PiggyBank!.OpenDate.Year < byMonth.Year

@@ -25,21 +25,18 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
         }
 
         var entriesQuery = db.PiggyBankEntries
-            .Where(e => e.PiggyBankId == piggyBank.Id)
-            .Where(e => !e.Transaction!.IsDeleted);
+            .Where(e => e.PiggyBankId == piggyBank.Id);
         var balance = await entriesQuery.SumAsync(e => e.Amount);
         var progress = piggyBank.TargetBalance is null
             ? null
             : (decimal?)(balance / piggyBank.TargetBalance.Value * 100m);
 
         var entries = await entriesQuery
-            .Include(e => e.Transaction)
             .Where(e => byMonth.Month == null
                 || byMonth.Year == null
-                || e.Date.Year < byMonth.Year
                 || (
                     e.Date.Year == byMonth.Year
-                    && e.Date.Month <= byMonth.Month
+                    && e.Date.Month == byMonth.Month
                 )
             )
             .Select(e => new {
@@ -51,12 +48,6 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
                     e.PiggyBank!.Id,
                     e.PiggyBank.Name
                 },
-                Transaction = e.TransactionId != null
-                    ? new {
-                        e.TransactionId,
-                        e.Transaction!.Description,
-                    }
-                    : null,
             })
             .ToListAsync();
 
@@ -109,13 +100,92 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeletePiggyBank(Guid id) {
-        _ = await db.PiggyBanks.Where(pb => pb.Id == id).ExecuteDeleteAsync();
+        var deleteCount = await db.PiggyBanks.Where(pb => pb.Id == id).ExecuteDeleteAsync();
+
+        if (deleteCount < 1) {
+            return NotFound();
+        }
 
         return NoContent();
     }
 
 
     // TODO: create piggy bank entry CRUD
+    [HttpGet("{id:guid}/entries")]
+    public async Task<IActionResult> ListPiggyBankEntries(Guid id, [FromQuery] QueryByMonth byMonth) {
+        if (!byMonth.IsValidQuery()) {
+            return BadRequest("Month and Year query parameters are required");
+        }
+
+        var entries = await db.PiggyBankEntries
+            .Where(e => e.PiggyBankId == id)
+            .Where(e => e.Date.Year == byMonth.Year && e.Date.Month == byMonth.Month)
+            .ToArrayAsync();
+
+        return Ok(entries);
+    }
+
+    [HttpPost("{id:guid}/entries")]
+    public async Task<IActionResult> CreatePiggyBankEntry(
+        Guid id,
+        [FromBody] PiggyBankEntryRequest req
+    ) {
+        var piggyBank = await db.PiggyBanks.FindAsync(id);
+
+        if (piggyBank is null) {
+            return NotFound();
+        }
+
+        var newEntry = new PiggyBankEntry {
+            PiggyBankId = id,
+            Amount = req.Amount,
+            Date = req.Date,
+            Description = req.Description ?? "",
+        };
+
+        _ = await db.PiggyBankEntries.AddAsync(newEntry);
+        _ = await db.SaveChangesAsync();
+
+        return Created();
+    }
+
+    [HttpPut("{piggyBankId:guid}/entries/{entryId:guid}")]
+    public async Task<IActionResult> UpdatePiggyBankEntry(
+        Guid piggyBankId,
+        Guid entryId,
+        [FromBody] PiggyBankEntryRequest req
+    ) {
+        var entry = await db.PiggyBankEntries
+            .Where(e => e.PiggyBankId == piggyBankId && e.Id == entryId)
+            .FirstOrDefaultAsync();
+
+        if (entry is null) {
+            return NotFound();
+        }
+
+        entry.Amount = req.Amount;
+        entry.Date = req.Date;
+        entry.Description = req.Description ?? entry.Description;
+        entry.PiggyBankId = req.PiggyBankId ?? entry.PiggyBankId;
+
+        _ = db.Update(entry);
+        _ = await db.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpDelete("{piggyBankId:guid}/entries/{entryId:guid}")]
+    public async Task<IActionResult> DeletePiggyBankEntry(Guid piggyBankId, Guid entryId) {
+        var deleteCount = await db.PiggyBankEntries
+            .Where(e => e.PiggyBankId == piggyBankId && e.Id == entryId)
+            .ExecuteDeleteAsync();
+
+        if (deleteCount < 1) {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
 }
 
 
@@ -125,4 +195,4 @@ public record PiggyBankRequest(
     DateOnly OpenDate,
     DateOnly? ClosedDate
 );
-
+public record PiggyBankEntryRequest(decimal Amount, DateOnly Date, string? Description, Guid? PiggyBankId);
