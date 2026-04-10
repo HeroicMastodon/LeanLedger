@@ -5,26 +5,21 @@
     import { ProgressBar } from "@skeletonlabs/skeleton";
     import Money from "$lib/components/Money.svelte";
     import ProgressPercent from "$lib/components/ProgressPercent.svelte";
+    import PiggyBankDiffText from "$lib/piggybanks/PiggyBankDiffText.svelte";
 
-    // TODO: fix these types
-    type Piggy = {
+    type PiggyBankMetric = {
         id: string;
         name: string;
-        initialBalance: number;
-        balanceTarget?: number;
+        targetBalance?: number;
         balance: number;
-        progressPercent?: number;
-        closed: boolean;
+        progress?: number;
         change: number;
     };
 
     type PiggyMetricsResponse = {
-        piggyBanks: Piggy[];
-        totals: {
-            piggyTotal: number;
-            accountTotal: number;
-            piggyTotalExceedsAccounts: boolean;
-        };
+        piggyBanks: PiggyBankMetric[];
+        piggyTotal: number;
+        accountTotal: number;
     };
 
     const metricsPromise = $derived.by(async () => {
@@ -35,7 +30,7 @@
     });
 
     function difference(metrics: PiggyMetricsResponse) {
-        return metrics.totals.accountTotal - metrics.totals.piggyTotal;
+        return metrics.accountTotal - metrics.piggyTotal;
     }
 </script>
 
@@ -68,10 +63,10 @@
                         <td class="text-center"><Money amount={piggy.balance} /></td>
                         <td class="text-center"><Money amount={piggy.change} /></td>
                         <td class="text-center">
-                            <Money amount={piggy.balanceTarget ?? 0} />
+                            <Money amount={piggy.targetBalance ?? 0} />
                         </td>
                         <td class="text-right">
-                            <ProgressPercent progress={piggy.progressPercent} />
+                            <ProgressPercent progress={piggy.progress} />
                         </td>
                     </tr>
                 {/each}
@@ -81,24 +76,10 @@
         <hr class="hr mt-4" />
         <div class="flex items-center justify-between gap-4">
             <div>
-                Total in Piggies: <Money amount={metrics.totals.piggyTotal} />
+                Total in Piggies: <Money amount={metrics.piggyTotal} />
             </div>
             <div class="text-sm">
-                {#if difference(metrics) > 0}
-                    <div class="text-warning-500">
-                        Need to allocate: <Money amount={difference(metrics)} />
-                    </div>
-                {:else if difference(metrics) < 0}
-                    <div class="text-error-500">
-                        Need to disburse: <Money
-                            amount={-difference(metrics)}
-                        />
-                    </div>
-                {:else}
-                    <div class="text-success-500">
-                        All piggies are perfectly allocated!
-                    </div>
-                {/if}
+                <PiggyBankDiffText difference={difference(metrics)}  />
             </div>
         </div>
     </Card>

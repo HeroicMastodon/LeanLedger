@@ -10,41 +10,13 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
     [HttpGet]
     public async Task<IActionResult> ListPiggyBanks([FromQuery] QueryByMonth byMonth) {
         // TODO: this may not work
-        var results = await db.PiggyBankEntries
-            .Include(e => e.PiggyBank)
-            .Where(e => e.Transaction == null || !e.Transaction.IsDeleted)
-            .Where(e => byMonth.Month == null
-                || byMonth.Year == null
-                || (
-                    (
-                        e.PiggyBank!.OpenDate.Year < byMonth.Year
-                        || (e.PiggyBank!.OpenDate.Year == byMonth.Year
-                            && e.PiggyBank!.OpenDate.Month <= byMonth.Month
-                        )
-                     ) && (e.PiggyBank!.CloseDate == null || (
-                            e.PiggyBank!.CloseDate.Value.Month >= byMonth.Month
-                            && e.PiggyBank!.CloseDate.Value.Year >= byMonth.Year
-                    ))
-                )
-            )
-            .GroupBy(e => e.PiggyBank)
-            .Select(g => new {
-                g.Key!.Id,
-                g.Key.Name,
-                g.Key.TargetBalance,
-                g.Key.Closed,
-                Balance = g.Sum(e => e.Amount),
-                Progress = g.Key.TargetBalance != null
-                    ? (decimal?)(g.Sum(e => e.Amount) / g.Key.TargetBalance.Value * 100m)
-                    : null
-            })
-            .ToListAsync();
+        var results = await db.GetPiggyMetrics(byMonth).ToListAsync();
 
         return Ok(results);
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetPiggyBank(Guid id, [FromQuery] QueryByMonth byMonth) {
         var piggyBank = await db.PiggyBanks.FindAsync(id);
 
@@ -141,6 +113,9 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
 
         return NoContent();
     }
+
+
+    // TODO: create piggy bank entry CRUD
 }
 
 
