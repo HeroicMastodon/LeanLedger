@@ -31,31 +31,38 @@ public static class PiggyFunctions {
         this LedgerDbContext db,
         QueryByMonth byMonth
     ) {
-        var results = db.PiggyBankEntries
-            .Include(e => e.PiggyBank)
-            .Where(e => byMonth.Month == null
+        var results = db.PiggyBanks
+            .Where(p => byMonth.Month == null
                 || byMonth.Year == null
-                || ((e.PiggyBank!.OpenDate.Year < byMonth.Year
-                        || (e.PiggyBank!.OpenDate.Year == byMonth.Year
-                            && e.PiggyBank!.OpenDate.Month <= byMonth.Month
-                        )
-                     ) && (e.PiggyBank!.CloseDate == null || (
-                            e.PiggyBank!.CloseDate.Value.Month >= byMonth.Month
-                            && e.PiggyBank!.CloseDate.Value.Year >= byMonth.Year
-                    ))
-                )
-            )
-            .GroupBy(e => e.PiggyBank)
-            .Select(g => new PiggyBankMetric(
-                g.Key!.Id,
-                g.Key.Name,
-                g.Sum(e => e.Amount),
-                g.Key.TargetBalance,
-                g.Key.TargetBalance != null
-                    ? (g.Sum(e => e.Amount) / g.Key.TargetBalance.Value * 100m)
+                || ((p.OpenDate.Year < byMonth.Year
+                        || (p.OpenDate.Year == byMonth.Year
+                            && p.OpenDate.Month <= byMonth.Month))
+                    && (p.CloseDate == null
+                        || p.CloseDate.Value.Year > byMonth.Year
+                        || (p.CloseDate.Value.Year == byMonth.Year
+                            && p.CloseDate.Value.Month >= byMonth.Month))))
+            .Select(p => new {
+                p.Id,
+                p.Name,
+                Balance = p.Entries
+                .Where(e => byMonth.Month == null
+                || byMonth.Year == null
+                || (
+                    e.Date.Year <= byMonth.Year
+                    && e.Date.Month <= byMonth.Month
+                ))
+                .Sum(e => (decimal?)e.Amount) ?? 0m,
+                p.TargetBalance
+            })
+            .Select(x => new PiggyBankMetric(
+                x.Id,
+                x.Name,
+                x.Balance,
+                x.TargetBalance,
+                x.TargetBalance != null
+                    ? (x.Balance / x.TargetBalance.Value * 100m)
                     : null
             ));
-
         return results;
     }
 }

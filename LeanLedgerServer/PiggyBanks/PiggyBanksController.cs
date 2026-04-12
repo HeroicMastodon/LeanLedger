@@ -10,9 +10,19 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
     [HttpGet]
     public async Task<IActionResult> ListPiggyBanks([FromQuery] QueryByMonth byMonth) {
         // TODO: this may not work
+        Console.WriteLine("********************");
+        Console.WriteLine(byMonth);
+        Console.WriteLine("********************");
         var results = await db.GetPiggyMetrics(byMonth).ToListAsync();
 
         return Ok(results);
+    }
+
+    [HttpGet("names")]
+    public async Task<IActionResult> ListPiggyBankNames() {
+        var piggies = await db.PiggyBanks.Select(pb => new { pb.Id, pb.Name }).ToArrayAsync();
+
+        return Ok(piggies);
     }
 
 
@@ -26,7 +36,14 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
 
         var entriesQuery = db.PiggyBankEntries
             .Where(e => e.PiggyBankId == piggyBank.Id);
-        var balance = await entriesQuery.SumAsync(e => e.Amount);
+        var balance = await entriesQuery
+            .Where(e => byMonth.Month == null
+                || byMonth.Year == null
+                || (
+                    e.Date.Year <= byMonth.Year
+                    && e.Date.Month <= byMonth.Month
+                ))
+            .SumAsync(e => e.Amount);
         var progress = piggyBank.TargetBalance is null
             ? null
             : (decimal?)(balance / piggyBank.TargetBalance.Value * 100m);
@@ -55,9 +72,10 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
             piggyBank.Id,
             piggyBank.Name,
             piggyBank.TargetBalance,
-            piggyBank.Closed,
+            piggyBank.OpenDate,
+            piggyBank.CloseDate,
             Balance = balance,
-            ProgressPercent = progress,
+            Progress = progress,
             Entries = entries
         });
 
@@ -70,13 +88,13 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
             Name = req.Name,
             TargetBalance = req.TargetBalance,
             OpenDate = req.OpenDate,
-            CloseDate = req.ClosedDate,
+            CloseDate = req.CloseDate,
         };
 
         _ = await db.AddAsync(piggyBank);
         _ = await db.SaveChangesAsync();
 
-        return Created($"/api/piggy-banks/{piggyBank.Id}", piggyBank);
+        return Created($"/api/piggybanks/{piggyBank.Id}", piggyBank);
     }
 
     [HttpPut("{id:guid}")]
@@ -90,7 +108,7 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
         piggyBank.Name = req.Name;
         piggyBank.TargetBalance = req.TargetBalance;
         piggyBank.OpenDate = req.OpenDate;
-        piggyBank.CloseDate = req.ClosedDate;
+        piggyBank.CloseDate = req.CloseDate;
 
         _ = db.Update(piggyBank);
         _ = await db.SaveChangesAsync();
@@ -193,6 +211,6 @@ public record PiggyBankRequest(
     string Name,
     decimal? TargetBalance,
     DateOnly OpenDate,
-    DateOnly? ClosedDate
+    DateOnly? CloseDate
 );
 public record PiggyBankEntryRequest(decimal Amount, DateOnly Date, string? Description, Guid? PiggyBankId);

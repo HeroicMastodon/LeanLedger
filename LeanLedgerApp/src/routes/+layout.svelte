@@ -113,7 +113,7 @@
                         "Accounts",
                     )}
                     {@render navItem(
-                        `/piggy-banks${selectedMonthParams}`,
+                        `/piggybanks${selectedMonthParams}`,
                         "Piggy Banks",
                     )}
                     {@render navItem(

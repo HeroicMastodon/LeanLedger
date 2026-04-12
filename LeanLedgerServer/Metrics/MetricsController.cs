@@ -334,7 +334,7 @@ public class MetricsController(
         });
     }
 
-    [HttpGet("piggy-banks")]
+    [HttpGet("piggybanks")]
     public async Task<IActionResult> GetPiggyBanksMetrics(
         [FromQuery]
         QueryByMonth byMonth

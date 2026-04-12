@@ -16,7 +16,7 @@
 
     async function load() {
         const resp = await apiClient.get<PiggyBank[]>(
-            `piggy-banks?${monthManager.params}`,
+            `piggybanks?${monthManager.params}`,
         );
         piggies = resp.data;
 
@@ -27,7 +27,7 @@
     }
 
     async function saveNewPiggy() {
-        await apiClient.post("piggy-banks", newPiggy);
+        await apiClient.post("piggybanks", newPiggy);
         newPiggy = defaultPiggyBank();
         await load();
         return true;
@@ -82,7 +82,7 @@
                         <td
                             ><a
                                 class="text-primary-400"
-                                href="/piggy-banks/{piggy.id}">{piggy.name}</a
+                                href="/piggybanks/{piggy.id}">{piggy.name}</a
                             ></td
                         >
                         <td class="text-center"><Money amount={piggy.balance} /></td>

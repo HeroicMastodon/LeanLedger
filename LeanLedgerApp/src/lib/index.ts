@@ -37,3 +37,7 @@ export function encodeCategory(category?: string | null) {
     let categoryStr = getCategoryName(category);
     return encodeURIComponent(categoryStr);
 }
+
+export function exists(value: any) {
+    return value != null && value != undefined;
+}

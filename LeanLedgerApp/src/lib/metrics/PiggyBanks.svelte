@@ -24,7 +24,7 @@
 
     const metricsPromise = $derived.by(async () => {
         const resp = await apiClient.get<PiggyMetricsResponse>(
-            `metrics/piggy-banks?${monthManager.params}`,
+            `metrics/piggybanks?${monthManager.params}`,
         );
         return resp.data;
     });

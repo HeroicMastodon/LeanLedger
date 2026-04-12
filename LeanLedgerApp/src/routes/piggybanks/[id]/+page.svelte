@@ -17,16 +17,22 @@
     import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import PiggyBankEntryForm from "$lib/piggybanks/PiggyBankEntryForm.svelte";
+    import ProgressPercent from "$lib/components/ProgressPercent.svelte";
 
     let id = $page.params.id;
     let piggy = $state<PiggyBankWithEntries>();
     let isSaving = $state(false);
+    let newEntry = $state(defaultPiggyBankEntry());
 
     async function load() {
         const resp = await apiClient.get<PiggyBankWithEntries>(
-            `piggy-banks/${id}?${monthManager.params}`,
+            `piggybanks/${id}?${monthManager.params}`,
         );
         piggy = resp.data;
+        newEntry.piggyBank = {
+            id: piggy.id,
+            name: piggy.name
+        }
     }
 
     // allocations are returned from the API on piggy.allocations — use directly in the template
@@ -35,25 +41,24 @@
         if (!piggy) return;
         isSaving = true;
 
-        await apiClient.put(`piggy-banks/${id}`, piggy);
+        await apiClient.put(`piggybanks/${id}`, piggy);
         await load();
         isSaving = false;
     }
 
     async function closePiggy() {
-        await apiClient.delete(`piggy-banks/${id}`);
-        await goto("/piggy-banks");
+        await apiClient.delete(`piggybanks/${id}`);
+        await goto("/piggybanks");
 
         return false;
     }
 
-    let newEntry = $state(defaultPiggyBankEntry());
 
     async function saveEntry() {
         if (!piggy) return true;
         isSaving = true;
 
-        await apiClient.post(`piggy-banks/${id}/entries`, newEntry);
+        await apiClient.post(`piggybanks/${id}/entries`, newEntry);
         newEntry = defaultPiggyBankEntry();
         await load();
         isSaving = false;
@@ -78,7 +83,7 @@
                 Balance: <Money amount={piggy.balance ?? 0} />
             </h4>
             <h4 class="h4">
-                Progress: {piggy.progress ?? "-"}
+                Progress: <ProgressPercent progress={piggy.progress} />
             </h4>
 
             {#if isSaving}
@@ -101,7 +106,7 @@
                     <PiggyBankEntryForm bind:entry={newEntry} />
                 </FormButton>
             </div>
-            <PiggyBankEntries entries={piggy.entries} />
+            <PiggyBankEntries entries={piggy.entries} entrySaved={load} />
         </div>
     {/if}
 {:catch err}

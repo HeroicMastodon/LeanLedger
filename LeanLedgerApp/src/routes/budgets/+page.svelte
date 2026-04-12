@@ -201,7 +201,7 @@
     async function loadPiggyBankEntries() {
         try {
         const res =
-            await apiClient.get<PiggyBankEntry[]>(`piggy-banks/entries?${monthManager.params}`);
+            await apiClient.get<PiggyBankEntry[]>(`piggybanks/entries?${monthManager.params}`);
         piggyBankEntries = res.data;
         } catch (e) {
             piggyBankEntries = [];
@@ -213,10 +213,10 @@
     async function savePiggyEntry() {
         if (!piggyEntry.id) return true;
 
-        await apiClient.post(`piggy-banks/entries`, piggyEntry);
+        await apiClient.post(`piggybanks/entries`, piggyEntry);
         piggyEntry = defaultPiggyBankEntry();
         const res =
-            await apiClient.get<PiggyBankEntry[]>(`piggy-banks/entries`);
+            await apiClient.get<PiggyBankEntry[]>(`piggybanks/entries`);
         piggyBankEntries = res.data;
 
         return true;
@@ -300,7 +300,7 @@
                 <PiggyBankEntryForm bind:entry={piggyEntry} />
             </FormButton>
             <a
-                href="/piggy-banks"
+                href="/piggybanks"
                 title="Piggy Banks"
                 class="btn btn-icon-sm p-2 text-secondary-500"
             >

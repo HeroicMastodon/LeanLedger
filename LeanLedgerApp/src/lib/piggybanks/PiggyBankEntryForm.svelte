@@ -1,15 +1,19 @@
 <script lang="ts">
+    import { type SelectOption } from "$lib";
+    import { apiClient } from "$lib/apiClient";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import PredictiveSelect from "$lib/components/forms/PredictiveSelect.svelte";
-    import { type PiggyBank, type PiggyBankEntry } from "$lib/piggybanks";
+    import {  type PiggyBankEntry } from "$lib/piggybanks";
 
     let { entry = $bindable() }: { entry: PiggyBankEntry } = $props();
-    let piggyBanks = $state<PiggyBank[]>([]);
-    const piggyBankOptions = $derived(
-        piggyBanks.map((pb) => ({ value: pb.id, display: pb.name })),
-    );
-    // TODO: Load piggy banks
-    // TODO: Allow for searching and selecting a transaction
+    let piggyBankOptions = $state<SelectOption<string>[]>([]);
+
+    async function load() {
+        const res = await apiClient.get<{id: string; name: string;}[]>("piggybanks/names");
+        piggyBankOptions = res.data.map(pb => ({ value: pb.id, display: pb.name }));
+    }
+
+    load();
 </script>
 
 <div class="flex flex-col gap-4">
@@ -30,12 +34,12 @@
     </div>
 
     <!-- TODO: Make this editable -->
-    {#if entry.transaction?.id}
-        <LabeledInput
-            type="text"
-            label="Transaction"
-            value={entry.transaction.description}
-            disabled
-        />
-    {/if}
+    <!-- {#if entry.transaction?.id} -->
+    <!--     <LabeledInput -->
+    <!--         type="text" -->
+    <!--         label="Transaction" -->
+    <!--         value={entry.transaction.description} -->
+    <!--         disabled -->
+    <!--     /> -->
+    <!-- {/if} -->
 </div>

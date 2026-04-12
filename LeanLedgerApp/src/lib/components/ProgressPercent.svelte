@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { exists } from "$lib";
+
     let { progress }: { progress?: number } = $props();
 </script>
 
@@ -7,5 +9,5 @@
     class:text-warning-500={progress && progress < 90 && progress >= 40}
     class:text-success-500={progress && progress >= 90}
 >
-    {progress ? `${progress.toFixed(1)}%` : "-"}
+    {exists(progress) ? `${progress!.toFixed(1)}%` : "-"}
 </span>

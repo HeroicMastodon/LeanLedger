@@ -1,4 +1,4 @@
-import type { TransactionType } from "$lib/transactions";
+// import type { TransactionType } from "$lib/transactions";
 
 export type PiggyBank = {
     id: string;
@@ -19,10 +19,10 @@ export type PiggyBankEntry = {
         id: string;
         name: string;
     };
-    transaction?: {
-        id: string;
-        description: TransactionType;
-    }
+    // transaction?: {
+    //     id: string;
+    //     description: TransactionType;
+    // }
 }
 
 export type PiggyBankWithEntries = PiggyBank & {

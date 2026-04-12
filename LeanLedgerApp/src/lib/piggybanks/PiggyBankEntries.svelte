@@ -7,11 +7,17 @@
     import Fa from "svelte-fa";
     import PiggyBankEntryForm from "./PiggyBankEntryForm.svelte";
     import { faEdit } from "@fortawesome/free-solid-svg-icons/faEdit";
+    import type { MaybePromise } from "$lib";
 
     let {
         entries,
         showPiggyBank,
-    }: { entries: PiggyBankEntry[]; showPiggyBank?: boolean } = $props();
+        entrySaved,
+    }: {
+        entries: PiggyBankEntry[];
+        showPiggyBank?: boolean;
+        entrySaved: MaybePromise<any>;
+    } = $props();
 
     let selectedEntry = $state<PiggyBankEntry>();
     let dialog = new Dialog();
@@ -23,9 +29,11 @@
     async function saveEntry() {
         if (!selectedEntry) return true;
         await apiClient.put(
-            `piggy-banks/entries/${selectedEntry.id}`,
+            `piggybanks/${selectedEntry.piggyBank.id}/entries/${selectedEntry.id}`,
             selectedEntry,
         );
+        dialog.close();
+        entrySaved();
 
         return true;
     }
@@ -41,7 +49,7 @@
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Description</th>
-                <th>Transaction</th>
+                <!-- <th>Transaction</th> -->
                 <th></th>
             </tr>
         </thead>
@@ -56,18 +64,18 @@
                     </td>
                     <td><Money amount={entry.amount} /></td>
                     <td> {entry.description}</td>
-                    <td>
-                        {#if entry.transaction}
-                            <a
-                                class="text-primary-400"
-                                href="/transactions/{entry.transaction.id}"
-                            >
-                                {entry.transaction.description}
-                            </a>
-                        {:else}
-                            -
-                        {/if}
-                    </td>
+                    <!-- <td> -->
+                    <!--     {#if entry.transaction} -->
+                    <!--         <a -->
+                    <!--             class="text-primary-400" -->
+                    <!--             href="/transactions/{entry.transaction.id}" -->
+                    <!--         > -->
+                    <!--             {entry.transaction.description} -->
+                    <!--         </a> -->
+                    <!--     {:else} -->
+                    <!--         - -->
+                    <!--     {/if} -->
+                    <!-- </td> -->
                     <td>
                         <button
                             onclick={() => selectEntry(entry)}
@@ -86,8 +94,13 @@
         <div class="flex flex-col gap-4">
             <PiggyBankEntryForm bind:entry={selectedEntry} />
             <div class="flex gap-4 items-center justify-end">
-                <button onclick={() => dialog.close()} class="btn variant-outline-error">Cancel</button>
-                <button onclick={saveEntry} class="btn variant-filled-success">Save</button>
+                <button
+                    onclick={() => dialog.close()}
+                    class="btn variant-outline-error">Cancel</button
+                >
+                <button onclick={saveEntry} class="btn variant-filled-success"
+                    >Save</button
+                >
             </div>
         </div>
     {:else}
