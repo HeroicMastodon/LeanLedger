@@ -342,14 +342,19 @@ public class MetricsController(
         // Retrieve piggy banks
         var lastMonthMetrics = await dbContext.GetPiggyMetrics(byMonth.Decrement()).ToListAsync();
         var thisMonthMetrics = await dbContext.GetPiggyMetrics(byMonth).ToListAsync();
-        var thisMonthWithChange = lastMonthMetrics.Join(thisMonthMetrics, m => m.Id, m => m.Id, (lastMonth, thisMonth) => new {
-            thisMonth.Id,
-            thisMonth.Name,
-            thisMonth.Balance,
-            thisMonth.TargetBalance,
-            thisMonth.Progress,
-            Change = thisMonth.Balance - lastMonth.Balance
-        });
+        var thisMonthWithChange = thisMonthMetrics.LeftJoin(
+            lastMonthMetrics,
+            m => m.Id,
+            m => m.Id,
+            (thisMonth, lastMonth) => new {
+                thisMonth.Id,
+                thisMonth.Name,
+                thisMonth.Balance,
+                thisMonth.TargetBalance,
+                thisMonth.Progress,
+                Change = thisMonth.Balance - (lastMonth?.Balance ?? 0)
+            }
+        );
         var networth = await QueryNetWorth(byMonth);
         var totalBalance = thisMonthWithChange.Sum(m => m.Balance);
 

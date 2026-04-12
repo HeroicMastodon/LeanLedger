@@ -21,7 +21,7 @@
         label="Target"
         bind:value={piggy.targetBalance}
     />
-
+<!-- TODO: Make this day month only or set to the first of the month every time -->
     <LabeledInput
         class="md:col-span-3"
         label="Opened"
