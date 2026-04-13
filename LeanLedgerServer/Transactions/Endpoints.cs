@@ -1,6 +1,5 @@
 namespace LeanLedgerServer.Transactions;
 
-using System.Diagnostics;
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +12,7 @@ public static class Endpoints {
         var transactions = endpoints.MapGroup("transactions");
         transactions.MapGet("{id:guid}", GetTransaction);
         transactions.MapGet("", ListTransactions);
+        transactions.MapGet("search", SearchTransactions);
         transactions.MapPost("", CreateTransaction);
         transactions.MapPut("{id:guid}", UpdateTransaction);
         transactions.MapDelete("{id:guid}", DeleteTransaction);
@@ -46,6 +46,50 @@ public static class Endpoints {
         return Ok(transactions.Select(TableTransaction.FromTransaction));
     }
 
+    private static async Task<IResult> SearchTransactions(
+        [FromQuery] string? description,
+        [FromQuery] DateOnly? startDate,
+        [FromQuery] DateOnly? endDate,
+        [FromQuery] decimal? minAmount,
+        [FromQuery] decimal? maxAmount,
+        [AsParameters] QueryByMonth byMonth,
+        [FromServices] LedgerDbContext db
+    ) {
+        var query = db.Transactions
+            .Include(t => t.SourceAccount)
+            .Include(t => t.DestinationAccount)
+            .AsQueryable()
+            .Where(t => !t.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(description)) {
+            query = query.Where(t => t.Description.Contains(description));
+        }
+
+        if (startDate is not null) {
+            query = query.Where(t => t.Date >= startDate.Value);
+        }
+
+        if (endDate is not null) {
+            query = query.Where(t => t.Date <= endDate.Value);
+        }
+
+        if (minAmount is not null) {
+            query = query.Where(t => t.Amount >= minAmount.Value);
+        }
+
+        if (maxAmount is not null) {
+            query = query.Where(t => t.Amount <= maxAmount.Value);
+        }
+
+        if (byMonth is { Month: not null, Year: not null }) {
+            query = query.Where(t => t.Date.Month == byMonth.Month && t.Date.Year == byMonth.Year);
+        }
+
+        var transactions = await query.OrderByDescending(t => t.Date).ToListAsync();
+
+        return Ok(transactions.Select(TableTransaction.FromTransaction));
+    }
+
     private static async Task<IResult> CreateTransaction(
         [FromBody]
         TransactionRequest newTransaction,
@@ -59,10 +103,10 @@ public static class Endpoints {
         return await CreateNewTransaction(newTransaction, db.Transactions, mapper, rules)
             .ThenAsync(
                 async transaction => {
-                    db.Transactions.Add(transaction!);
+                    db.Transactions.Add(transaction);
                     await db.SaveChangesAsync();
 
-                    return Created($"/api/transactions/{transaction!.Id}", transaction);
+                    return Created($"/api/transactions/{transaction.Id}", transaction);
                 }
             )
             .Map(

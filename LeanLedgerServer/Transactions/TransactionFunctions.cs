@@ -1,6 +1,5 @@
 namespace LeanLedgerServer.Transactions;
 
-using System.Diagnostics;
 using AutoMapper;
 using Automation;
 using Common;

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
+using PiggyBanks;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -75,6 +76,15 @@ public class MetricsController(
         }
 
         return netWorth;
+    }
+
+    [HttpGet("net-worth/amount")]
+    public async Task<IActionResult> GetNetWorthAmount(
+        [FromQuery]
+        QueryByMonth byMonth
+    ) {
+        var netWorth = await QueryNetWorth(byMonth);
+        return Ok(new { netWorth });
     }
 
     [HttpGet("budget")]
@@ -279,6 +289,7 @@ public class MetricsController(
         var yearlyResults = await Task.WhenAll(yearlyQueries);
 
 
+        // TODO: simpflify this by extracting a method
         // then calculate the change from the previous month/quarter/year
         var monthlyTrends = monthlyResults
             .Select(
@@ -320,6 +331,37 @@ public class MetricsController(
             Monthly = monthlyTrends.Reverse(),
             Quarterly = quarterlyTrends.Reverse(),
             Yearly = yearlyTrends.Reverse()
+        });
+    }
+
+    [HttpGet("piggybanks")]
+    public async Task<IActionResult> GetPiggyBanksMetrics(
+        [FromQuery]
+        QueryByMonth byMonth
+    ) {
+        // Retrieve piggy banks
+        var lastMonthMetrics = await dbContext.GetPiggyMetrics(byMonth.Decrement()).ToListAsync();
+        var thisMonthMetrics = await dbContext.GetPiggyMetrics(byMonth).ToListAsync();
+        var thisMonthWithChange = thisMonthMetrics.LeftJoin(
+            lastMonthMetrics,
+            m => m.Id,
+            m => m.Id,
+            (thisMonth, lastMonth) => new {
+                thisMonth.Id,
+                thisMonth.Name,
+                thisMonth.Balance,
+                thisMonth.TargetBalance,
+                thisMonth.Progress,
+                Change = thisMonth.Balance - (lastMonth?.Balance ?? 0)
+            }
+        );
+        var networth = await QueryNetWorth(byMonth);
+        var totalBalance = thisMonthWithChange.Sum(m => m.Balance);
+
+        return Ok(new {
+            PiggyBanks = thisMonthWithChange,
+            PiggyTotal = totalBalance,
+            AccountTotal = networth
         });
     }
 }

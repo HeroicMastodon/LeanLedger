@@ -3,7 +3,6 @@ namespace LeanLedgerServer.TransactionImport;
 using System.Text.Json.Serialization;
 using Accounts;
 
-// TODO: create dbset. Mappings should be stored in a json column
 public class ImportSettings {
     public Guid Id { get; init; }
     public char? CsvDelimiter { get; set; }

@@ -1,15 +1,12 @@
 <script lang="ts">
-    import {accountTypeOptions, accountTypes} from "$lib/accounts/index.js";
-    import {splitPascal} from "$lib";
-    import {faDollar} from "@fortawesome/free-solid-svg-icons";
-    import {Fa} from "svelte-fa";
-    import {type AccountData} from "$lib/accounts";
+    import { accountTypeOptions } from "$lib/accounts/index.js";
+    import { type AccountData } from "$lib/accounts";
     import MoneyInput from "$lib/components/forms/MoneyInput.svelte";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import LabeledSelect from "$lib/components/forms/LabeledSelect.svelte";
     import Card from "$lib/components/Card.svelte";
 
-    let {account = $bindable()}: { account: AccountData } = $props();
+    let { account = $bindable() }: { account: AccountData } = $props();
 </script>
 
 <Card class="grid grid-cols-1 md:grid-cols-6 gap-4 max-w-3xl items-center">
@@ -39,11 +36,19 @@
     />
     <div class="md:col-span-2 flex flex-col">
         <label class="md:col-span-1 flex space-x-2 items-center">
-            <input type="checkbox" class="checkbox mt-2 mb-2" bind:checked={account.includeInNetWorth} />
+            <input
+                type="checkbox"
+                class="checkbox mt-2 mb-2"
+                bind:checked={account.includeInNetWorth}
+            />
             <span>Part of Net Worth</span>
         </label>
         <label class="md:col-span-1 flex space-x-2 items-center">
-            <input type="checkbox" class="checkbox mt-2 mb-2" bind:checked={account.active} />
+            <input
+                type="checkbox"
+                class="checkbox mt-2 mb-2"
+                bind:checked={account.active}
+            />
             <span>Active</span>
         </label>
     </div>

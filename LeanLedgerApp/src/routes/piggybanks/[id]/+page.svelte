@@ -1,0 +1,140 @@
+<script lang="ts">
+    import { apiClient } from "$lib/apiClient";
+    import { monthManager } from "$lib/selectedMonth.svelte";
+    import Money from "$lib/components/Money.svelte";
+    import { ProgressBar } from "@skeletonlabs/skeleton";
+    import { page } from "$app/stores";
+    import PiggyForm from "$lib/piggybanks/PiggyForm.svelte";
+    import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
+    import { Fa } from "svelte-fa";
+    import { faSave } from "@fortawesome/free-solid-svg-icons/faSave";
+    import { goto } from "$app/navigation";
+    import {
+        defaultPiggyBankEntry,
+        type PiggyBankWithEntries,
+    } from "$lib/piggybanks";
+    import PiggyBankEntries from "$lib/piggybanks/PiggyBankEntries.svelte";
+    import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
+    import FormButton from "$lib/components/dialog/FormButton.svelte";
+    import PiggyBankEntryForm from "$lib/piggybanks/PiggyBankEntryForm.svelte";
+    import ProgressPercent from "$lib/components/ProgressPercent.svelte";
+    import { sumUp } from "$lib";
+
+    let id = $page.params.id;
+    let piggy = $state<PiggyBankWithEntries>();
+    let isSaving = $state(false);
+    let newEntry = $state(defaultPiggyBankEntry());
+
+    const allocated = $derived(
+        sumUp(
+            piggy?.entries?.filter((e) => e.amount > 0) ?? [],
+            (e) => e.amount,
+        ),
+    );
+    const disbursed = $derived(
+        sumUp(
+            piggy?.entries?.filter((e) => e.amount < 0) ?? [],
+            (e) => e.amount,
+        ),
+    );
+    const totalChange = $derived(
+        sumUp(
+            piggy?.entries ?? [],
+            (e) => e.amount,
+        ),
+    );
+
+    async function load() {
+        const resp = await apiClient.get<PiggyBankWithEntries>(
+            `piggybanks/${id}?${monthManager.params}`,
+        );
+        piggy = resp.data;
+        newEntry.piggyBank = {
+            id: piggy.id,
+            name: piggy.name,
+        };
+    }
+
+    // allocations are returned from the API on piggy.allocations — use directly in the template
+
+    async function saveChanges() {
+        if (!piggy) return;
+        isSaving = true;
+
+        await apiClient.put(`piggybanks/${id}`, piggy);
+        await load();
+        isSaving = false;
+    }
+
+    async function closePiggy() {
+        await apiClient.delete(`piggybanks/${id}`);
+        await goto("/piggybanks");
+
+        return false;
+    }
+
+    async function saveEntry() {
+        if (!piggy) return true;
+        isSaving = true;
+
+        await apiClient.post(`piggybanks/${id}/entries`, newEntry);
+        newEntry = defaultPiggyBankEntry();
+        await load();
+        isSaving = false;
+
+        return true;
+    }
+</script>
+
+{#await load()}
+    <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
+{:then _}
+    {#if !piggy}
+        <div class="p-4 variant-filled-error">Could not load piggy</div>
+    {:else}
+        <div class="mb-4 flex gap-4 justify-start items-center flex-wrap">
+            <h1 class="h1">Piggy Bank</h1>
+            <button class="btn text-primary-500 p-2" onclick={saveChanges}>
+                <Fa icon={faSave} />
+            </button>
+            <DeleteConfirmationButton onDelete={closePiggy} />
+            <h4 class="h4">
+                Balance: <Money amount={piggy.balance ?? 0} />
+            </h4>
+            <h4 class="h4">
+                Progress: <ProgressPercent progress={piggy.progress} />
+            </h4>
+
+            {#if isSaving}
+                <ProgressBar meter="bg-primary-500" track="bg-primary-500/30" />
+            {/if}
+        </div>
+
+        <PiggyForm bind:piggy />
+
+        <div class="mt-8">
+            <div class="flex gap-4 items-center mb-4">
+                <h2 class="h2">Entries</h2>
+
+                <FormButton
+                    class="btn-icon-sm p-2 variant-filled-secondary size-5"
+                    icon={faPlus}
+                    text="New Entry"
+                    onConfirm={saveEntry}
+                >
+                    <PiggyBankEntryForm bind:entry={newEntry} />
+                </FormButton>
+
+                <h4 class="h4">Allocated: <Money amount={allocated} /></h4>
+                <h4 class="h4">Disbursed: <Money amount={disbursed} /></h4>
+                <h4 class="h4">Total Change: <Money amount={totalChange} /></h4>
+            </div>
+            <PiggyBankEntries entries={piggy.entries} entrySaved={load} />
+        </div>
+    {/if}
+{:catch err}
+    <div class="p-4 variant-filled-error">
+        <h3 class="h3">Could not load piggy</h3>
+        <p class="p">{String(err)}</p>
+    </div>
+{/await}

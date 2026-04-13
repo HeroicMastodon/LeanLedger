@@ -38,7 +38,7 @@ public record RuleAction(
             return;
         }
 
-        transactionValue = transactionValue + Value;
+        transactionValue += Value;
         Field.Value.ApplyValueTo(transaction, transactionValue);
     }
 
@@ -60,5 +60,5 @@ public enum RuleActionType {
     Append,
     Set,
     Clear,
-    DeleteTransaction
+    DeleteTransaction,
 }

@@ -18,7 +18,7 @@ let endDate = $state(todaysDateString());
 </script>
 
 <FormButton
-    class="text-warning-500 p-0"
+    class="text-warning-400 p-0"
     text={text}
     confirmText="Run"
     onConfirm={() => {run(startDate, endDate); return false;}}

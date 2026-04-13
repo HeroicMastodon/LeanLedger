@@ -21,7 +21,8 @@ public class Rule {
         ? Triggers.All(t => t.Matches(transaction))
         : Triggers.Any(t => t.Matches(transaction));
 
-    public void ApplyActionsTo(Transaction transaction) => Actions.ForEach(a => a.ApplyTo(transaction));
+    public void ApplyActionsTo(Transaction transaction)
+        => Actions.ForEach(a => a.ApplyTo(transaction));
 }
 
 public class RuleGroup {

@@ -1,11 +1,11 @@
 // place files you want to import through the `$lib` alias in this folder.
-import type {TransactionType} from "$lib/transactions";
+import type { TransactionType } from "$lib/transactions";
 
 export function splitPascal(words: string) {
     return words.replace(/([a-z])([A-Z])/g, '$1 $2')
 }
 
-const formatCurrency = new Intl.NumberFormat("en-us", {style: "currency", currency: "USD"}).format;
+const formatCurrency = new Intl.NumberFormat("en-us", { style: "currency", currency: "USD" }).format;
 export function formatMoney(amount: number, type?: TransactionType) {
 
     return type !== "Expense" ? formatCurrency(amount) : formatCurrency(-amount);
@@ -29,4 +29,15 @@ export type MaybePromise<T> = Promise<T> | T;
 
 export function sumUp<T>(arr: T[], getter: (val: T) => number): number {
     return arr.reduce((agg, curr) => agg + getter(curr), 0);
+}
+export function getCategoryName(category?: string | null) {
+    return category ? category : '(none)';
+}
+export function encodeCategory(category?: string | null) {
+    let categoryStr = getCategoryName(category);
+    return encodeURIComponent(categoryStr);
+}
+
+export function exists(value: any) {
+    return value != null && value != undefined;
 }

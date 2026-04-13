@@ -52,7 +52,7 @@ export const ruleActionTypes = [
     "Append",
     "Set",
     "Clear",
-    "DeleteTransaction"
+    "DeleteTransaction",
 ] as const;
 export type RuleActionType = typeof ruleActionTypes[number];
 export type RuleGroup = {

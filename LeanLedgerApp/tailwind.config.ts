@@ -38,6 +38,8 @@ export default {
         "variant-filled-primary",
         "variant-filled-warning",
         "variant-filled-success",
+        "text-warning-400",
+        "text-error-400",
         "bg-error-500",
         "bg-error-500/30",
         "bg-success-500",
