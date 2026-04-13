@@ -100,7 +100,7 @@
             {/if}
         </div>
         <AccountForm bind:account />
-        <!--TODO: Add metrics-->
+
         <div class="flex gap-4 items-center mt-8 mb-4">
             <h2 class="h2">Transactions</h2>
             <div>

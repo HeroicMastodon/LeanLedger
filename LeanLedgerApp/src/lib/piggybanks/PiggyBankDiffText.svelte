@@ -5,11 +5,11 @@
 </script>
 
 {#if difference > 0}
-    <div class="text-warning-500">
+    <div class="text-warning-400">
         Need to allocate: <Money amount={difference} />
     </div>
 {:else if difference < 0}
-    <div class="text-error-500">
+    <div class="text-error-400">
         Need to disburse: <Money amount={-difference} />
     </div>
 {:else}

@@ -272,7 +272,7 @@
         >
             <div class="w-4"></div>
             {#if maxIncome - totalActual < 0}
-                <p class="text-error-500">
+                <p class="text-error-400">
                     Overspent by {formatMoney(totalActual - maxIncome)}!
                 </p>
             {:else if maxIncome - totalActual > 0}
@@ -370,7 +370,7 @@
                     </button>
                     <button
                         onclick={() => removeCategoryGroup(groupIdx)}
-                        class="btn btn-icon text-error-500"
+                        class="btn btn-icon text-error-400"
                     >
                         <Fa icon={faTrashCan} />
                     </button>
@@ -423,7 +423,7 @@
                             <button
                                 onclick={() =>
                                     removeCategory(groupIdx, categoryIdx)}
-                                class="btn btn-icon text-error-500"
+                                class="btn btn-icon text-error-400"
                             >
                                 <Fa icon={faTrashCan} />
                             </button>

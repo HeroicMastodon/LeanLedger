@@ -322,7 +322,7 @@
                 <tr>
                     <td>
                         <button
-                            class="btn text-error-500 mr-4 p-0"
+                            class="btn text-error-400 mr-4 p-0"
                             onclick={() => removeTrigger(idx)}
                         >
                             <Fa icon={faTrashCan} />
@@ -392,7 +392,7 @@
                 <tr>
                     <td>
                         <button
-                            class="btn text-error-500 mr-4 p-0"
+                            class="btn text-error-400 mr-4 p-0"
                             onclick={() => removeAction(idx)}
                         >
                             <Fa icon={faTrashCan} />
