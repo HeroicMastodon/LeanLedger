@@ -9,10 +9,6 @@ using Microsoft.EntityFrameworkCore;
 public class PiggyBanksController(LedgerDbContext db): ControllerBase {
     [HttpGet]
     public async Task<IActionResult> ListPiggyBanks([FromQuery] QueryByMonth byMonth) {
-        // TODO: this may not work
-        Console.WriteLine("********************");
-        Console.WriteLine(byMonth);
-        Console.WriteLine("********************");
         var results = await db.GetPiggyMetrics(byMonth).ToListAsync();
 
         return Ok(results);
@@ -127,8 +123,29 @@ public class PiggyBanksController(LedgerDbContext db): ControllerBase {
         return NoContent();
     }
 
+    [HttpGet("entries")]
+    public async Task<IActionResult> ListAllPiggyBankEntries([FromQuery] QueryByMonth byMonth) {
+        if (!byMonth.IsValidQuery()) {
+            return BadRequest("Month and Year query parameters are required");
+        }
+        var entries = await db.PiggyBankEntries
+            .Where(e => e.Date.Year == byMonth.Year && e.Date.Month == byMonth.Month)
+            .Select(e => new {
+                e.Id,
+                e.Date,
+                e.Amount,
+                e.Description,
+                PiggyBank = new {
+                    e.PiggyBank!.Id,
+                    e.PiggyBank.Name
+                }
+            })
+            .ToArrayAsync();
 
-    // TODO: create piggy bank entry CRUD
+        return Ok(entries);
+    }
+
+
     [HttpGet("{id:guid}/entries")]
     public async Task<IActionResult> ListPiggyBankEntries(Guid id, [FromQuery] QueryByMonth byMonth) {
         if (!byMonth.IsValidQuery()) {

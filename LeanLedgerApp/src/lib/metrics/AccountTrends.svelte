@@ -24,7 +24,6 @@
     let params = $derived(monthManager.params);
 
     async function load() {
-        // TODO: implement API
         const resp = await apiClient.get<AccountTrends>(
             `Metrics/account-trends?${params}`,
         );

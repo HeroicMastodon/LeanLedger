@@ -18,11 +18,31 @@
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import PiggyBankEntryForm from "$lib/piggybanks/PiggyBankEntryForm.svelte";
     import ProgressPercent from "$lib/components/ProgressPercent.svelte";
+    import { sumUp } from "$lib";
 
     let id = $page.params.id;
     let piggy = $state<PiggyBankWithEntries>();
     let isSaving = $state(false);
     let newEntry = $state(defaultPiggyBankEntry());
+
+    const allocated = $derived(
+        sumUp(
+            piggy?.entries?.filter((e) => e.amount > 0) ?? [],
+            (e) => e.amount,
+        ),
+    );
+    const disbursed = $derived(
+        sumUp(
+            piggy?.entries?.filter((e) => e.amount < 0) ?? [],
+            (e) => e.amount,
+        ),
+    );
+    const totalChange = $derived(
+        sumUp(
+            piggy?.entries ?? [],
+            (e) => e.amount,
+        ),
+    );
 
     async function load() {
         const resp = await apiClient.get<PiggyBankWithEntries>(
@@ -31,8 +51,8 @@
         piggy = resp.data;
         newEntry.piggyBank = {
             id: piggy.id,
-            name: piggy.name
-        }
+            name: piggy.name,
+        };
     }
 
     // allocations are returned from the API on piggy.allocations — use directly in the template
@@ -52,7 +72,6 @@
 
         return false;
     }
-
 
     async function saveEntry() {
         if (!piggy) return true;
@@ -105,6 +124,10 @@
                 >
                     <PiggyBankEntryForm bind:entry={newEntry} />
                 </FormButton>
+
+                <h4 class="h4">Allocated: <Money amount={allocated} /></h4>
+                <h4 class="h4">Disbursed: <Money amount={disbursed} /></h4>
+                <h4 class="h4">Total Change: <Money amount={totalChange} /></h4>
             </div>
             <PiggyBankEntries entries={piggy.entries} entrySaved={load} />
         </div>

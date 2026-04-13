@@ -24,6 +24,7 @@
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import { faExternalLink, faPlus } from "@fortawesome/free-solid-svg-icons";
     import PiggyBankEntryForm from "$lib/piggybanks/PiggyBankEntryForm.svelte";
+    import PiggyBanks from "$lib/metrics/PiggyBanks.svelte";
 
     type BudgetCategory = {
         category: string;
@@ -200,24 +201,29 @@
 
     async function loadPiggyBankEntries() {
         try {
-        const res =
-            await apiClient.get<PiggyBankEntry[]>(`piggybanks/entries?${monthManager.params}`);
-        piggyBankEntries = res.data;
+            const res = await apiClient.get<PiggyBankEntry[]>(
+                `piggybanks/entries?${monthManager.params}`,
+            );
+            piggyBankEntries = res.data;
         } catch (e) {
             piggyBankEntries = [];
         }
     }
 
     let piggyEntry = $state<PiggyBankEntry>(defaultPiggyBankEntry());
+    let entryError = $state<string>();
 
     async function savePiggyEntry() {
-        if (!piggyEntry.id) return true;
+        entryError = undefined;
 
-        await apiClient.post(`piggybanks/entries`, piggyEntry);
+        if (!piggyEntry.piggyBank?.id) {
+            entryError = "No piggy bank was specified."
+            return false;
+        }
+
+        await apiClient.post(`piggybanks/${piggyEntry.piggyBank.id}/entries`, piggyEntry);
         piggyEntry = defaultPiggyBankEntry();
-        const res =
-            await apiClient.get<PiggyBankEntry[]>(`piggybanks/entries`);
-        piggyBankEntries = res.data;
+        await loadPiggyBankEntries();
 
         return true;
     }
@@ -296,6 +302,7 @@
                 icon={faPlus}
                 text="New Entry"
                 onConfirm={savePiggyEntry}
+                error={entryError}
             >
                 <PiggyBankEntryForm bind:entry={piggyEntry} />
             </FormButton>
@@ -307,7 +314,7 @@
                 <Fa icon={faExternalLink} />
             </a>
         </div>
-        <PiggyBankEntries entries={piggyBankEntries} showPiggyBank />
+        <PiggyBankEntries entries={piggyBankEntries} showPiggyBank entrySaved={loadPiggyBankEntries} />
     </Card>
     <Card class="mb-4">
         <BudgetItem

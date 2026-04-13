@@ -37,18 +37,27 @@
 
         return true;
     }
+
+    async function deleteEntry() {
+        if (!selectedEntry) return;
+        await apiClient.delete(
+            `piggybanks/${selectedEntry.piggyBank.id}/entries/${selectedEntry.id}`,
+        );
+        dialog.close();
+        entrySaved();
+    }
 </script>
 
 <div class="table-container">
     <table class="table table-compact table-hover w-full">
         <thead>
             <tr>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Amount</th>
                 {#if showPiggyBank}
                     <th>Piggy Bank</th>
                 {/if}
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Description</th>
                 <!-- <th>Transaction</th> -->
                 <th></th>
             </tr>
@@ -56,14 +65,14 @@
         <tbody>
             {#each entries as entry}
                 <tr>
-                    {#if showPiggyBank}
-                        <td>{entry.piggyBank.name}</td>
-                    {/if}
+                    <td> {entry.description}</td>
                     <td>
                         {entry.date}
                     </td>
                     <td><Money amount={entry.amount} /></td>
-                    <td> {entry.description}</td>
+                    {#if showPiggyBank}
+                        <td>{entry.piggyBank.name}</td>
+                    {/if}
                     <!-- <td> -->
                     <!--     {#if entry.transaction} -->
                     <!--         <a -->
@@ -93,14 +102,24 @@
     {#if selectedEntry}
         <div class="flex flex-col gap-4">
             <PiggyBankEntryForm bind:entry={selectedEntry} />
-            <div class="flex gap-4 items-center justify-end">
-                <button
-                    onclick={() => dialog.close()}
-                    class="btn variant-outline-error">Cancel</button
-                >
-                <button onclick={saveEntry} class="btn variant-filled-success"
-                    >Save</button
-                >
+            <div class="flex gap-4 items-center justify-between">
+                <button class="btn variant-filled-error" onclick={deleteEntry}>
+                    Delete
+                </button>
+                <div class="flex gap-4 items-center justify-end">
+                    <button
+                        onclick={() => dialog.close()}
+                        class="btn variant-outline-error"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onclick={saveEntry}
+                        class="btn variant-filled-success"
+                    >
+                        Save
+                    </button>
+                </div>
             </div>
         </div>
     {:else}

@@ -18,7 +18,6 @@ public class PiggyEntryDbConfig: IEntityTypeConfiguration<PiggyBankEntry> {
     public void Configure(EntityTypeBuilder<PiggyBankEntry> builder) {
         _ = builder.HasKey(a => a.Id);
 
-        // TODO: Test that deleting a piggy bank deletes its entries
         _ = builder.HasOne(a => a.PiggyBank)
             .WithMany(pb => pb.Entries)
             .HasForeignKey(a => a.PiggyBankId)
