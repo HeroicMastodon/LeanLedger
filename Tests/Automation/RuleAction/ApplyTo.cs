@@ -1,52 +1,46 @@
 namespace Tests.Automation.RuleAction;
 
+using System.Diagnostics;
 using LeanLedgerServer.Automation;
 using LeanLedgerServer.Transactions;
 
 public class ApplyTo {
     [TestCase(
-        RuleActionType.Append,
+        nameof(Append),
         RuleTransactionField.Description,
         "starting",
         "new value",
         "startingnew value"
     )]
     [TestCase(
-        RuleActionType.Append,
+        nameof(Append),
         RuleTransactionField.Description,
         null,
         "new value",
         "new value"
     )]
     [TestCase(
-        RuleActionType.Set,
+        nameof(Set),
         RuleTransactionField.Description,
         "starting",
         "new value",
         "new value"
     )]
     [TestCase(
-        RuleActionType.Clear,
+        nameof(Clear),
         RuleTransactionField.Description,
         "starting",
         null,
-        null
-    )]
-    [TestCase(
-        RuleActionType.Clear,
-        RuleTransactionField.Description,
-        "starting",
-        "unused",
         null
     )]
     public void GivenAnActionTypeFieldAndValue_SetTransactionFieldAppropriately(
-        RuleActionType actionType,
+        string actionType,
         RuleTransactionField field,
         string? startingValue,
         string? actionValue,
         string? expectedValue
     ) {
-        var action = new RuleAction(actionType, field, actionValue);
+        var action = CreateAction(actionType, field, actionValue);
         var transaction = new Transaction {
             UniqueHash = "",
             Id = Guid.NewGuid()
@@ -54,15 +48,12 @@ public class ApplyTo {
 
         field.ApplyValueTo(transaction, startingValue);
 
-        action.ApplyTo(transaction);
-        var result = field.GetValueFrom(transaction);
-
-        Assert.That(result, Is.EqualTo(expectedValue));
+        RunAndAssert(action, transaction, expectedValue);
     }
 
     [Test]
     public void WhenActionIsDeleteTransaction_TransactionIsDeletedIsTrue() {
-        var action = new RuleAction(RuleActionType.DeleteTransaction, null, null);
+        var action = CreateAction(nameof(DeleteTransaction));
         var transaction = new Transaction {
             UniqueHash = "",
             Id = Guid.NewGuid()
@@ -71,5 +62,27 @@ public class ApplyTo {
         action.ApplyTo(transaction);
 
         Assert.That(transaction.IsDeleted, Is.True);
+    }
+
+    private RuleAction CreateAction(string actionType, RuleTransactionField? field = null, string? value = null)
+        => actionType switch {
+            "Append" => new Append(field!.Value, value!),
+            "Set" => new Set(field!.Value, value!),
+            "Clear" => new Clear(field!.Value),
+            "DeleteTransaction" => new DeleteTransaction(),
+            _ => throw new UnreachableException()
+        };
+
+    private void RunAndAssert(RuleAction action, Transaction transaction, string? expectedValue) {
+        action.ApplyTo(transaction);
+        var result = action switch {
+            Append append => append.Field.GetValueFrom(transaction),
+            Set set => set.Field.GetValueFrom(transaction),
+            Clear clear => clear.Field.GetValueFrom(transaction),
+            DeleteTransaction => null,
+            _ => throw new UnreachableException()
+        };
+
+        Assert.That(result, Is.EqualTo(expectedValue));
     }
 }

@@ -1,11 +1,8 @@
 namespace LeanLedgerServer.Automation;
 
-using System.Diagnostics;
-using System.Globalization;
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
 
@@ -46,10 +43,10 @@ public class RulesController(
         var newRule = new Rule {
             Id = Guid.NewGuid()
         };
-        mapper.Map(request, newRule);
+        _ = mapper.Map(request, newRule);
         newRule.RuleGroupName = newRuleGroupName;
-        await dbContext.AddAsync(newRule);
-        await dbContext.SaveChangesAsync();
+        _ = await dbContext.AddAsync(newRule);
+        _ = await dbContext.SaveChangesAsync();
 
         return Ok(newRule);
     }
@@ -70,10 +67,10 @@ public class RulesController(
             return NotFound();
         }
 
-        mapper.Map(request, rule);
+        _ = mapper.Map(request, rule);
         rule.RuleGroupName = newRuleGroupName;
-        dbContext.Update(rule);
-        await dbContext.SaveChangesAsync();
+        _ = dbContext.Update(rule);
+        _ = await dbContext.SaveChangesAsync();
 
         return Ok(rule);
     }
@@ -88,8 +85,8 @@ public class RulesController(
 
         rule.IsDeleted = true;
 
-        dbContext.Update(rule);
-        await dbContext.SaveChangesAsync();
+        _ = dbContext.Update(rule);
+        _ = await dbContext.SaveChangesAsync();
 
         return NoContent();
     }
@@ -174,7 +171,5 @@ public record RuleRequest(
 public record RunRuleRequest(string StartDate, string EndDate);
 
 public class RuleProfile: Profile {
-    public RuleProfile() {
-        CreateMap<RuleRequest, Rule>();
-    }
+    public RuleProfile() => _ = CreateMap<RuleRequest, Rule>();
 }
