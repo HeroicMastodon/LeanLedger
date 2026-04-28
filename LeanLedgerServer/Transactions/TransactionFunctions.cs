@@ -1,5 +1,6 @@
 namespace LeanLedgerServer.Transactions;
 
+using System.Diagnostics;
 using AutoMapper;
 using Automation;
 using Common;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 public static class TransactionFunctions {
     // TODO: we will likely want to figure out how to express that a transaction has been affected by a rule
-    public static async Task<Result<Transaction>> CreateNewTransaction(
+    public static async Task<Result<CreatedTransaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
         IMapper mapper,
@@ -38,14 +39,15 @@ public static class TransactionFunctions {
                     try {
                         var effects = rules
                             .Where(r => r.ShouldTriggerFor(transaction))
-                            .SelectMany(r => r.RunActionsOn(transaction))
-                            .ToList();
+                            .SelectMany(r => r.RunActionsOn(transaction));
+
+                        return new CreatedTransaction(transaction, effects).AsResult();
                     } catch (Exception e) {
                         return new BadRule(e);
                     }
                 }
 
-                return transaction.AsResult();
+                return new CreatedTransaction(transaction).AsResult();
             }
         );
 
@@ -88,6 +90,22 @@ public static class TransactionFunctions {
             ? transactionType
             : new InvalidRequest("Transaction", problemDetail);
     }
+
+    public static async Task HandleRuleEffects(
+        LedgerDbContext dbContext,
+        Transaction transaction,
+        IEnumerable<RuleEffect>? effects
+    ) {
+        if (effects is null) {
+            return;
+        }
+
+        foreach (var effect in effects) {
+            if (effect is CreatedPiggyEntry entry) {
+                _ = await dbContext.PiggyBankEntries.AddAsync(entry.Entry);
+            }
+        }
+    }
 }
 
 public record ConflictingHash(string Hash, Transaction Transaction): Err() {
@@ -113,4 +131,4 @@ public record BadRule(Exception Exception): Err() {
     );
 }
 
-public record CreatedTransaction(Transaction Transaction, List<RuleEffect> Effects);
+public record CreatedTransaction(Transaction Transaction, IEnumerable<RuleEffect>? Effects = null);

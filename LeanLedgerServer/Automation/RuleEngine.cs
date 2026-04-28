@@ -23,9 +23,16 @@ public class RuleEngine(LedgerDbContext dbContext) {
             startDate,
             endDate
         );
-        var effects = transactions.Select(rule.RunActionsOn);
+        var effects = transactions.Select(t => (t, rule.RunActionsOn(t)));
+        foreach (var (transaction, transactionEffects) in effects) {
+            await TransactionFunctions.HandleRuleEffects(
+                dbContext,
+                transaction,
+                transactionEffects
+            );
+        }
         dbContext.UpdateRange(transactions);
-        await dbContext.SaveChangesAsync();
+        _ = await dbContext.SaveChangesAsync();
 
         return transactions.Count;
     }

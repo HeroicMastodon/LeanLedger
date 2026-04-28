@@ -2,6 +2,7 @@ namespace LeanLedgerServer.Transactions;
 
 using AutoMapper;
 using Common;
+using LeanLedgerServer.Automation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static Results;
@@ -10,12 +11,12 @@ using static TransactionFunctions;
 public static class Endpoints {
     public static void MapTransactions(this IEndpointRouteBuilder endpoints) {
         var transactions = endpoints.MapGroup("transactions");
-        transactions.MapGet("{id:guid}", GetTransaction);
-        transactions.MapGet("", ListTransactions);
-        transactions.MapGet("search", SearchTransactions);
-        transactions.MapPost("", CreateTransaction);
-        transactions.MapPut("{id:guid}", UpdateTransaction);
-        transactions.MapDelete("{id:guid}", DeleteTransaction);
+        _ = transactions.MapGet("{id:guid}", GetTransaction);
+        _ = transactions.MapGet("", ListTransactions);
+        _ = transactions.MapGet("search", SearchTransactions);
+        _ = transactions.MapPost("", CreateTransaction);
+        _ = transactions.MapPut("{id:guid}", UpdateTransaction);
+        _ = transactions.MapDelete("{id:guid}", DeleteTransaction);
     }
 
     private static async Task<IResult> GetTransaction(Guid id, [FromServices] LedgerDbContext db) {
@@ -102,9 +103,15 @@ public static class Endpoints {
 
         return await CreateNewTransaction(newTransaction, db.Transactions, mapper, rules)
             .ThenAsync(
-                async transaction => {
-                    db.Transactions.Add(transaction);
-                    await db.SaveChangesAsync();
+                async createdTransaction => {
+                    var transaction = createdTransaction.Transaction;
+                    _ = db.Transactions.Add(transaction);
+                    await HandleRuleEffects(
+                        db,
+                        transaction,
+                        createdTransaction.Effects
+                    );
+                    _ = await db.SaveChangesAsync();
 
                     return Created($"/api/transactions/{transaction.Id}", transaction);
                 }
@@ -133,10 +140,10 @@ public static class Endpoints {
                 }
 
                 transaction.Type = type;
-                mapper.Map(transactionUpdate, transaction);
+                _ = mapper.Map(transactionUpdate, transaction);
 
-                db.Update(transaction);
-                await db.SaveChangesAsync();
+                _ = db.Update(transaction);
+                _ = await db.SaveChangesAsync();
 
                 return Ok(transaction);
             }
@@ -154,8 +161,8 @@ public static class Endpoints {
         }
 
         transaction.IsDeleted = true;
-        db.Update(transaction);
-        await db.SaveChangesAsync();
+        _ = db.Update(transaction);
+        _ = await db.SaveChangesAsync();
 
         return NoContent();
     }
@@ -179,7 +186,7 @@ public record TransactionRequest(
 
 public class TransactionProfile: Profile {
     public TransactionProfile() {
-        CreateMap<TransactionRequest, Transaction>()
+        _ = CreateMap<TransactionRequest, Transaction>()
             .ForMember(t => t.Type, opt => opt.Ignore());
     }
 }

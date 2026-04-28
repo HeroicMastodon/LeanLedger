@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Accounts;
 using AutoMapper;
 using Common;
+using LeanLedgerServer.Automation;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
 using static Transactions.TransactionFunctions;
@@ -64,8 +65,16 @@ public class Importer(
                     rules
                 )
                 .ThenAsync(
-                    async transaction => {
-                        await dbContext.AddAsync(transaction);
+                    async createdTransaction => {
+                        var transaction = createdTransaction.Transaction;
+                        _ = await dbContext.AddAsync(transaction);
+
+                        await HandleRuleEffects(
+                            dbContext,
+                            transaction,
+                            rules.SelectMany(r => r.RunActionsOn(transaction))
+                        );
+
                         return transaction;
                     }
                 );
@@ -73,7 +82,7 @@ public class Importer(
             transactions.Add(transaction);
         }
 
-        await dbContext.SaveChangesAsync();
+        _ = await dbContext.SaveChangesAsync();
 
         return transactions
             .Select(
