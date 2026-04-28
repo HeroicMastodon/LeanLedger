@@ -59,7 +59,7 @@ public class ApplyTo {
             Id = Guid.NewGuid()
         };
 
-        action.ApplyTo(transaction);
+        action.RunOn(transaction);
 
         Assert.That(transaction.IsDeleted, Is.True);
     }
@@ -74,7 +74,7 @@ public class ApplyTo {
         };
 
     private void RunAndAssert(RuleAction action, Transaction transaction, string? expectedValue) {
-        action.ApplyTo(transaction);
+        action.RunOn(transaction);
         var result = action switch {
             Append append => append.Field.GetValueFrom(transaction),
             Set set => set.Field.GetValueFrom(transaction),

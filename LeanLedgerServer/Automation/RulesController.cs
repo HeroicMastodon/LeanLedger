@@ -11,7 +11,7 @@ using Transactions;
 public class RulesController(
     LedgerDbContext dbContext,
     IMapper mapper,
-    RuleService ruleService
+    RuleEngine ruleEngine
 ): Controller {
     [HttpGet]
     public async Task<IActionResult> ListRules() {
@@ -40,6 +40,7 @@ public class RulesController(
             );
         }
 
+        // TODO: Add validation
         var newRule = new Rule {
             Id = Guid.NewGuid()
         };
@@ -67,6 +68,7 @@ public class RulesController(
             return NotFound();
         }
 
+        // TODO: Add validation
         _ = mapper.Map(request, rule);
         rule.RuleGroupName = newRuleGroupName;
         _ = dbContext.Update(rule);
@@ -107,12 +109,12 @@ public class RulesController(
             return NotFound();
         }
 
-        var results = await ruleService.FindMatchingTransactionsFor(
+        var results = await ruleEngine.FindMatchingTransactionsFor(
             rule,
             startDate,
             endDate,
             limit,
-            includeAccounts:true
+            includeAccounts: true
         );
 
         return Ok(results.Select(TableTransaction.FromTransaction));
@@ -130,7 +132,7 @@ public class RulesController(
             return NotFound();
         }
 
-        var changedCount = await ruleService.Run(rule, request.StartDate, request.EndDate);
+        var changedCount = await ruleEngine.Run(rule, request.StartDate, request.EndDate);
 
         return Ok(
             new {
@@ -145,7 +147,7 @@ public class RulesController(
         var changedCount = 0;
 
         foreach (var rule in rules) {
-            changedCount += await ruleService.Run(
+            changedCount += await ruleEngine.Run(
                 rule,
                 request.StartDate,
                 request.EndDate

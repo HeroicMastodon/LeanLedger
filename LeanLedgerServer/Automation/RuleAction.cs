@@ -2,27 +2,31 @@ namespace LeanLedgerServer.Automation;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LeanLedgerServer.PiggyBanks;
 using LeanLedgerServer.Transactions;
 
 [JsonConverter(typeof(RuleActionConverter))]
 public abstract record RuleAction() {
-    public abstract void ApplyTo(Transaction transaction);
+    // TODO: Remove these methods and just use static dispatch from the call site
+    public abstract RuleEffect RunOn(Transaction transaction);
 }
 
 public record Append(
     RuleTransactionField Field,
     string Value
 ): RuleAction {
-    public override void ApplyTo(Transaction transaction) {
+    public override RuleEffect RunOn(Transaction transaction) {
         var transactionValue = Field.GetValueFrom(transaction);
 
         if (transactionValue is null) {
             Field.ApplyValueTo(transaction, Value);
-            return;
+        } else {
+            transactionValue += Value;
+            Field.ApplyValueTo(transaction, transactionValue + Value);
         }
 
-        transactionValue += Value;
-        Field.ApplyValueTo(transaction, transactionValue);
+
+        return new ChangedField(Field, transactionValue, Field.GetValueFrom(transaction));
     }
 }
 
@@ -30,17 +34,41 @@ public record Set(
     RuleTransactionField Field,
     string Value
 ): RuleAction {
-    public override void ApplyTo(Transaction transaction) => Field.ApplyValueTo(transaction, Value);
+    public override RuleEffect RunOn(Transaction transaction) {
+        var oldValue = Field.GetValueFrom(transaction);
+        Field.ApplyValueTo(transaction, Value);
+        return new ChangedField(Field, oldValue, Field.GetValueFrom(transaction));
+    }
 }
 
 public record Clear(RuleTransactionField Field): RuleAction {
-    public override void ApplyTo(Transaction transaction) => Field.ApplyValueTo(transaction, null);
+    public override RuleEffect RunOn(Transaction transaction) {
+        var oldValue = Field.GetValueFrom(transaction);
+        Field.ApplyValueTo(transaction, null);
+
+        return new ChangedField(Field, oldValue, null);
+    }
 }
 
 public record DeleteTransaction(): RuleAction {
-    public override void ApplyTo(Transaction transaction) => transaction.IsDeleted = true;
+    public override RuleEffect RunOn(Transaction transaction) {
+        transaction.IsDeleted = true;
+        return new DeletedTransaction();
+    }
 }
 
+public record CreatePiggyEntry(Guid PiggyBankId, decimal Amount, string Description): RuleAction {
+    public override RuleEffect RunOn(Transaction transaction) {
+        var entry = new PiggyBankEntry {
+            PiggyBankId = PiggyBankId,
+            Amount = Amount,
+            Description = Description,
+            Date = transaction.Date,
+        };
+
+        return new CreatedPiggyEntry(entry);
+    }
+}
 
 public static class RuleActionMap {
     private static readonly Dictionary<string, Type> _byName;

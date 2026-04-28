@@ -7,7 +7,11 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
 
-public class RuleService(LedgerDbContext dbContext) {
+public class RuleEngine(LedgerDbContext dbContext) {
+    // TODO: I need to change how this service works a bit
+    // I need to support running a single rule on a transaction
+    // This service probably shouldn't save changes? I don't know, need to revisit the abstraction here
+    // This will be quite the refactor
     public async Task<int> Run(Rule rule, string start, string end) {
         var (startDate, endDate) = (
             DateOnly.Parse(start, CultureInfo.InvariantCulture),
@@ -19,7 +23,7 @@ public class RuleService(LedgerDbContext dbContext) {
             startDate,
             endDate
         );
-        transactions.ForEach(rule.ApplyActionsTo);
+        var effects = transactions.Select(rule.RunActionsOn);
         dbContext.UpdateRange(transactions);
         await dbContext.SaveChangesAsync();
 

@@ -32,13 +32,14 @@ public static class TransactionFunctions {
                     Type = transactionType,
                     DateImported = request.ImportDate
                 };
-                mapper.Map(request, transaction);
+                _ = mapper.Map(request, transaction);
 
                 if (rules is not null) {
                     try {
-                        foreach (var rule in rules.Where(r => r.ShouldTriggerFor(transaction))) {
-                            rule.ApplyActionsTo(transaction);
-                        }
+                        var effects = rules
+                            .Where(r => r.ShouldTriggerFor(transaction))
+                            .SelectMany(r => r.RunActionsOn(transaction))
+                            .ToList();
                     } catch (Exception e) {
                         return new BadRule(e);
                     }
@@ -111,3 +112,5 @@ public record BadRule(Exception Exception): Err() {
         detail: Exception.Message
     );
 }
+
+public record CreatedTransaction(Transaction Transaction, List<RuleEffect> Effects);

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/rule-groups")]
 public class RuleGroupsController(
     LedgerDbContext dbContext,
-    RuleService ruleService
+    RuleEngine ruleService
 ): Controller {
     [HttpGet]
     public async Task<IActionResult> ListRuleGroups() {

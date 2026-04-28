@@ -21,7 +21,7 @@ builder.Services.AddDbContext<LedgerDbContext>(
 );
 builder.Services.AddAutoMapper(_ => { }, Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<Importer>();
-builder.Services.AddScoped<RuleService>();
+builder.Services.AddScoped<RuleEngine>();
 builder.Services.AddControllers()
     .AddJsonOptions(
         options => {

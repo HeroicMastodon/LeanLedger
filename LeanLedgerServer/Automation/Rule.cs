@@ -3,6 +3,7 @@ namespace LeanLedgerServer.Automation;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json.Serialization;
+using LeanLedgerServer.PiggyBanks;
 using Transactions;
 
 public class Rule {
@@ -21,8 +22,8 @@ public class Rule {
         ? Triggers.All(t => t.Matches(transaction))
         : Triggers.Any(t => t.Matches(transaction));
 
-    public void ApplyActionsTo(Transaction transaction)
-        => Actions.ForEach(a => a.ApplyTo(transaction));
+    public IEnumerable<RuleEffect> RunActionsOn(Transaction transaction)
+        => Actions.Select(a => a.RunOn(transaction));
 }
 
 public class RuleGroup {
@@ -30,6 +31,7 @@ public class RuleGroup {
     public List<Rule> Rules { get; set; } = [];
 }
 
+// TODO: consider converting this into a DU and tying it with the value for better type safety.
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum RuleTransactionField {
     Description,
@@ -93,3 +95,8 @@ public static class TransactionRuleFieldFunctions {
         }
     }
 }
+
+public abstract record RuleEffect();
+public record ChangedField(RuleTransactionField Field, object? OldValue, object? NewValue): RuleEffect;
+public record DeletedTransaction(): RuleEffect;
+public record CreatedPiggyEntry(PiggyBankEntry Entry): RuleEffect;
