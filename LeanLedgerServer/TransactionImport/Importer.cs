@@ -6,7 +6,6 @@ using System.Text.Json.Serialization;
 using Accounts;
 using AutoMapper;
 using Common;
-using LeanLedgerServer.Automation;
 using Microsoft.EntityFrameworkCore;
 using Transactions;
 using static Transactions.TransactionFunctions;
@@ -15,10 +14,6 @@ public class Importer(
     LedgerDbContext dbContext,
     IMapper mapper
 ) {
-    // TODO: retest this post refactor
-    // TODO: we will need some way to indicate that a transaction was affected by a rule
-    // ? We could do a union thing
-    // ? We could also keep a history of modifications to transactions
     public async Task<List<ImportedTransaction>> ImportCsv(
         Account account,
         ImportSettings settings,
@@ -67,7 +62,9 @@ public class Importer(
                 .ThenAsync(
                     async createdTransaction => {
                         var transaction = createdTransaction.Transaction;
-                        _ = await dbContext.AddAsync(transaction);
+                        if (!transaction.IsDeleted) {
+                            _ = await dbContext.AddAsync(transaction);
+                        }
 
                         await HandleRuleEffects(
                             dbContext,
@@ -94,8 +91,10 @@ public class Importer(
                         t.Id
                     ),
                     error: e => e switch {
+                        // TODO: Change these errors and the ok branch into an ImportResult DU
+                        // The current ImportResult enum should be renamed to ImportStatus or something
                         ConflictingHash err => new ImportedTransaction(
-                            ImportResult.Failed,
+                            ImportResult.Warning,
                             index,
                             $"Transaction conflicts with existing transaction {err.Transaction}",
                             err.Transaction.Id

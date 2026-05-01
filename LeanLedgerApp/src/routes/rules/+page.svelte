@@ -1,28 +1,33 @@
 <script lang="ts">
-    import {apiClient} from "$lib/apiClient";
-    import {ProgressBar} from "@skeletonlabs/skeleton";
-    import {actionToString, defaultRule, type Rule, type RuleGroup, triggerToString} from "$lib/rules";
+    import { apiClient } from "$lib/apiClient";
+    import { ProgressBar } from "@skeletonlabs/skeleton";
+    import {
+        defaultRule,
+        isAccountField,
+        type Rule,
+        type RuleAction,
+        type RuleGroup,
+        triggerToString,
+    } from "$lib/rules";
     import SimpleExpandingList from "$lib/components/SimpleExpandingList.svelte";
-    import {Dialog} from "$lib/dialog.svelte";
+    import { Dialog } from "$lib/dialog.svelte";
     import DefaultDialog from "$lib/components/dialog/DefaultDialog.svelte";
     import LabeledInput from "$lib/components/forms/LabeledInput.svelte";
     import FormButton from "$lib/components/dialog/FormButton.svelte";
     import RunRuleButton from "$lib/rules/RunRuleButton.svelte";
     import DeleteConfirmationButton from "$lib/components/dialog/DeleteConfirmationButton.svelte";
-    import {goto} from "$app/navigation";
-    import type {SelectOption} from "$lib";
-    import {loadAccountOptions} from "$lib/transactions";
-    import {Fa} from "svelte-fa";
-    import {faFolderPlus} from "@fortawesome/free-solid-svg-icons/faFolderPlus";
-    import {faEdit} from "@fortawesome/free-solid-svg-icons/faEdit";
-    import {faRunning} from "@fortawesome/free-solid-svg-icons/faRunning";
-    import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
-    import {faPlusCircle} from "@fortawesome/free-solid-svg-icons/faPlusCircle";
+    import { goto } from "$app/navigation";
+    import { formatMoney, splitPascal, type SelectOption } from "$lib";
+    import { loadAccountOptions } from "$lib/transactions";
+    import { Fa } from "svelte-fa";
+    import { faFolderPlus } from "@fortawesome/free-solid-svg-icons/faFolderPlus";
+    import { faEdit } from "@fortawesome/free-solid-svg-icons/faEdit";
+    import { faPlusCircle } from "@fortawesome/free-solid-svg-icons/faPlusCircle";
 
     let accounts = $state<SelectOption<string>[]>([]);
     let ruleGroups = $state(load());
     function accountNameFromId(id?: string) {
-        return accounts.find(a => a.value === id)?.display;
+        return accounts.find((a) => a.value === id)?.display;
     }
 
     async function load() {
@@ -32,11 +37,13 @@
     }
 
     let ruleGroupDialog = new Dialog();
-    let ruleGroupUpdate = $state<{ previous?: string; current: string; }>({
+    let ruleGroupUpdate = $state<{ previous?: string; current: string }>({
         previous: undefined,
-        current: ""
-    })
-    const ruleGroupDialogHeader = $derived(ruleGroupUpdate.previous ? "Update" : "New");
+        current: "",
+    });
+    const ruleGroupDialogHeader = $derived(
+        ruleGroupUpdate.previous ? "Update" : "New",
+    );
 
     function openRuleGroupDialog(previousValue?: string) {
         ruleGroupUpdate.previous = previousValue;
@@ -45,10 +52,13 @@
     }
 
     async function saveRuleGroup() {
-        console.log($state.snapshot(ruleGroupUpdate))
-        const payload = {name: ruleGroupUpdate.current.trim()};
+        console.log($state.snapshot(ruleGroupUpdate));
+        const payload = { name: ruleGroupUpdate.current.trim() };
         if (ruleGroupUpdate.previous) {
-            const res = await apiClient.put(`rule-groups/${ruleGroupUpdate.previous}`, payload);
+            const res = await apiClient.put(
+                `rule-groups/${ruleGroupUpdate.previous}`,
+                payload,
+            );
         } else {
             const res = await apiClient.post(`rule-groups`, payload);
         }
@@ -56,18 +66,26 @@
         ruleGroups = load();
     }
 
-    let changedCount: Promise<number | undefined> = $state(Promise.resolve(undefined));
+    let changedCount: Promise<number | undefined> = $state(
+        Promise.resolve(undefined),
+    );
 
     function runAllRules(startDate: string, endDate: string) {
         changedCount = apiClient
-            .post<{ count: number }>("rules/run-all", {startDate, endDate})
-            .then(res => res.data.count);
+            .post<{ count: number }>("rules/run-all", { startDate, endDate })
+            .then((res) => res.data.count);
     }
 
-    function runRuleGroup(name: string | undefined, startDate: string, endDate: string) {
+    function runRuleGroup(
+        name: string | undefined,
+        startDate: string,
+        endDate: string,
+    ) {
         changedCount = apiClient
-            .post<{ count: number }>(`rule-groups/run`, {startDate, endDate, ruleGroupName: name})
-            .then(res => res.data.count);
+            .post<{
+                count: number;
+            }>(`rule-groups/run`, { startDate, endDate, ruleGroupName: name })
+            .then((res) => res.data.count);
     }
 
     async function deleteRuleGroup(name: string) {
@@ -82,17 +100,36 @@
         const res = await apiClient.post<Rule>(`rules`, {
             ...defaultRule(),
             ruleGroupName,
-            name: newRuleName
-        })
+            name: newRuleName,
+        });
 
         await goto(`/rules/${res.data.id}`);
         return true;
     }
+
+function actionToString(action: RuleAction) {
+    let result = splitPascal(action.actionType);
+
+    if (action.actionType === "Set" || action.actionType === "Append") {
+        const val = isAccountField(action.field) ? accountNameFromId(action.value) : action.value;
+        result += ` ${action.field} to ${val}`;
+    } else if (action.actionType === "Clear") {
+        result += ` ${action.field}`;
+    } else if (action.actionType === "CreatePiggyEntry") {
+        const piggyIdentifier = action.piggyBankName ? `${action.piggyBankName} (${action.piggyBankId})` : action.piggyBankId;
+        result += ` in ${piggyIdentifier}: ${action.description} for ${formatMoney(action.amount)} `;
+    }
+
+    return result;
+}
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
     <h1 class="h1">Rules</h1>
-    <button onclick={() => openRuleGroupDialog()} class="btn text-secondary-500 p-0">
+    <button
+        onclick={() => openRuleGroupDialog()}
+        class="btn text-secondary-500 p-0"
+    >
         <Fa icon={faFolderPlus} />
     </button>
     <RunRuleButton
@@ -114,7 +151,7 @@
                         <button
                             class="btn text-tertiary-500 p-0"
                             onclick={() => openRuleGroupDialog(group.name)}
-                        ><Fa icon={faEdit} />
+                            ><Fa icon={faEdit} />
                         </button>
                         <DeleteConfirmationButton
                             onDelete={() => deleteRuleGroup(group.name ?? "")}
@@ -123,7 +160,8 @@
                     <RunRuleButton
                         text="Run Rule Group"
                         countPromise={changedCount}
-                        run={(start, end) => runRuleGroup(group.name, start, end)}
+                        run={(start, end) =>
+                            runRuleGroup(group.name, start, end)}
                     />
                 </div>
                 <FormButton
@@ -143,36 +181,45 @@
             <div class="table-container">
                 <table class="table table-compact table-hover lg:table-fixed">
                     <thead>
-                    <tr>
-                        <th> Name</th>
-                        <th>Triggers when</th>
-                        <th>Rule will</th>
-                    </tr>
+                        <tr>
+                            <th> Name</th>
+                            <th>Triggers when</th>
+                            <th>Rule will</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    {#each group.rules as rule}
-                        <tr>
-                            <td>
-                                <a class="text-primary-400" href="rules/{rule.id}">
-                                    {rule.name}
-                                </a>
-                            </td>
-                            <td>
-                                <SimpleExpandingList
-                                    items={rule.triggers}
-                                    stringify={(trigger) => triggerToString(trigger, accountNameFromId(trigger.value))}
-                                    label="Triggers"
-                                />
-                            </td>
-                            <td>
-                                <SimpleExpandingList
-                                    items={rule.actions}
-                                    stringify={actionToString}
-                                    label="Actions"
-                                />
-                            </td>
-                        </tr>
-                    {/each}
+                        {#each group.rules as rule}
+                            <tr>
+                                <td>
+                                    <a
+                                        class="text-primary-400"
+                                        href="rules/{rule.id}"
+                                    >
+                                        {rule.name}
+                                    </a>
+                                </td>
+                                <td>
+                                    <SimpleExpandingList
+                                        items={rule.triggers}
+                                        stringify={(trigger) =>
+                                            triggerToString(
+                                                trigger,
+                                                accountNameFromId(
+                                                    trigger.value,
+                                                ),
+                                            )}
+                                        label="Triggers"
+                                    />
+                                </td>
+                                <td>
+                                    <SimpleExpandingList
+                                        items={rule.actions}
+                                        stringify={actionToString}
+                                        label="Actions"
+                                    />
+                                </td>
+                            </tr>
+                        {/each}
                     </tbody>
                 </table>
             </div>
@@ -187,8 +234,14 @@
                 label="Name"
             />
             <div class="flex flex-row gap-8">
-                <button onclick={() => ruleGroupDialog.close()} class="btn variant-outline-error">Cancel</button>
-                <button onclick={saveRuleGroup} class="btn variant-filled-success">Save</button>
+                <button
+                    onclick={() => ruleGroupDialog.close()}
+                    class="btn variant-outline-error">Cancel</button
+                >
+                <button
+                    onclick={saveRuleGroup}
+                    class="btn variant-filled-success">Save</button
+                >
             </div>
         </div>
     </DefaultDialog>

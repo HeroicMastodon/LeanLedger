@@ -1,13 +1,11 @@
 namespace LeanLedgerServer.Transactions;
 
-using System.Diagnostics;
 using AutoMapper;
 using Automation;
 using Common;
 using Microsoft.EntityFrameworkCore;
 
 public static class TransactionFunctions {
-    // TODO: we will likely want to figure out how to express that a transaction has been affected by a rule
     public static async Task<Result<CreatedTransaction>> CreateNewTransaction(
         TransactionRequest request,
         IQueryable<Transaction> transactions,
@@ -96,6 +94,10 @@ public static class TransactionFunctions {
         Transaction transaction,
         IEnumerable<RuleEffect>? effects
     ) {
+        if (transaction.IsDeleted) {
+            return;
+        }
+
         if (effects is null) {
             return;
         }

@@ -1,4 +1,4 @@
-import {type SelectOption, splitPascal} from "$lib";
+import { splitPascal } from "$lib";
 
 export type RuleTrigger = {
     field: RuleTransactionField;
@@ -16,15 +16,37 @@ export function defaultRuleTrigger(): RuleTrigger {
 }
 
 export type RuleAction = {
-    actionType: RuleActionType;
-    field?: RuleTransactionField;
-    value?: string;
+    actionType: "Set" | "Append";
+    field: RuleTransactionField;
+    value: string;
+} | {
+    actionType: "Clear";
+    field: RuleTransactionField;
+} | {
+    actionType: "DeleteTransaction";
+} | {
+    actionType: "CreatePiggyEntry";
+    piggyBankId: string;
+    amount: number;
+    description: string;
+    piggyBankName?: string;
 }
+// Create an array of rule action types from the RuleActionV2 type, not select options
+export type RuleActionType = RuleAction["actionType"];
+export const ruleActionTypes: RuleActionType[] = [
+    "Set",
+    "Append",
+    "Clear",
+    "DeleteTransaction",
+    "CreatePiggyEntry",
+] as const;
+
 
 export function defaultRuleAction(): RuleAction {
     return {
         actionType: "Set",
         field: "Description",
+        value: "",
     }
 }
 
@@ -48,13 +70,6 @@ export const ruleConditions = [
     "Exists",
 ] as const;
 export type RuleCondition = typeof ruleConditions[number];
-export const ruleActionTypes = [
-    "Append",
-    "Set",
-    "Clear",
-    "DeleteTransaction",
-] as const;
-export type RuleActionType = typeof ruleActionTypes[number];
 export type RuleGroup = {
     name?: string;
     rules: Rule[];
@@ -81,16 +96,10 @@ export function defaultRule(): Rule {
 export function triggerToString(trigger: RuleTrigger, accountName?: string) {
     return `When ${splitPascal(trigger.field)} ${trigger.not ? "Not " : ""}${splitPascal(trigger.condition)} ${accountName || trigger.value || ""}`
 }
-
-export function actionToString(action: RuleAction) {
-    let result = splitPascal(action.actionType);
-
-    if (action.field) {
-        result += ` ${action.field} to ${action.value}`
-    }
-
-    return result;
+export function isAccountField(field?: RuleTransactionField) {
+    return field === "Source" || field === "Destination";
 }
+
 
 export function debounce(callback: Function, wait = 300) {
     let timeout: ReturnType<typeof setTimeout>;

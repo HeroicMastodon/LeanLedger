@@ -7,7 +7,6 @@ using LeanLedgerServer.Transactions;
 
 [JsonConverter(typeof(RuleActionConverter))]
 public abstract record RuleAction() {
-    // TODO: Remove these methods and just use static dispatch from the call site
     public abstract RuleEffect RunOn(Transaction transaction);
 }
 
