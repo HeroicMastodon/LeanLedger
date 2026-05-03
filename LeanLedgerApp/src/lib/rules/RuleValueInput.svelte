@@ -18,7 +18,7 @@
         label,
     }: {
         field: RuleTransactionField;
-        value?: string;
+        value?: string | number;
         disabled?: boolean;
         dataListId: string;
         accounts: SelectOption<string>[];

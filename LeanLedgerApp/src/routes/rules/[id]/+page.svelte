@@ -358,12 +358,16 @@
                 onRemove={() => removeAction(idx)}
                 selectPopupId={idx}
                 onLoadTextPredictions={async (value) => {
-                    console.log($state.snapshot(action.field));
-                    textValueDatalist = await loadCompletionsForField(
-                        action.field ?? "Category",
-                        value,
-                        "Contains",
-                    );
+                    if (
+                        action.actionType === "Set" ||
+                        action.actionType === "Append"
+                    ) {
+                        textValueDatalist = await loadCompletionsForField(
+                            action.field ?? "Category",
+                            value,
+                            "Contains",
+                        );
+                    }
                 }}
             />
         {/each}

@@ -46,7 +46,10 @@
 
     function onFieldSelectChange(
         e: { currentTarget: HTMLSelectElement },
-        actionOrTrigger: { field?: RuleTransactionField; value?: string },
+        actionOrTrigger: {
+            field?: RuleTransactionField;
+            value?: string | number;
+        },
     ) {
         const currentField = actionOrTrigger.field;
         const targetField = e.currentTarget.value as RuleTransactionField;
@@ -76,7 +79,7 @@
     }
 </script>
 
-<div class="flex justify-between items-center">
+<div class="flex gap-4 items-center">
     <div class="flex justify-start items-center gap-4">
         <button class="btn text-error-400 mr-4 p-0" onclick={onRemove}>
             <Fa icon={faTrashCan} />
@@ -91,25 +94,29 @@
             }))}
         />
     </div>
-    <LabeledSelect
-        class="w-fit"
-        label="Field"
-        value={action.field}
-        disabled={isActionFieldDisabled(action.actionType)}
-        onchange={(e) => onFieldSelectChange(e, action)}
-        options={validFieldsForAction(action.actionType).map((t) => ({
-            value: t,
-            display: splitPascal(t),
-        }))}
-    />
-    <RuleValueInput
-        label="Value"
-        disabled={isActionValueDisabled(action.actionType)}
-        bind:value={action.value}
-        dataListId="text-value"
-        field={action.field ?? "Description"}
-        {accounts}
-        {onLoadTextPredictions}
-        selectPopupName="action-value-{selectPopupId}"
-    />
+    {#if action.actionType === "Append" || action.actionType === "Set" || action.actionType === "Clear"}
+        <LabeledSelect
+            class="w-fit"
+            label="Field"
+            value={action.field}
+            disabled={isActionFieldDisabled(action.actionType)}
+            onchange={(e) => onFieldSelectChange(e, action)}
+            options={validFieldsForAction(action.actionType).map((t) => ({
+                value: t,
+                display: splitPascal(t),
+            }))}
+        />
+    {/if}
+    {#if action.actionType === "Append" || action.actionType === "Set"}
+        <RuleValueInput
+            label="Value"
+            disabled={isActionValueDisabled(action.actionType)}
+            bind:value={action.value}
+            dataListId="text-value"
+            field={action.field ?? "Description"}
+            {accounts}
+            {onLoadTextPredictions}
+            selectPopupName="action-value-{selectPopupId}"
+        />
+    {/if}
 </div>
