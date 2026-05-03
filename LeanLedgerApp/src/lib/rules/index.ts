@@ -18,7 +18,9 @@ export function defaultRuleTrigger(): RuleTrigger {
 export type RuleAction = {
     actionType: "Set" | "Append";
     field: RuleTransactionField;
-    value: string;
+    // Easier to allow numbers since svelte inputs auto convert
+    // But this is frontend only and we convert to string before sending to backend
+    value: string | number;
 } | {
     actionType: "Clear";
     field: RuleTransactionField;

@@ -5,13 +5,9 @@
         defaultRuleTrigger,
         isAccountField,
         type Rule,
-        type RuleAction,
-        type RuleActionType,
-        ruleActionTypes,
         type RuleCondition,
         type RuleTransactionField,
         ruleTransactionFields,
-        type RuleTrigger,
     } from "$lib/rules";
     import Alert from "$lib/components/Alert.svelte";
     import { ProgressBar } from "@skeletonlabs/skeleton";
@@ -33,6 +29,7 @@
     import { faSearchDollar } from "@fortawesome/free-solid-svg-icons/faSearchDollar";
     import { faPlus } from "@fortawesome/free-solid-svg-icons/faPlus";
     import { faTrashCan } from "@fortawesome/free-solid-svg-icons/faTrashCan";
+    import RuleActionLine from "./RuleActionLine.svelte";
 
     let id = $page.params.id;
     let rule = $state<Rule>(defaultRule());
@@ -61,9 +58,12 @@
             }
         });
         rule.actions.forEach((action) => {
-            // TODO: refactor this to the new type
-            if (typeof (action.value as unknown) === "number") {
-                action.value = (action.value as unknown as number).toString();
+            if (
+                (action.actionType === "Set" ||
+                    action.actionType === "Append") &&
+                typeof action.value === "number"
+            ) {
+                action.value = action.value.toString();
             }
         });
 
@@ -102,14 +102,6 @@
         return condition === "Exists";
     }
 
-    function isActionValueDisabled(actionType: RuleActionType) {
-        return actionType === "DeleteTransaction" || actionType === "Clear";
-    }
-
-    function isActionFieldDisabled(actionType: RuleActionType) {
-        return actionType === "DeleteTransaction";
-    }
-
     let textValueDatalist = $state<string[]>([]);
 
     async function loadTextCompletions(
@@ -135,20 +127,16 @@
         }
     }
 
-
     // Keeps the display value in sync when changing between account and non-account fields.
     // This makes it easier for users to switch fields without losing their entered value
     function onFieldSelectChange(
         e: { currentTarget: HTMLSelectElement },
-        actionOrTrigger: {field?: RuleTransactionField; value?: string},
+        actionOrTrigger: { field?: RuleTransactionField; value?: string },
     ) {
         const currentField = actionOrTrigger.field;
         const targetField = e.currentTarget.value as RuleTransactionField;
 
-        if (
-            isAccountField(currentField)
-            && !isAccountField(targetField)
-        ) {
+        if (isAccountField(currentField) && !isAccountField(targetField)) {
             actionOrTrigger.value =
                 accounts.find((a) => a.value == actionOrTrigger.value)
                     ?.display ?? "";
@@ -188,24 +176,6 @@
                 return ["IsExactly", "Exists"];
             default:
                 return [];
-        }
-    }
-
-    // TODO: I need to extract an action component to be more flexible with fields, values, etc
-    function validFieldsForAction(
-        actionType: RuleActionType,
-    ): readonly RuleTransactionField[] {
-        switch (actionType) {
-            case "Append":
-                return ["Category", "Description"];
-            case "Set":
-                return ruleTransactionFields;
-            case "Clear":
-                return ["Source", "Destination", "Category"];
-            case "DeleteTransaction":
-                return [];
-            default:
-                return ruleTransactionFields;
         }
     }
 
@@ -411,60 +381,12 @@
             </thead>
             <tbody>
                 {#each rule.actions as action, idx}
-                    <tr>
-                        <td>
-                            <button
-                                class="btn text-error-400 mr-4 p-0"
-                                onclick={() => removeAction(idx)}
-                            >
-                                <Fa icon={faTrashCan} />
-                            </button>
-                            <select
-                                class="select w-fit"
-                                bind:value={action.actionType}
-                            >
-                                {#each ruleActionTypes as actionType}
-                                    <option value={actionType}
-                                        >{splitPascal(actionType)}</option
-                                    >
-                                {/each}
-                            </select>
-                        </td>
-                        <td>
-                            <select
-                                class="select w-fit"
-                                value={action.field}
-                                onchange={(e) => onFieldSelectChange(e, action)}
-                                disabled={isActionFieldDisabled(
-                                    action.actionType,
-                                )}
-                            >
-                                {#each validFieldsForAction(action.actionType) as field}
-                                    <option value={field}
-                                        >{splitPascal(field)}</option
-                                    >
-                                {/each}
-                            </select>
-                        </td>
-                        <td class="min-w-64">
-                            <RuleValueInput
-                                disabled={isActionValueDisabled(
-                                    action.actionType,
-                                )}
-                                bind:value={action.value}
-                                dataListId="text-value"
-                                field={action.field ?? "Description"}
-                                {accounts}
-                                onLoadTextPredictions={(value) =>
-                                    loadTextCompletions(
-                                        action.field ?? "Category",
-                                        value,
-                                        "Contains",
-                                    )}
-                                selectPopupName="action-value-{idx}"
-                            />
-                        </td>
-                    </tr>
+                    <RuleActionLine
+                        bind:action={rule.actions[idx]}
+                        {accounts}
+                        onRemove={() => removeAction(idx)}
+                        selectPopupId={idx}
+                    />
                 {/each}
             </tbody>
         </table>

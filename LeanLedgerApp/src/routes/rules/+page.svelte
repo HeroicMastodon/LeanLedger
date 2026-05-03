@@ -26,7 +26,7 @@
 
     let accounts = $state<SelectOption<string>[]>([]);
     let ruleGroups = $state(load());
-    function accountNameFromId(id?: string) {
+    function accountNameFromId(id?: string | number) {
         return accounts.find((a) => a.value === id)?.display;
     }
 
@@ -107,21 +107,25 @@
         return true;
     }
 
-function actionToString(action: RuleAction) {
-    let result = splitPascal(action.actionType);
+    function actionToString(action: RuleAction) {
+        let result = splitPascal(action.actionType);
 
-    if (action.actionType === "Set" || action.actionType === "Append") {
-        const val = isAccountField(action.field) ? accountNameFromId(action.value) : action.value;
-        result += ` ${action.field} to ${val}`;
-    } else if (action.actionType === "Clear") {
-        result += ` ${action.field}`;
-    } else if (action.actionType === "CreatePiggyEntry") {
-        const piggyIdentifier = action.piggyBankName ? `${action.piggyBankName} (${action.piggyBankId})` : action.piggyBankId;
-        result += ` in ${piggyIdentifier}: ${action.description} for ${formatMoney(action.amount)} `;
+        if (action.actionType === "Set" || action.actionType === "Append") {
+            const val = isAccountField(action.field)
+                ? accountNameFromId(action.value)
+                : action.value;
+            result += ` ${action.field} to ${val}`;
+        } else if (action.actionType === "Clear") {
+            result += ` ${action.field}`;
+        } else if (action.actionType === "CreatePiggyEntry") {
+            const piggyIdentifier = action.piggyBankName
+                ? `${action.piggyBankName} (${action.piggyBankId})`
+                : action.piggyBankId;
+            result += ` in ${piggyIdentifier}: ${action.description} for ${formatMoney(action.amount)} `;
+        }
+
+        return result;
     }
-
-    return result;
-}
 </script>
 
 <div class="mb-8 flex gap-4 items-center">
