@@ -4,6 +4,7 @@
         defaultRuleAction,
         defaultRuleTrigger,
         isAccountField,
+        loadCompletionsForField,
         type Rule,
         type RuleCondition,
         type RuleTransactionField,
@@ -103,29 +104,6 @@
     }
 
     let textValueDatalist = $state<string[]>([]);
-
-    async function loadTextCompletions(
-        field: RuleTransactionField,
-        value?: string,
-        condition?: RuleCondition,
-    ) {
-        const isAction = condition === undefined;
-        if (!value || (isAction && field === "Description")) {
-            return;
-        }
-
-        if (field === "Description") {
-            const res = await apiClient.get<string[]>(
-                `Completions/descriptions?value=${value}&condition=${condition}`,
-            );
-            textValueDatalist = res.data;
-        } else if (field === "Category") {
-            const res = await apiClient.get<string[]>(
-                `Completions/categories?value=${value}&condition=${condition}`,
-            );
-            textValueDatalist = res.data;
-        }
-    }
 
     // Keeps the display value in sync when changing between account and non-account fields.
     // This makes it easier for users to switch fields without losing their entered value
@@ -341,12 +319,14 @@
                                 dataListId="text-value"
                                 field={trigger.field}
                                 {accounts}
-                                onLoadTextPredictions={(value) =>
-                                    loadTextCompletions(
-                                        trigger.field,
-                                        value,
-                                        trigger.condition,
-                                    )}
+                                onLoadTextPredictions={async (value) => {
+                                    textValueDatalist =
+                                        await loadCompletionsForField(
+                                            trigger.field,
+                                            value,
+                                            trigger.condition,
+                                        );
+                                }}
                                 selectPopupName="trigger-value-{idx}"
                             />
                         </td>
@@ -370,26 +350,23 @@
             <Fa icon={faPlus} />
         </button>
     </div>
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Action</th>
-                    <th>Field</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each rule.actions as action, idx}
-                    <RuleActionLine
-                        bind:action={rule.actions[idx]}
-                        {accounts}
-                        onRemove={() => removeAction(idx)}
-                        selectPopupId={idx}
-                    />
-                {/each}
-            </tbody>
-        </table>
+    <div class="card p-4 flex flex-col gap-4">
+        {#each rule.actions as action, idx}
+            <RuleActionLine
+                bind:action={rule.actions[idx]}
+                {accounts}
+                onRemove={() => removeAction(idx)}
+                selectPopupId={idx}
+                onLoadTextPredictions={async (value) => {
+                    console.log($state.snapshot(action.field));
+                    textValueDatalist = await loadCompletionsForField(
+                        action.field ?? "Category",
+                        value,
+                        "Contains",
+                    );
+                }}
+            />
+        {/each}
     </div>
 {:catch err}
     <Alert class="variant-filled-error">

@@ -1,5 +1,5 @@
 <script lang="ts" generics="Option">
-    import type {SelectOption} from "$lib";
+    import type { MaybePromise, SelectOption } from "$lib";
 
     let {
         value = $bindable(),
@@ -7,18 +7,26 @@
         class: className,
         options,
         optional = false,
+        onchange,
+        disabled = false,
     }: {
         value?: Option;
         optional?: boolean;
-        label: string;
+        label?: string;
         class?: string;
         options: SelectOption<Option>[];
+        onchange?: (e: {
+            currentTarget: HTMLSelectElement;
+        }) => MaybePromise<void>;
+        disabled?: boolean;
     } = $props();
 </script>
 
 <label class="label {className ?? ''}">
-    <span>{label}</span>
-    <select class="select" bind:value={value}>
+    {#if label}
+        <span>{label}</span>
+    {/if}
+    <select class="select" bind:value {onchange} {disabled}>
         {#if optional}
             <option value={undefined}>(none)</option>
         {/if}

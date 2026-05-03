@@ -1,6 +1,4 @@
 <script lang="ts">
-    import {filter} from "@skeletonlabs/skeleton";
-
     let {
         value = $bindable(),
         label,

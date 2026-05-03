@@ -1,13 +1,14 @@
 <script lang="ts">
     type InputType = "text" | "number" | "date";
 
-    let {type, value = $bindable(), class: className, label, placeholder, onkeyup, disabled}: {
+    let {type, value = $bindable(), class: className, label, placeholder, onkeyup, disabled, list}: {
         label?: string;
         type: InputType;
         value?: string | number;
         class?: string;
         placeholder?: string;
         disabled?: boolean;
+        list?: string;
         onkeyup?: (value: Event & { currentTarget: EventTarget & HTMLInputElement }) => void;
     } = $props();
 </script>
@@ -16,5 +17,5 @@
     {#if label}
         <span>{label}</span>
     {/if}
-    <input type={type} class="input" bind:value={value} placeholder={placeholder} {onkeyup} {disabled} />
+    <input type={type} class="input" bind:value={value} placeholder={placeholder} {onkeyup} {disabled} {list} />
 </label>

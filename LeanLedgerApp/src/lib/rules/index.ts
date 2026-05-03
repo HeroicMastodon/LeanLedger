@@ -1,4 +1,5 @@
 import { splitPascal } from "$lib";
+import { apiClient } from "$lib/apiClient";
 
 export type RuleTrigger = {
     field: RuleTransactionField;
@@ -110,4 +111,29 @@ export function debounce(callback: Function, wait = 300) {
         clearTimeout(timeout);
         timeout = setTimeout(() => callback(...args), wait);
     };
+}
+
+export async function loadCompletionsForField(
+    field: RuleTransactionField,
+    value?: string,
+    condition?: RuleCondition,
+): Promise<string[]> {
+    const isAction = condition === undefined;
+    if (!value || (isAction && field === "Description")) {
+        return [];
+    }
+
+    if (field === "Description") {
+        const res = await apiClient.get<string[]>(
+            `Completions/descriptions?value=${value}&condition=${condition}`,
+        );
+        return res.data;
+    } else if (field === "Category") {
+        const res = await apiClient.get<string[]>(
+            `Completions/categories?value=${value}&condition=${condition}`,
+        );
+        return res.data;
+    }
+
+    return [];
 }
